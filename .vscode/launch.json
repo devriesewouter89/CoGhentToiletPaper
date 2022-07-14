@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "LDES download",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [
+                "--fetch",
+                "DMG",
+                "--result",
+                "pg"
+            ],
+            "console": "integratedTerminal",
+        }
+    ]
+}

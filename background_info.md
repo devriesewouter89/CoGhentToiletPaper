@@ -10,7 +10,11 @@ blob detection voor grote zwarte vlakken
 contour blob behouden, opvullen ahv hatch
 
 https://learnopencv.com/blob-detection-using-opencv-python-c/ ?
+https://ezdxf.readthedocs.io/en/stable/tutorials/hatch.html ?
 
 
 [potrace](https://pypi.org/project/pypotrace/) ==> of im2vec of deepSVG
 
+[DIY pen plotter with automatic tool changer](https://www.youtube.com/watch?v=virDtVVt2Xo)
+
+[diy plen plotter](https://www.youtube.com/watch?v=u26Wt8eY5zc)
