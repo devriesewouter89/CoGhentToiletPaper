@@ -18,3 +18,5 @@ https://ezdxf.readthedocs.io/en/stable/tutorials/hatch.html ?
 [DIY pen plotter with automatic tool changer](https://www.youtube.com/watch?v=virDtVVt2Xo)
 
 [diy plen plotter](https://www.youtube.com/watch?v=u26Wt8eY5zc)
+
+[cheap chinese woodworking tools reviewed](https://www.hookedonwood.online/China-Tools/)
