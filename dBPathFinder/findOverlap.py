@@ -105,7 +105,7 @@ class FindOverlap:
 
 # def find_overlappers(file, origin, indexes) -> list():
 #     """
-#     TODO not satisfied with this, not functional!
+#     TODO not satisfied with this, not functionally written!
 #     @param file:
 #     @param origin:
 #     @param indexes:

@@ -20,3 +20,5 @@ https://ezdxf.readthedocs.io/en/stable/tutorials/hatch.html ?
 [diy plen plotter](https://www.youtube.com/watch?v=u26Wt8eY5zc)
 
 [cheap chinese woodworking tools reviewed](https://www.hookedonwood.online/China-Tools/)
+
+[docker+nvidia+vscode development](https://blog.roboflow.com/nvidia-docker-vscode-pytorch/)
