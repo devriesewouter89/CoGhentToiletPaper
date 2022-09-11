@@ -2,17 +2,23 @@
 python file to check two or more lines from a csv file
 
 '''
+import math
+
 import pandas as pd
+from matplotlib import pyplot as plt
+
 from stemmer import sentence_to_stems
 from pathlib import Path
 import ast
 import numpy as np
 from datetime import date
 import re
+from colorama import Fore, Style
+import pprint
 
 
 class FindOverlap:
-    def __init__(self, file, time_col: str, list_cols: [str], stemmer_cols: [str]):
+    def __init__(self, file, time_col: str, list_cols: list[str], stemmer_cols: list[str]):
         """
 
         @type stemmer_cols: array of strings
@@ -20,10 +26,18 @@ class FindOverlap:
         """
         self.file = file
         self.time_col = time_col
-        self.clean_time_com = "converted_creation_date"
+        self.clean_time_col = "converted_creation_date"
         self.list_cols = list_cols
         self.stemmer_cols = stemmer_cols
-        self.df = pd.read_csv(file)
+        self.df = pd.read_csv(file).drop_duplicates()
+        self.end_date: int = date.today().year
+        self.start_date: int = None  # start_date we want to retrieve from the clean_time_col
+        self.start_object = None
+        self.start_idx: int = None
+        # 1. the dates are not easily human readable, let's convert them
+        self.convert_column_first_year_via_regex()
+        # 2. let's set the starting point of our path
+        self.find_first_entry()
 
     def find_overlap(self, origin_idx, target_idx) -> (bool, list[dict]):
         """
@@ -74,67 +88,121 @@ class FindOverlap:
 
     def find_indices_in_time_range(self, origin_year: int, time_distance: int, time_spread: int) -> (bool, list[int]):
         new_origin = origin_year + time_distance
-        new_time_range = [date(new_origin - time_spread, 1, 1), date(new_origin + time_spread, 1, 1)]
-        print(new_time_range)
-        # for i in range(1, 20):
-        #     print("index {}".format(i))
-        #     cell = self.df[self.clean_time_col].iloc[i]
-        #     # print(cell, type(cell))
-        #     year_cell = self.extract_first_year_via_regex(cell)
-        #     print("year_cell = {}".format(year_cell))
-        #     year_cell_date = date(year_cell, 1, 1)
-        #     print(new_time_range[0] < year_cell_date < new_time_range[1])
-        #     print()
-        bool_array = self.df.loc[
-            (new_time_range[0] <= date(self.extract_first_year_via_regex(self.df[self.time_col]), 1, 1))]
-        print(bool_array)
-        # res = self.df.loc[] # < new_time_range[1]]
-        # return res
+        new_time_range = [new_origin - time_spread,
+                          new_origin + time_spread]
+        # print(new_time_range)
+        bool_array = self.df.index[
+            (new_time_range[0] <= self.df[self.clean_time_col]) & (self.df[self.clean_time_col] <= new_time_range[1])]
+        if len(bool_array) > 0:
+            res = bool_array.values.tolist()
+            res_bool = True
+        else:
+            res = None
+            res_bool = False
+        # print(bool_array)
+        return res_bool, res
 
     def convert_column_first_year_via_regex(self):
         """
         convert_column_first_year_via_regex is a function that formats the "converted_creation_date" column in the pd dataframe to something readable
         """
-        self.df.insert(10, self.clean_time_com, self.df[self.time_col].str.extract(r"([\d+]{4})").squeeze(), True)
-        print(self.df[self.clean_time_com].head())
+        res = self.df[self.time_col].str.extract(r"([\d+]{4})").squeeze()
+        self.df.insert(10, self.clean_time_col,
+                       pd.to_numeric(res), True)
+        # print(self.df[self.clean_time_col].head())
 
-    # def find_overlappers(file, origin, indexes) -> list():
-    #     """
-    #     TODO not satisfied with this, not functionally written!
-    #     @param file:
-    #     @param origin:
-    #     @param indexes:
-    #     """
-    #     df = pd.read_csv(file)
-    #     # print("origin:")
-    #     print(df.iloc[origin, :])
-    #     for i in indexes:
-    #         # print(df.iloc[i, :])
-    #         overlap_found, overlap_list = find_overlap(df.iloc[origin, :], df.iloc[i, :])
-    #         if overlap_found:
-    #             print(overlap_list)
-    #         else:
-    #             print("nothing found")
-    #     # todo find per column the overlaps
-    #     # todo return: boolean 'foundsmth', which indexes with which parameters: multiple options possible!
+    def find_overlap_in_series(self, origin, indexes) -> (bool, list[dict]):
+        """
+        TODO not satisfied with this, not functionally written!
+        @rtype: object
+        @param origin:
+        @param indexes:
+        """
+
+        print("origin:")
+        print(self.df_row(origin))
+        res = list()
+        res_found = False
+        for i in indexes:
+            if i == origin:
+                continue
+            # print(self.df_row(i))
+            overlap_found, overlap_list = self.find_overlap(origin, i)
+            if overlap_found:
+                print(Fore.GREEN)
+                print(overlap_list)
+                res.append({i: overlap_list})
+                res_found = True
+            else:
+                print(Fore.RED + "nothing found")
+            print(Style.RESET_ALL)
+        return res_found, res
+        # todo find per column the overlaps
+        # todo return: boolean 'foundsmth', which indexes with which parameters: multiple options possible!
 
     def write_to_clean_csv(self, path):
-
         self.df.to_csv(path)
+
+    def find_first_entry(self):
+        """
+        finds the first element in time recorded in the dataset
+        sets the start_date as well as the initial object to get started with
+        """
+        print(self.df[self.clean_time_col].dropna().min())
+        idx = self.df[self.clean_time_col].idxmin(skipna=True)
+        self.start_idx = idx
+        self.start_object = self.df.iloc[idx]
+        self.start_date = self.df.iloc[idx][self.clean_time_col]
+
+    def plot_distribution(self):
+        plt.figure(figsize=(20, 20))
+        ax = self.df[self.clean_time_col].groupby(self.df[self.clean_time_col]).value_counts().plot(kind="bar")
+        amount_of_valids = self.df[self.clean_time_col].count()
+        amount_of_nan = self.df[self.clean_time_col].isna().sum()
+        plt.title("distribution of the collection")
+        plt.suptitle("Amount of pieces with a date is {}\nAmount of pieces with no date is {}".format(amount_of_valids,
+                                                                                                      amount_of_nan))
+        plt.show()
+
+
+def print_tree(tree):
+    for layer, res in tree[0].items():
+        print(layer)
+        for object in res:
+            for index, match in object.items():
+                print("---> index: {}".format(index))
+                for overlap in match:
+                    print("---------> {}".format(overlap))
 
 
 if __name__ == '__main__':
     _file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG.csv')
-    print(_file)
     list_cols_DMG = ['object_name', 'creator']
     stemmer_cols_DMG = ['title', 'description']
+    amount_of_tissues = 100
+    amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
+
+    # 1. we make a pandas dataframe for manipulation
     fOL = FindOverlap(file=_file, time_col="creation_date", list_cols=list_cols_DMG, stemmer_cols=stemmer_cols_DMG)
-
-    fOL.convert_column_first_year_via_regex()
-
-    # print(fOL.find_overlap(28, 29))
-    row_indices = fOL.find_indices_in_time_range(1870, 14, 15)
-    print(row_indices.head())
-
-    clean_csv_path = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG_clean.csv')
-    fOL.write_to_clean_csv(clean_csv_path)
+    # 2. to get some insights in the distribution of the data: enable next statement
+    # fOL.plot_distribution()
+    # 3. we search for initial objects in a time-range from the first found object
+    layer = 0
+    object_tree = list()
+    res_found, row_indices = fOL.find_indices_in_time_range(fOL.start_date, time_distance=50, time_spread=50)
+    # 4. we remove the start index if present and check if
+    if fOL.start_idx in row_indices:
+        print('found original object, removing it')
+        row_indices.remove(fOL.start_idx)
+    if len(row_indices) < 1:
+        print("no results")
+    res_found, res = fOL.find_overlap_in_series(fOL.start_idx, row_indices)
+    if (res_found):
+        object_tree.append({layer: res})
+        # now we have to choose an option and continue
+    else:
+        print("we came at a dead-end, return a layer and try another index")
+    print_tree(object_tree)
+    # 4. Next we want to continue searching to get our path
+    # clean_csv_path = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG_clean.csv')
+    # fOL.write_to_clean_csv(clean_csv_path)
