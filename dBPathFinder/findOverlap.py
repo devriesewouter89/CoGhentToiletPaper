@@ -20,6 +20,7 @@ class FindOverlap:
         """
         self.file = file
         self.time_col = time_col
+        self.clean_time_com = "converted_creation_date"
         self.list_cols = list_cols
         self.stemmer_cols = stemmer_cols
         self.df = pd.read_csv(file)
@@ -77,7 +78,7 @@ class FindOverlap:
         print(new_time_range)
         # for i in range(1, 20):
         #     print("index {}".format(i))
-        #     cell = self.df[self.time_col].iloc[i]
+        #     cell = self.df[self.clean_time_col].iloc[i]
         #     # print(cell, type(cell))
         #     year_cell = self.extract_first_year_via_regex(cell)
         #     print("year_cell = {}".format(year_cell))
@@ -94,40 +95,32 @@ class FindOverlap:
         """
         convert_column_first_year_via_regex is a function that formats the "converted_creation_date" column in the pd dataframe to something readable
         """
-        # try:
-        ser = self.df[self.time_col]
-        # print(ser.str.extract(r'([\d+]{4})'))
-        self.df['converted_creation_date'] = self.df[self.time_col].str.extract(r"([\d+]{4})")
-        #     date_find = re.findall(r"[\d+]{4}", text)
-        #     print(date_find, text)
-        #     if date_find:
-        #         return int(date_find[0])
-        #     else:
-        #         return 1
-        # except:
-        #     return 1
-        print(self.df['converted_creation_date'].head())
+        self.df.insert(10, self.clean_time_com, self.df[self.time_col].str.extract(r"([\d+]{4})").squeeze(), True)
+        print(self.df[self.clean_time_com].head())
 
+    # def find_overlappers(file, origin, indexes) -> list():
+    #     """
+    #     TODO not satisfied with this, not functionally written!
+    #     @param file:
+    #     @param origin:
+    #     @param indexes:
+    #     """
+    #     df = pd.read_csv(file)
+    #     # print("origin:")
+    #     print(df.iloc[origin, :])
+    #     for i in indexes:
+    #         # print(df.iloc[i, :])
+    #         overlap_found, overlap_list = find_overlap(df.iloc[origin, :], df.iloc[i, :])
+    #         if overlap_found:
+    #             print(overlap_list)
+    #         else:
+    #             print("nothing found")
+    #     # todo find per column the overlaps
+    #     # todo return: boolean 'foundsmth', which indexes with which parameters: multiple options possible!
 
-# def find_overlappers(file, origin, indexes) -> list():
-#     """
-#     TODO not satisfied with this, not functionally written!
-#     @param file:
-#     @param origin:
-#     @param indexes:
-#     """
-#     df = pd.read_csv(file)
-#     # print("origin:")
-#     print(df.iloc[origin, :])
-#     for i in indexes:
-#         # print(df.iloc[i, :])
-#         overlap_found, overlap_list = find_overlap(df.iloc[origin, :], df.iloc[i, :])
-#         if overlap_found:
-#             print(overlap_list)
-#         else:
-#             print("nothing found")
-#     # todo find per column the overlaps
-#     # todo return: boolean 'foundsmth', which indexes with which parameters: multiple options possible!
+    def write_to_clean_csv(self, path):
+
+        self.df.to_csv(path)
 
 
 if __name__ == '__main__':
@@ -136,7 +129,12 @@ if __name__ == '__main__':
     list_cols_DMG = ['object_name', 'creator']
     stemmer_cols_DMG = ['title', 'description']
     fOL = FindOverlap(file=_file, time_col="creation_date", list_cols=list_cols_DMG, stemmer_cols=stemmer_cols_DMG)
-    # print(fOL.find_overlap(28, 29))
-    # row_indices = fOL.find_indices_in_time_range(1870, 14, 15)
-    # print(row_indices.head())
+
     fOL.convert_column_first_year_via_regex()
+
+    # print(fOL.find_overlap(28, 29))
+    row_indices = fOL.find_indices_in_time_range(1870, 14, 15)
+    print(row_indices.head())
+
+    clean_csv_path = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG_clean.csv')
+    fOL.write_to_clean_csv(clean_csv_path)
