@@ -3,6 +3,7 @@ python file to check two or more lines from a csv file
 
 '''
 import math
+import random
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -10,15 +11,13 @@ from matplotlib import pyplot as plt
 from stemmer import sentence_to_stems
 from pathlib import Path
 import ast
-import numpy as np
 from datetime import date
-import re
 from colorama import Fore, Style
-import pprint
+from tabulate import tabulate
 
 
 class FindOverlap:
-    def __init__(self, file, time_col: str, list_cols: list[str], stemmer_cols: list[str]):
+    def __init__(self, file, time_col: str, list_cols: list[str], stemmer_cols: list[str], steps: int):
         """
 
         @type stemmer_cols: array of strings
@@ -31,9 +30,14 @@ class FindOverlap:
         self.stemmer_cols = stemmer_cols
         self.df = pd.read_csv(file).drop_duplicates()
         self.end_date: int = date.today().year
-        self.start_date: int = None  # start_date we want to retrieve from the clean_time_col
+        self.steps = steps
+        self.object_tree = list()
+        self.df_tree = pd.DataFrame(columns=["layer", "df_idx", "previous_match", "chosen", "has_already_been_chosen"])
+        self.start_date: int = 0  # start_date we want to retrieve from the clean_time_col
         self.start_object = None
-        self.start_idx: int = None
+        self.start_idx: int = 0
+        self.next_date = 0
+        self.next_layer = 0
         # 1. the dates are not easily human readable, let's convert them
         self.convert_column_first_year_via_regex()
         # 2. let's set the starting point of our path
@@ -131,7 +135,7 @@ class FindOverlap:
             if overlap_found:
                 print(Fore.GREEN)
                 print(overlap_list)
-                res.append({i: overlap_list})
+                res.append({"index": i, "res": overlap_list})
                 res_found = True
             else:
                 print(Fore.RED + "nothing found")
@@ -148,11 +152,15 @@ class FindOverlap:
         finds the first element in time recorded in the dataset
         sets the start_date as well as the initial object to get started with
         """
-        print(self.df[self.clean_time_col].dropna().min())
+        # print(self.df[self.clean_time_col].dropna().min())
         idx = self.df[self.clean_time_col].idxmin(skipna=True)
         self.start_idx = idx
         self.start_object = self.df.iloc[idx]
         self.start_date = self.df.iloc[idx][self.clean_time_col]
+        self.object_tree.append({0: LinkedObject(0, "", self.start_date, self.df.iloc[idx], idx)})
+        self.df_tree = pd.concat([self.df_tree, pd.DataFrame.from_records(
+            [{"layer": 0, "df_idx": self.start_idx, "previous_match": "", "chosen": True,
+              "has_already_been_chosen": True}])])
 
     def plot_distribution(self):
         plt.figure(figsize=(20, 20))
@@ -164,15 +172,61 @@ class FindOverlap:
                                                                                                       amount_of_nan))
         plt.show()
 
+    def print_tree(self):
+        for layer, res in self.object_tree[0].items():
+            print(layer)
+            for object in res:
+                for index, match in object.items():
+                    print("---> index: {}, date is: {}".format(index, int(self.df.iloc[index][self.clean_time_col])))
+                    for overlap in match:
+                        print("---------> {}".format(overlap))
 
-def print_tree(tree):
-    for layer, res in tree[0].items():
-        print(layer)
-        for object in res:
-            for index, match in object.items():
-                print("---> index: {}".format(index))
-                for overlap in match:
-                    print("---------> {}".format(overlap))
+    def get_date_from_original_df(self, idx) -> int:
+        return int(self.df.iloc[idx][self.clean_time_col])
+
+    def build_tree(self):
+        print(tabulate(self.df_tree, headers='keys'))
+        # todo: split this in a forward motion and backward motion when no options can be found in next layer
+        for layer in range(1, self.steps):
+            chosen_in_previous_layer = self.df_tree[
+                (self.df_tree["layer"] == layer - 1) & (self.df_tree['chosen'])]
+            origin_idx = chosen_in_previous_layer["df_idx"].values[0]
+            origin_year = self.get_date_from_original_df(origin_idx)
+            # origin_year = self.object_tree[layer - 1].get_date()
+            # origin_idx = self.object_tree[layer - 1].get_idx()
+            rows_found, row_indices = self.find_indices_in_time_range(origin_year=origin_year, time_distance=50,
+                                                                      time_spread=49)
+            if rows_found:
+                print("{} indices found".format(len(row_indices)))
+                # 4. we remove the start index if present and check if we find semantic matches
+                # FORWARD MOTION todo: add BACKWARDS motion
+                if origin_idx in row_indices:
+                    print('found original object, removing it')
+                    row_indices.remove(origin_idx)
+                if len(row_indices) < 1:
+                    print("no results")
+                matches_found, matches = self.find_overlap_in_series(origin_idx, row_indices)
+                if matches_found:
+                    print("{} matches found for layer {}".format(len(matches), layer))
+                    # we choose a random start option
+                    choose_idx = random.randint(0, len(matches) - 1)
+                    for idx, i in enumerate(matches):
+                        if idx == choose_idx:
+                            choose_this = True
+                        else:
+                            choose_this = False
+                        df_idx = i["index"]
+                        prev_match = i["res"]
+                        self.df_tree = pd.concat([self.df_tree, pd.DataFrame.from_records(
+                            [{"layer": layer, "df_idx": df_idx, "previous_match": prev_match, "chosen": choose_this,
+                              "has_already_been_chosen": choose_this}])])  # todo perhaps we only need to set has_already_been_chosen in a backward motion
+                else:
+                    print("we came at a dead-end by no matches found, return a layer and try another index")
+                    print(tabulate(self.df_tree, headers='keys'))
+            else:
+                print("we came at a dead end, there were no indices found in the timezone")
+                print(tabulate(self.df_tree, headers='keys'))
+        print(tabulate(self.df_tree, headers='keys'))
 
 
 if __name__ == '__main__':
@@ -183,26 +237,13 @@ if __name__ == '__main__':
     amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
 
     # 1. we make a pandas dataframe for manipulation
-    fOL = FindOverlap(file=_file, time_col="creation_date", list_cols=list_cols_DMG, stemmer_cols=stemmer_cols_DMG)
+    fOL = FindOverlap(file=_file, time_col="creation_date", list_cols=list_cols_DMG, stemmer_cols=stemmer_cols_DMG,
+                      steps=amount_of_imgs_to_find)
     # 2. to get some insights in the distribution of the data: enable next statement
     # fOL.plot_distribution()
     # 3. we search for initial objects in a time-range from the first found object
-    layer = 0
-    object_tree = list()
-    res_found, row_indices = fOL.find_indices_in_time_range(fOL.start_date, time_distance=50, time_spread=50)
-    # 4. we remove the start index if present and check if
-    if fOL.start_idx in row_indices:
-        print('found original object, removing it')
-        row_indices.remove(fOL.start_idx)
-    if len(row_indices) < 1:
-        print("no results")
-    res_found, res = fOL.find_overlap_in_series(fOL.start_idx, row_indices)
-    if (res_found):
-        object_tree.append({layer: res})
-        # now we have to choose an option and continue
-    else:
-        print("we came at a dead-end, return a layer and try another index")
-    print_tree(object_tree)
-    # 4. Next we want to continue searching to get our path
+    fOL.build_tree()
+    # fOL.print_tree()
+
     # clean_csv_path = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG_clean.csv')
     # fOL.write_to_clean_csv(clean_csv_path)
