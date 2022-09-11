@@ -10,6 +10,7 @@ import numpy as np
 from datetime import date
 import re
 
+
 class FindOverlap:
     def __init__(self, file, time_col: str, list_cols: [str], stemmer_cols: [str]):
         """
@@ -83,16 +84,20 @@ class FindOverlap:
         #     year_cell_date = date(year_cell, 1, 1)
         #     print(new_time_range[0] < year_cell_date < new_time_range[1])
         #     print()
-        bool_array = self.df.loc[(new_time_range[0] <= date(self.extract_first_year_via_regex(self.df[self.time_col]), 1, 1))]
+        bool_array = self.df.loc[
+            (new_time_range[0] <= date(self.extract_first_year_via_regex(self.df[self.time_col]), 1, 1))]
         print(bool_array)
         # res = self.df.loc[] # < new_time_range[1]]
         # return res
 
     def convert_column_first_year_via_regex(self):
+        """
+        convert_column_first_year_via_regex is a function that formats the "converted_creation_date" column in the pd dataframe to something readable
+        """
         # try:
         ser = self.df[self.time_col]
         # print(ser.str.extract(r'([\d+]{4})'))
-        self.df['converted_creation_date']= self.df[self.time_col].str.extract(r"([\d+]{4})")
+        self.df['converted_creation_date'] = self.df[self.time_col].str.extract(r"([\d+]{4})")
         #     date_find = re.findall(r"[\d+]{4}", text)
         #     print(date_find, text)
         #     if date_find:
@@ -102,6 +107,7 @@ class FindOverlap:
         # except:
         #     return 1
         print(self.df['converted_creation_date'].head())
+
 
 # def find_overlappers(file, origin, indexes) -> list():
 #     """
