@@ -157,7 +157,6 @@ class FindOverlap:
         self.start_idx = idx
         self.start_object = self.df.iloc[idx]
         self.start_date = self.df.iloc[idx][self.clean_time_col]
-        self.object_tree.append({0: LinkedObject(0, "", self.start_date, self.df.iloc[idx], idx)})
         self.df_tree = pd.concat([self.df_tree, pd.DataFrame.from_records(
             [{"layer": 0, "df_idx": self.start_idx, "previous_match": "", "chosen": True,
               "has_already_been_chosen": True}])])
@@ -165,10 +164,10 @@ class FindOverlap:
     def plot_distribution(self):
         plt.figure(figsize=(20, 20))
         ax = self.df[self.clean_time_col].groupby(self.df[self.clean_time_col]).value_counts().plot(kind="bar")
-        amount_of_valids = self.df[self.clean_time_col].count()
+        amount_of_valid = self.df[self.clean_time_col].count()
         amount_of_nan = self.df[self.clean_time_col].isna().sum()
         plt.title("distribution of the collection")
-        plt.suptitle("Amount of pieces with a date is {}\nAmount of pieces with no date is {}".format(amount_of_valids,
+        plt.suptitle("Amount of pieces with a date is {}\nAmount of pieces with no date is {}".format(amount_of_valid,
                                                                                                       amount_of_nan))
         plt.show()
 
@@ -225,7 +224,9 @@ class FindOverlap:
                     print(tabulate(self.df_tree, headers='keys'))
             else:
                 print("we came at a dead end, there were no indices found in the timezone")
+                print("end result:")
                 print(tabulate(self.df_tree, headers='keys'))
+                print('last date found: {}'.format(self.get_date_from_original_df(self.df_tree[self.df_tree["layer"] == layer - 1]["df_idx"])))
         print(tabulate(self.df_tree, headers='keys'))
 
 
@@ -240,7 +241,7 @@ if __name__ == '__main__':
     fOL = FindOverlap(file=_file, time_col="creation_date", list_cols=list_cols_DMG, stemmer_cols=stemmer_cols_DMG,
                       steps=amount_of_imgs_to_find)
     # 2. to get some insights in the distribution of the data: enable next statement
-    # fOL.plot_distribution()
+    fOL.plot_distribution()
     # 3. we search for initial objects in a time-range from the first found object
     fOL.build_tree()
     # fOL.print_tree()
