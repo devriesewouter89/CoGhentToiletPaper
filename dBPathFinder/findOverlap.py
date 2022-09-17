@@ -29,6 +29,7 @@ class FindOverlap:
         self.list_cols = list_cols
         self.stemmer_cols = stemmer_cols
         self.df = pd.read_csv(file).drop_duplicates()
+        print("Initial reading of the data: {}".format(self.df.describe))
         self.end_date: int = date.today().year
         self.steps = steps
         self.object_tree = list()
@@ -191,10 +192,8 @@ class FindOverlap:
                 (self.df_tree["layer"] == layer - 1) & (self.df_tree['chosen'])]
             origin_idx = chosen_in_previous_layer["df_idx"].values[0]
             origin_year = self.get_date_from_original_df(origin_idx)
-            # origin_year = self.object_tree[layer - 1].get_date()
-            # origin_idx = self.object_tree[layer - 1].get_idx()
             rows_found, row_indices = self.find_indices_in_time_range(origin_year=origin_year, time_distance=50,
-                                                                      time_spread=49)
+                                                                      time_spread=49) #todo lets make time_distance be decided by the spread of the data
             if rows_found:
                 print("{} indices found".format(len(row_indices)))
                 # 4. we remove the start index if present and check if we find semantic matches
@@ -231,7 +230,7 @@ class FindOverlap:
 
 
 if __name__ == '__main__':
-    _file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG.csv')
+    _file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'STAM.csv')
     list_cols_DMG = ['object_name', 'creator']
     stemmer_cols_DMG = ['title', 'description']
     amount_of_tissues = 100
