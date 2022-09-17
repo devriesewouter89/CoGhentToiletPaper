@@ -2,8 +2,12 @@
 python file to check two or more lines from a csv file
 
 '''
+import json
 import math
+import os
 import random
+from urllib.error import HTTPError
+from urllib.request import urlopen
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -17,7 +21,7 @@ from tabulate import tabulate
 
 
 class FindOverlap:
-    def __init__(self, file, time_col: str, list_cols: list[str], stemmer_cols: list[str], steps: int):
+    def __init__(self, file, institute: str, time_col: str, list_cols: list[str], stemmer_cols: list[str], steps: int):
         """
 
         @type stemmer_cols: array of strings
@@ -25,11 +29,12 @@ class FindOverlap:
         """
         self.file = file
         self.time_col = time_col
+        self.institute = institute
         self.clean_time_col = "converted_creation_date"
         self.list_cols = list_cols
         self.stemmer_cols = stemmer_cols
         self.df = pd.read_csv(file).drop_duplicates()
-        print("Initial reading of the data: {}".format(self.df.describe))
+        # print("Initial reading of the data: {}".format(self.df.describe))
         self.end_date: int = date.today().year
         self.steps = steps
         self.object_tree = list()
@@ -39,9 +44,14 @@ class FindOverlap:
         self.start_idx: int = 0
         self.next_date = 0
         self.next_layer = 0
-        # 1. the dates are not easily human readable, let's convert them
+        # 1. the dates are not easily human-readable, let's convert them
         self.convert_column_first_year_via_regex()
-        # 2. let's set the starting point of our path
+        self.amount_of_valid = self.df[self.clean_time_col].count()
+        self.amount_of_nan = self.df[self.clean_time_col].isna().sum()
+        self.distance_per_step = math.floor(self.amount_of_valid / self.steps)
+        # 2. sort the dataframe and drop the elements which have no clear date
+        self.sort_and_drop_na_df()
+        # 3. let's set the starting point of our path todo: still necessary?
         self.find_first_entry()
 
     def find_overlap(self, origin_idx, target_idx) -> (bool, list[dict]):
@@ -95,7 +105,6 @@ class FindOverlap:
         new_origin = origin_year + time_distance
         new_time_range = [new_origin - time_spread,
                           new_origin + time_spread]
-        # print(new_time_range)
         bool_array = self.df.index[
             (new_time_range[0] <= self.df[self.clean_time_col]) & (self.df[self.clean_time_col] <= new_time_range[1])]
         if len(bool_array) > 0:
@@ -104,8 +113,26 @@ class FindOverlap:
         else:
             res = None
             res_bool = False
-        # print(bool_array)
         return res_bool, res
+
+    def return_indices_in_list_range(self, start_idx: int, idx_distance: int, idx_spread: int) -> (bool, list[int]):
+        new_origin = start_idx + idx_distance
+        new_time_range = [new_origin - idx_spread,
+                          new_origin + idx_spread]
+        # valid except for border values
+        if new_time_range[0] < 0:
+            new_time_range[0] = 0
+        if new_time_range[1] > len(self.df):
+            new_time_range[1] = len(self.df)
+        idx_list = self.df.index[new_time_range[0]:new_time_range[1]]
+        return True, idx_list
+
+    def sort_and_drop_na_df(self):
+        """
+        Sort the dataframe and reindex it
+        """
+        self.df = self.df.sort_values(by=self.clean_time_col, ignore_index=True)
+        self.df.drop(self.df[self.df[self.clean_time_col].isna()].index, inplace=True)
 
     def convert_column_first_year_via_regex(self):
         """
@@ -165,21 +192,14 @@ class FindOverlap:
     def plot_distribution(self):
         plt.figure(figsize=(20, 20))
         ax = self.df[self.clean_time_col].groupby(self.df[self.clean_time_col]).value_counts().plot(kind="bar")
-        amount_of_valid = self.df[self.clean_time_col].count()
-        amount_of_nan = self.df[self.clean_time_col].isna().sum()
+
         plt.title("distribution of the collection")
-        plt.suptitle("Amount of pieces with a date is {}\nAmount of pieces with no date is {}".format(amount_of_valid,
-                                                                                                      amount_of_nan))
+        plt.suptitle("Amount of pieces with a date is {}\nAmount of pieces with no date is {}".format(
+            self.amount_of_valid, self.amount_of_nan))
         plt.show()
 
     def print_tree(self):
-        for layer, res in self.object_tree[0].items():
-            print(layer)
-            for object in res:
-                for index, match in object.items():
-                    print("---> index: {}, date is: {}".format(index, int(self.df.iloc[index][self.clean_time_col])))
-                    for overlap in match:
-                        print("---------> {}".format(overlap))
+        print(tabulate(self.df_tree, headers='keys'))
 
     def get_date_from_original_df(self, idx) -> int:
         return int(self.df.iloc[idx][self.clean_time_col])
@@ -187,15 +207,16 @@ class FindOverlap:
     def build_tree(self):
         print(tabulate(self.df_tree, headers='keys'))
         # todo: split this in a forward motion and backward motion when no options can be found in next layer
+        # todo: probably immediately necessary to check if there are images available
         for layer in range(1, self.steps):
             chosen_in_previous_layer = self.df_tree[
                 (self.df_tree["layer"] == layer - 1) & (self.df_tree['chosen'])]
             origin_idx = chosen_in_previous_layer["df_idx"].values[0]
-            origin_year = self.get_date_from_original_df(origin_idx)
-            rows_found, row_indices = self.find_indices_in_time_range(origin_year=origin_year, time_distance=50,
-                                                                      time_spread=49) #todo lets make time_distance be decided by the spread of the data
+            rows_found, row_indices = self.return_indices_in_list_range(start_idx=origin_idx,
+                                                                        idx_distance=self.distance_per_step,
+                                                                        idx_spread=30)
+
             if rows_found:
-                print("{} indices found".format(len(row_indices)))
                 # 4. we remove the start index if present and check if we find semantic matches
                 # FORWARD MOTION todo: add BACKWARDS motion
                 if origin_idx in row_indices:
@@ -225,25 +246,65 @@ class FindOverlap:
                 print("we came at a dead end, there were no indices found in the timezone")
                 print("end result:")
                 print(tabulate(self.df_tree, headers='keys'))
-                print('last date found: {}'.format(self.get_date_from_original_df(self.df_tree[self.df_tree["layer"] == layer - 1]["df_idx"])))
-        print(tabulate(self.df_tree, headers='keys'))
+                print('last date found: {}'.format(
+                    self.get_date_from_original_df(self.df_tree[self.df_tree["layer"] == layer - 1]["df_idx"])))
+
+    def save_tree(self):
+        self.df_tree.to_csv("{}_tree.csv".format(os.path.splitext(self.file)[0]))
+
+    def load_tree(self):
+        self.df_tree = pd.read_csv("{}_tree.csv".format(os.path.splitext(self.file)[0]))
+
+    def get_image_uri(self, img_id) -> str:
+        iiif_manifest = "https://api.collectie.gent/iiif/presentation/v2/manifest/{}:{}".format(self.institute, img_id)
+        try:
+            response = urlopen(iiif_manifest)
+        except ValueError:
+            print('no image found')
+        except HTTPError:
+            print('no image found')
+        else:
+            data_json = json.loads(response.read())
+            image_uri = data_json["sequences"][0]['canvases'][0]["images"][0]["resource"]["@id"]
+            return image_uri
+
+    def get_image_list_from_tree(self):
+        # we pick the rows from our dataframe which were chose
+        index_list = self.df_tree[self.df_tree["chosen"] == True].index
+        # based on these indexes we pick the data from within our original dataframe
+        df_list = self.df.iloc[self.df.index.isin(index_list)]
+        # we make a list of the objectnumbers, as they are needed to retrieve images
+        object_id_list = df_list["objectnumber"].values
+        # print(index_list)
+        # print(df_list.columns)
+        # print(object_id_list)
+        img_list = list(map(lambda x: self.get_image_uri(x), object_id_list))
+        for i in img_list:
+            print(i)
+        print(len(img_list))
+
+        # for i in object_id_list:
+        #     self.get_image_uri(i)
 
 
 if __name__ == '__main__':
-    _file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'STAM.csv')
+    _file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG.csv')
     list_cols_DMG = ['object_name', 'creator']
     stemmer_cols_DMG = ['title', 'description']
     amount_of_tissues = 100
     amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
 
     # 1. we make a pandas dataframe for manipulation
-    fOL = FindOverlap(file=_file, time_col="creation_date", list_cols=list_cols_DMG, stemmer_cols=stemmer_cols_DMG,
+    fOL = FindOverlap(file=_file, institute="dmg", time_col="creation_date", list_cols=list_cols_DMG,
+                      stemmer_cols=stemmer_cols_DMG,
                       steps=amount_of_imgs_to_find)
     # 2. to get some insights in the distribution of the data: enable next statement
-    fOL.plot_distribution()
+    # fOL.plot_distribution()
     # 3. we search for initial objects in a time-range from the first found object
-    fOL.build_tree()
+    # fOL.build_tree()
     # fOL.print_tree()
-
+    # fOL.save_tree()
+    fOL.load_tree()
+    fOL.get_image_list_from_tree()
     # clean_csv_path = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG_clean.csv')
     # fOL.write_to_clean_csv(clean_csv_path)
