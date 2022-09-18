@@ -3,6 +3,8 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.corpus import stopwords
 import argparse
 import string
+from nltk.corpus import wordnet as wn
+
 '''
 script to test NLP models to get stem words from sentences and remove stop words.
 This methodology can then be used to convert unstructured text to structured, assisting in finding objects with some similarity.
@@ -12,8 +14,15 @@ This methodology can then be used to convert unstructured text to structured, as
 # run once:
 # import nltk
 # nltk.download()
+def start_WordListCorpusReader():
+    """
+    function to ensure the LazyCorpusLoader is initialized, needs to be called once.(especially use-ful in threaded
+    environment)
+    """
+    wn.ensure_loaded()
 
-def sentence_to_stems(text) -> str:
+
+def sentence_to_stems(text) -> list():
     ps = PorterStemmer()
     _stopwords = stopwords.words("dutch")
     # 1. remove punctuation
@@ -30,9 +39,9 @@ def sentence_to_stems(text) -> str:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--sentence', '-s', type=str,
-                        default="Vierkante geglazuurde en roodbruin geëngobeerde witbakkende aardewerken wandtegel met stippen in de hoeken")
+                        default="Vierkante geglazuurde en roodbruin geëngobeerde witbakkende aardewerken wandtegel "
+                                "met stippen in de hoeken")
     args = parser.parse_args()
 
     clean_stems = sentence_to_stems(args.sentence)
     print(clean_stems)
-    

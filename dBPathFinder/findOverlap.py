@@ -2,22 +2,24 @@
 python file to check two or more lines from a csv file
 
 '''
+import ast
 import json
 import math
 import os
 import random
+from datetime import date
+from threading import Thread
+from queue import Queue
+from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
 import pandas as pd
-from matplotlib import pyplot as plt
-
-from stemmer import sentence_to_stems
-from pathlib import Path
-import ast
-from datetime import date
 from colorama import Fore, Style
+from matplotlib import pyplot as plt
 from tabulate import tabulate
+
+from stemmer import sentence_to_stems, start_WordListCorpusReader
 
 
 class FindOverlap:
@@ -54,7 +56,7 @@ class FindOverlap:
         # 3. let's set the starting point of our path todo: still necessary?
         self.find_first_entry()
 
-    def find_overlap(self, origin_idx, target_idx) -> (bool, list[dict]):
+    def find_overlap(self, origin_idx, target_idx) -> (bool, list[dict], str):
         """
         find_overlap is a function looking in a set of columns if overlapping text is to be found.
         @param self:
@@ -66,6 +68,11 @@ class FindOverlap:
         overlap_list = list[dict]()
         origin = self.df_row(origin_idx)
         target = self.df_row(target_idx)
+        # First we test if the target_idx has an image, otherwise it's useless
+        img_uri = self.get_image_uri(self.get_object_id(target_idx))
+        if img_uri is None:
+            # we return an empty list as we haven't got an image.
+            return overlap_found, overlap_list, img_uri
 
         for col in self.list_cols:
             # we need to unpack the strings to list via ast.literal_eval as otherwise we're evaluating character-based.
@@ -91,7 +98,7 @@ class FindOverlap:
             except Exception as e:
                 print(e)
                 pass
-        return overlap_found, overlap_list
+        return overlap_found, overlap_list, img_uri
 
     def df_row(self, idx):
         """
@@ -143,6 +150,56 @@ class FindOverlap:
                        pd.to_numeric(res), True)
         # print(self.df[self.clean_time_col].head())
 
+    # class OverlapThread(threading.Thread):
+    #     def __init__(self, group=None, target=None, name=None,
+    #              args=(), kwargs={}, Verbose=None):
+    #         threading.Thread.__init__(self, group, target, name, args, kwargs)
+    #         self.img_uri = None
+    #         self.found_res = None
+    #         self.found_list = None
+    #     def run(self) -> None:
+    #         self.found_res, self.found_list, self.img_uri =
+
+    def find_overlap_threaded_in_series(self, origin, indexes) -> (bool, list[dict], list[str]):
+        """
+        TODO not satisfied with this, not functionally written!
+        @rtype: object
+        @param origin:
+        @param indexes:
+        """
+
+        print("origin:")
+        print(self.df_row(origin))
+        res = list()
+        res_found = False
+
+        # we'll multithread the find_overlap function to speed things up
+        que = Queue()
+        threads_list = list()
+        for i in indexes:
+            if i == origin:
+                continue
+            t = Thread(target=lambda q, arg1, arg2: q.put(self.find_overlap(arg1, arg2)), args=(que, origin, i))
+            t.start()
+            threads_list.append(t)
+            # print(self.df_row(i))
+            # overlap_found, overlap_list, img_uri = self.find_overlap(origin, i)
+        for t in threads_list:
+            t.join()
+        while not que.empty():
+            overlap_found, overlap_list, img_uri = que.get()
+            if overlap_found:
+                print(Fore.GREEN)
+                print(overlap_list)
+                res.append({"index": i, "res": overlap_list, "img_uri": img_uri})
+                res_found = True
+            else:
+                print(Fore.RED + "nothing found")
+            print(Style.RESET_ALL)
+        return res_found, res
+        # todo find per column the overlaps
+        # todo return: boolean 'foundsmth', which indexes with which parameters: multiple options possible!
+
     def find_overlap_in_series(self, origin, indexes) -> (bool, list[dict]):
         """
         TODO not satisfied with this, not functionally written!
@@ -155,15 +212,16 @@ class FindOverlap:
         print(self.df_row(origin))
         res = list()
         res_found = False
+
         for i in indexes:
             if i == origin:
                 continue
             # print(self.df_row(i))
-            overlap_found, overlap_list = self.find_overlap(origin, i)
+            overlap_found, overlap_list, img_uri = self.find_overlap(origin, i)
             if overlap_found:
                 print(Fore.GREEN)
                 print(overlap_list)
-                res.append({"index": i, "res": overlap_list})
+                res.append({"index": i, "res": overlap_list , "img_uri": img_uri})
                 res_found = True
             else:
                 print(Fore.RED + "nothing found")
@@ -208,6 +266,9 @@ class FindOverlap:
         print(tabulate(self.df_tree, headers='keys'))
         # todo: split this in a forward motion and backward motion when no options can be found in next layer
         # todo: probably immediately necessary to check if there are images available
+        # Initialize the wordListcorpusreader object
+        start_WordListCorpusReader()
+
         for layer in range(1, self.steps):
             chosen_in_previous_layer = self.df_tree[
                 (self.df_tree["layer"] == layer - 1) & (self.df_tree['chosen'])]
@@ -224,7 +285,7 @@ class FindOverlap:
                     row_indices.remove(origin_idx)
                 if len(row_indices) < 1:
                     print("no results")
-                matches_found, matches = self.find_overlap_in_series(origin_idx, row_indices)
+                matches_found, matches = self.find_overlap_threaded_in_series(origin_idx, row_indices)
                 if matches_found:
                     print("{} matches found for layer {}".format(len(matches), layer))
                     # we choose a random start option
@@ -236,9 +297,11 @@ class FindOverlap:
                             choose_this = False
                         df_idx = i["index"]
                         prev_match = i["res"]
+                        img_uri = i["img_uri"]
                         self.df_tree = pd.concat([self.df_tree, pd.DataFrame.from_records(
-                            [{"layer": layer, "df_idx": df_idx, "previous_match": prev_match, "chosen": choose_this,
-                              "has_already_been_chosen": choose_this}])])  # todo perhaps we only need to set has_already_been_chosen in a backward motion
+                            [{"layer": layer, "df_idx": df_idx, "previous_match": prev_match, "img_uri": img_uri,
+                              "chosen": choose_this, "has_already_been_chosen": choose_this}])])
+                        # todo perhaps we only need to set has_already_been_chosen in a backward motion
                 else:
                     print("we came at a dead-end by no matches found, return a layer and try another index")
                     print(tabulate(self.df_tree, headers='keys'))
@@ -268,6 +331,13 @@ class FindOverlap:
             image_uri = data_json["sequences"][0]['canvases'][0]["images"][0]["resource"]["@id"]
             return image_uri
 
+    def get_object_id(self, df_tree_idx):
+        # based on the index we pick the data from within our original dataframe
+        res = self.df.iloc[df_tree_idx]
+        # we retrieve the object number
+        object_number = res["objectnumber"]
+        return object_number
+
     def get_image_list_from_tree(self):
         # we pick the rows from our dataframe which were chose
         index_list = self.df_tree[self.df_tree["chosen"] == True].index
@@ -275,16 +345,13 @@ class FindOverlap:
         df_list = self.df.iloc[self.df.index.isin(index_list)]
         # we make a list of the objectnumbers, as they are needed to retrieve images
         object_id_list = df_list["objectnumber"].values
-        # print(index_list)
-        # print(df_list.columns)
-        # print(object_id_list)
+        # todo improvement possible speedup if we rewrite with threads? Need to make sure order is maintained though.
         img_list = list(map(lambda x: self.get_image_uri(x), object_id_list))
         for i in img_list:
             print(i)
-        print(len(img_list))
-
-        # for i in object_id_list:
-        #     self.get_image_uri(i)
+        # Using filter() method to filter None values
+        filtered_img_list = list(filter(None, img_list))
+        print(len(filtered_img_list))
 
 
 if __name__ == '__main__':
@@ -301,10 +368,14 @@ if __name__ == '__main__':
     # 2. to get some insights in the distribution of the data: enable next statement
     # fOL.plot_distribution()
     # 3. we search for initial objects in a time-range from the first found object
-    # fOL.build_tree()
-    # fOL.print_tree()
-    # fOL.save_tree()
+    fOL.build_tree()
+    fOL.print_tree()
+    fOL.save_tree()
     fOL.load_tree()
     fOL.get_image_list_from_tree()
+
+    # index_list = fOL.df_tree[fOL.df_tree["chosen"] == True].index
+    # for i in index_list:
+    #     print(fOL.get_image_uri(fOL.get_object_id(i)))
     # clean_csv_path = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG_clean.csv')
     # fOL.write_to_clean_csv(clean_csv_path)
