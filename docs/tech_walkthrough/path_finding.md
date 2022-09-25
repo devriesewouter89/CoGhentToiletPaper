@@ -75,4 +75,94 @@ Got me on a random occasion only 12 out of 50 results. Not good...
 
 Plan van aanpak: bij het bouwen van de tree reeds rekening houden met het resultaat van get_image_uri!
 
-Nu wordt alles wel heel traag (serieel alle uri's opvragen), 
+Nu wordt alles wel heel traag (serieel alle uri's opvragen), dus gaan we threaded werken!
+
+Van 
+```python
+def find_overlap_in_series(self, origin, indexes) -> (bool, list[dict]):  
+    """  
+    @rtype: object  
+    @param origin:    @param indexes:    """  
+    print("origin:")  
+    print(self.df_row(origin))  
+    res = list()  
+    res_found = False  
+  
+    for i in indexes:  
+        if i == origin:  
+            continue  
+        # print(self.df_row(i))  
+        overlap_found, overlap_list, img_uri = self.find_overlap(origin, i)  
+        if overlap_found:  
+            print(Fore.GREEN)  
+            print(overlap_list)  
+            res.append({"index": i, "res": overlap_list, "img_uri": img_uri})  
+            res_found = True  
+        else:  
+            # print(Fore.RED + "nothing found")  
+            continue  
+        print(Style.RESET_ALL)  
+    return res_found, res
+```
+
+Naar threaded:
+
+```python
+
+def find_overlap_threaded_in_series(self, origin, indexes) -> (bool, list[dict], list[str]):  
+    """  
+    TODO not satisfied with this, not functionally written!  
+    @rtype: object  
+    @param origin: the index in the original dataframe for which we're looking for childs in <indexes> with a textual overlap    @param indexes: the indexes of possible children    """  
+    print("origin:")  
+    print(self.df_row(origin))  
+    res = list()  
+    res_found = False  
+  
+    # we'll multithread the find_overlap function to speed things up  
+    que = Queue()  
+    threads_list = list()  
+    for i in indexes:  
+        if i == origin:  
+            continue  
+        t = Thread(target=lambda q, arg1, arg2: q.put(self.find_overlap(arg1, arg2)), args=(que, origin, i))  
+        t.start()  
+        threads_list.append(t)  
+    for t in threads_list:  
+        t.join()  
+    while not que.empty():  
+        overlap_found, overlap_list, img_uri, index = que.get()  
+        if overlap_found:  
+            print(Fore.GREEN)  
+            print(overlap_list)  
+            res.append({"index": index, "res": overlap_list, "img_uri": img_uri})  
+            res_found = True  
+        else:  
+            # print(Fore.RED + "nothing found")  
+            continue  
+        print(Style.RESET_ALL)  
+    return res_found, res
+```
+
+
+Now, my algorithm is basically:
+- You have a startnode
+- Find all indices we want to evaluate
+- Find all childs based on the indices which have a textual overlap with our startnode
+- choose one of them as a new startnode
+	- If no child nodes are to be found, switch the new startnode
+
+As this takes a long time, perhaps it's faster for future reference to NOT choose the new startnode, yet search childs with overlaps for all nested childs. This implicates:
+- more memory usage
+- small rewriting part (not choosing one branch + keeping track of the parent)
+- if the database is renewed, entire process needs to be redone.
+
+
+So I've rewritten my flow for easier reuse:
+- instead of finding a unique path and only saving this path towards the end
+- I build the entire tree structure
+- and find a possible path afterwards
+- This way making it possible to recuperate the builded tree structure.
+As I only keep a link to the images, I don't have this huge memory bounty.
+
+Now, after having some hassles rewriting the code in threads. It takes a **long** time to make the tree structure. That made me think that I check often for the same entry if there's an image present as they appear in different branches. Thus, I'll rewrite the code again to add the uri, if available, to the original dataframe. Then I don't need to have so many requests (which is the bottleneck, together with my sense of patience)

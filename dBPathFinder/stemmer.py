@@ -19,7 +19,9 @@ def start_WordListCorpusReader():
     function to ensure the LazyCorpusLoader is initialized, needs to be called once.(especially use-ful in threaded
     environment)
     """
-    wn.ensure_loaded()
+    print(wn.__class__)  # <class 'nltk.corpus.util.LazyCorpusLoader'>
+    wn.ensure_loaded()  # first access to wn transforms it
+    print(wn.__class__)  # <class 'nltk.corpus.reader.wordnet.WordNetCorpusReader'>
 
 
 def sentence_to_stems(text) -> list():
