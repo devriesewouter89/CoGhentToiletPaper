@@ -52,7 +52,7 @@ class FindOverlap:
         self.clean_time_col = "converted_creation_date"
         self.list_cols = list_cols
         self.stemmer_cols = stemmer_cols
-        self.df = pd.read_csv(file).drop_duplicates()
+        self.df = pd.read_csv(file, index_col=0).drop_duplicates()
         # print("Initial reading of the data: {}".format(self.df.describe))
         self.end_date: int = date.today().year
         self.steps = steps
@@ -65,15 +65,20 @@ class FindOverlap:
         self.next_date = 0
         self.next_layer = 1
         # 1. the dates are not easily human-readable, let's convert them
-        self.convert_column_first_year_via_regex()
+        if not self.clean_time_col in self.df:
+            self.convert_column_first_year_via_regex()
         self.amount_of_valid = self.df[self.clean_time_col].count()
         self.amount_of_nan = self.df[self.clean_time_col].isna().sum()
         self.distance_per_step = math.floor(self.amount_of_valid / self.steps)
         self.spread = 30
+        self.set_dtypes()
         # 2. sort the dataframe and drop the elements which have no clear date
         self.sort_and_drop_na_df()
         # 3. let's set the starting point of our path
         self.find_first_entry()
+
+    def set_dtypes(self):
+        self.df[self.clean_time_col] = pd.to_numeric(self.df[self.clean_time_col], downcast='integer')
 
     def find_overlap(self, origin_idx, target_idx) -> (bool, list[dict], str):
         """
@@ -163,7 +168,13 @@ class FindOverlap:
         if not "img_uri" in self.df:
             print("img_uri is not yet set, we'll first initialise this, hang on")
             self.set_image_uri_to_df()
-        self.write_to_clean_csv("{}_clean.csv".format(os.path.splitext(self.file)[0]))
+        # self.write_to_clean_csv("{}_clean.csv".format(os.path.splitext(self.file)[0]))
+        print("Before image filtering, {} entries".format(len(self.df)))
+        self.df.drop(columns='0', inplace=True)
+        self.df.drop(self.df[self.df["img_uri"].isna()].index, inplace=True)
+        self.df.reset_index(drop=True, inplace=True)
+        print("after filtering, {} entries left".format(len(self.df)))
+        self.write_to_clean_csv("{}_clean_only_imgs.csv".format(os.path.splitext(self.file)[0]))
 
     def convert_column_first_year_via_regex(self):
         """
