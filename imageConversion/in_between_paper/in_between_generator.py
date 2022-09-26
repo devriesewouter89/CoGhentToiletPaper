@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+import os
 
 import svglue
+
 """
 tip: 
 
@@ -13,25 +15,32 @@ tip:
     the xml editor. from [link](https://github.com/mbr/svglue/issues/9) 
 """
 
-# load the template from a file
-tpl = svglue.load(file='template.svg')
 
-# replace some text based on id
-tpl.set_text('temp', u'This was replaced.')
+def replace_text_in_svg(svg_path, text_1, text_2, output_path):
+    # load the template from a file
+    tpl = svglue.load(file=svg_path)
 
-# replace the pink box with 'hello.png'. if you do not specify the mimetype,
-# # the image will get linked instead of embedded
-# tpl.set_image('pink-box', file='hello.png', mimetype='image/png')
-#
-# # svgs are merged into the svg document (i.e. always embedded)
-# tpl.set_svg('yellow-box', file='Ghostscript_Tiger.svg')
+    # replace some text based on id
+    tpl.set_text('text1', text_1)
+    tpl.set_text('text2', text_2)
 
-# to render the template, cast it to a string. this also allows passing it
-# as a parameter to set_svg() of another template
-src = tpl.__str__().decode()
+    # replace the pink box with 'hello.png'. if you do not specify the mimetype,
+    # # the image will get linked instead of embedded
+    # tpl.set_image('pink-box', file='hello.png', mimetype='image/png')
+    #
+    # # svgs are merged into the svg document (i.e. always embedded)
+    # tpl.set_svg('yellow-box', file='Ghostscript_Tiger.svg')
 
-# write out the result as an SVG image and render it to pdf using cairosvg
-import cairosvg
-with open('output.pdf', 'wb') as out, open('output.svg', 'w') as svgout:
-    svgout.write(src)
-    cairosvg.svg2pdf(bytestring=src, write_to=out)
+    # to render the template, cast it to a string. this also allows passing it
+    # as a parameter to set_svg() of another template
+    src = tpl.__str__().decode()
+
+    # write out the result as an SVG image and render it to pdf using cairosvg
+    import cairosvg
+    with open('{}.pdf'.format(output_path), 'wb') as out, open('.svg'.format(output_path), 'w') as svgout:
+        svgout.write(src)
+        cairosvg.svg2pdf(bytestring=src, write_to=out)
+
+
+if __name__ == '__main__':
+    replace_text_in_svg('template.svg', "vorige wc-rol", "volgende wc-rol", "test_output")
