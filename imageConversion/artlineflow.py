@@ -18,8 +18,7 @@ class FeatureLoss(nn.Module):
         self.loss_features = [self.m_feat[i] for i in layer_ids]
         self.hooks = hook_outputs(self.loss_features, detach=False)
         self.wgts = layer_wgts
-        self.metric_names = ['pixel', ] + [f'feat_{i}' for i in range(len(layer_ids))
-                                           ] + [f'gram_{i}' for i in range(len(layer_ids))]
+        self.metric_names = ['pixel', ] + [f'feat_{i}' for i in range(len(layer_ids))] + [f'gram_{i}' for i in range(len(layer_ids))]
 
     def make_features(self, x, clone=False):
         self.m_feat(x)
@@ -50,10 +49,11 @@ def add_margin(pil_img, top, right, bottom, left, color):
 
 def convert_dir_to_lineart(input_dir: Path, output_dir: Path):
     for img_name in os.listdir(input_dir):
+        print("converting {}".format(img_name))
         img = open_image(os.path.join(input_dir, img_name))
         p, img_hr, b = learn.predict(img)
         p.save(os.path.join(output_dir, img_name))
-
+    print("finished conversion")
 
 def convert_dir_to_vectors(input_dir: Path, output_dir: Path):
     for img_name in os.listdir(input_dir):
@@ -83,16 +83,15 @@ def tensor_to_image(tensor):
 
 if __name__ == '__main__':
     print("make sure to bind the input folder to /workspace/coghent_input and the output folder to "
-          "/workspace/coghent_results")
+          "/workspace/coghent_vectors")
     # MODEL_URL = Path(Path.cwd() / "models" / "Artline_920.pkl")
     # model_path = os.path.join(os.getcwd(), 'ArtLine_920.pkl')
     # urllib.request.urlretrieve(MODEL_URL, "ArtLine_920.pkl")
-    print("hello world")
     path = Path(".")
     learn = load_learner(path, 'ArtLine_920.pkl')
     input_dir = Path(Path.cwd() / "coghent_input")
-    output_dir = Path(Path.cwd() / "coghent_results")
-    temp_dir = Path(Path.cwd() / "coghent" / "temp")
-    os.makedirs(temp_dir, exist_ok=True)
-    convert_dir_to_lineart(input_dir, output_dir)
-    # convert_dir_to_vectors(temp_dir, output_dir)
+    vector_dir = Path(Path.cwd() / "coghent_vectors")
+    lineart_dir = Path(Path.cwd() / "coghent_lineart")
+    # os.makedirs(temp_dir, exist_ok=True)
+    convert_dir_to_lineart(input_dir, lineart_dir)
+    convert_dir_to_vectors(lineart_dir, vector_dir)

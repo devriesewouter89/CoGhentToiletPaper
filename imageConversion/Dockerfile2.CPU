@@ -1,0 +1,22 @@
+FROM balenalib/raspberrypi4-64:latest
+
+RUN apt update && apt install -y wget && apt install -y build-essential python-dev libagg-dev libpotrace-dev pkg-config potrace imagemagick python3-pip
+RUN wget https://www.dropbox.com/s/04suaimdpru76h3/ArtLine_920.pkl
+
+COPY . /workspace/coghent
+# PYTORCH:
+RUN wget https://mathinf.com/pytorch/arm64/torch-1.6.0a0+b31f58d-cp37-cp37m-linux_aarch64.whl
+RUN wget https://mathinf.com/pytorch/arm64/torchvision-0.7.0a0+78ed10c-cp37-cp37m-linux_aarch64.whl
+RUN sudo apt-get install -y python3-numpy python3-wheel python3-setuptools python3-future python3-yaml python3-six python3-requests python3-pip python3-pillow
+RUN pip3 install torch*.whl torchvision*.whl
+#todo: remove torch and torchvision from requirements.txt
+RUN pip install -r /workspace/coghent/requirements.txt
+#VOLUME .:/workspace/coghent_results
+ENTRYPOINT ["python3"]
+CMD ["/workspace/coghent/artlineflow.py"]
+
+
+#todo or use other base container: FROM zironycho/pytorch:160-cpu-py37
+#todo or bitnami/pytorch:1.6.0-debian-10-r82
+#todo check: https://hub.docker.com/search?q=pytorch%201.6.0
+
