@@ -373,7 +373,7 @@ class FindOverlap:
         Function that creates tree.png with in each layer the nodes written as "layer"_"identifier"
         @type depth: amount of layers we want to show (becomes easily very big)
         """
-        #todo validate if this is correct by printing some links
+        # todo validate if this is correct by printing some links
         base_of_tree = self.df_tree[self.df_tree["layer"] == 0]["df_idx"].values[0]
         node_list = [[Node(name="{}_{}".format(0, base_of_tree))]]
         for layer in range(1, depth):
