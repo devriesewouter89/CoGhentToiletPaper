@@ -24,7 +24,7 @@ def start_WordListCorpusReader():
     print(wn.__class__)  # <class 'nltk.corpus.reader.wordnet.WordNetCorpusReader'>
 
 
-def sentence_to_stems(text) -> list():
+def sentence_to_stems(text) -> list[str]:
     ps = PorterStemmer()
     _stopwords = stopwords.words("dutch")
     # 1. remove punctuation
@@ -32,7 +32,7 @@ def sentence_to_stems(text) -> list():
     # 2. tokenize the text
     _words = word_tokenize(text, language="dutch")
     # 3. convert to stems
-    _stems = list(map(lambda w: ps.stem(w), _words))
+    _stems = list(map(ps.stem, _words))
     # 4. remove stopwords
     _clean_stems = list(filter(lambda w: w not in _stopwords, _stems))
     return _clean_stems

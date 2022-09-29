@@ -4,7 +4,7 @@
 
 ## installation
 
-Start with a **64-bit** raspberry pi OS. 
+Start with a **64-bit** raspberry pi OS as Git lfs needs 64 bits
 
 	tip: enable SSH & setup headless wifi via raspberry pi Imager and CTRL+SHIFT+X
 
@@ -24,10 +24,10 @@ git lfs pull
 
 **optional:** Want to run docker containers? install docker:
 ```bash
-curl -fsSL https://get.docker.com -o get-docker.sh & sudo sh get-docker.sh
+curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
 sudo groupadd docker
 sudo usermod -aG docker ${USER}
-su -s ${USER}
+sudo reboot
 ```
 
 

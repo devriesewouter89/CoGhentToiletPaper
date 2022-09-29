@@ -1,3 +1,6 @@
 [submodule "dBPathFinder/LDES_TO_PG"]
 	path = dBPathFinder/LDES_TO_PG
 	url = https://github.com/devriesewouter89/LDES_TO_PG
+[submodule "imageConversion/linedraw"]
+	path = imageConversion/linedraw
+	url = https://github.com/LingDong-/linedraw

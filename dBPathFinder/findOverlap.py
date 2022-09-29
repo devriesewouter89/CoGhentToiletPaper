@@ -7,6 +7,7 @@ import math
 import os
 import random
 import time
+from contextlib import suppress
 from datetime import date
 from pathlib import Path
 from queue import Queue
@@ -42,7 +43,7 @@ class FindOverlap:
         self.spread = spread
         # print("Initial reading of the data: {}".format(self.df.describe))
         self.end_date: int = date.today().year
-        self.object_tree = list()
+        self.object_tree = []  # list()
         self.df_tree = pd.DataFrame(columns=["layer", "df_idx", "previous_match", "parent", "img_uri"])  # "chosen",
         # "has_already_been_chosen"])
         self.start_date: int = 0  # start_date we want to retrieve from the clean_time_col
@@ -75,27 +76,29 @@ class FindOverlap:
         for col in self.list_cols:
             # we need to unpack the strings to list via ast.literal_eval as otherwise we're evaluating character-based.
             # we use the try except statement as not always there are valid entries
-            try:
+            # try:
+            with suppress(Exception):
                 origin_entries = ast.literal_eval(origin[col])
                 target_entries = ast.literal_eval(target[col])
                 res = list(set(origin_entries).intersection(target_entries))
                 if res:
                     overlap_found = True
                     overlap_list.append({"column": col, "overlap": res})
-            except Exception as e:
-                # print(e)
-                pass
+            # except Exception as e:
+            #     # print(e)
+            #     pass
         for col in self.stemmer_cols:
-            try:
+            # try:
+            with suppress(Exception):
                 df1_res = sentence_to_stems(origin[col])
                 df2_res = sentence_to_stems(target[col])
                 res = list(set(df1_res).intersection(df2_res))
                 if res:
                     overlap_found = True
                     overlap_list.append({"column": col, "overlap": res})
-            except Exception as e:
-                print(e)
-                pass
+            # except Exception as e:
+            #     print(e)
+            #     pass
         img_uri = target["img_uri"]
         return overlap_found, overlap_list, img_uri, target_idx
 
@@ -142,12 +145,12 @@ class FindOverlap:
 
         # print("origin:")
         # print(self.df_row(origin))
-        res = list()
+        res = [] #list()
         res_found = False
 
         # we'll multithread the find_overlap function to speed things up
         que = Queue()
-        threads_list = list()
+        threads_list = [] #list()
         for i in indexes:
             if i == origin:
                 continue
@@ -293,8 +296,8 @@ class FindOverlap:
             df_temp = self.forward_tree_build_no_child_chosen(row_indices=row_indices,
                                                               origin_idx=origin_idx)
             return df_temp
-        else:
-            return
+        # else:
+        #     return
 
     def build_tree_parallel(self):
         print(tabulate(self.df_tree, headers='keys'))
@@ -309,7 +312,7 @@ class FindOverlap:
             origin_idx_list = chosen_in_previous_layer["df_idx"].values
             print("amount of ids to check: {}".format(len(origin_idx_list)))
             for pos, chunk in chunker(origin_idx_list, self.max_amount_of_threads):
-                thread_list_parent = list()
+                thread_list_parent = [] #list()
 
                 for origin_idx in chunk:
                     t = Thread(target=lambda q, arg1: q.put(self.forward_build_thread(arg1)), args=(queue, origin_idx))
@@ -380,7 +383,7 @@ class FindOverlap:
             idx_list = self.df_tree.loc[self.df_tree["layer"] == layer, "df_idx"].values.tolist()
             parent_list = self.df_tree.loc[self.df_tree["layer"] == layer, "parent"].values.astype(int).tolist()
 
-            node_sub_list = list()
+            node_sub_list = [] #list()
             parent = None
             for i in range(len(idx_list)):
                 for j in node_list[layer - 1]:
@@ -396,22 +399,6 @@ class FindOverlap:
 
     def load_tree(self):
         self.df_tree = pd.read_csv(self.tree_csv)
-
-    # def get_image_list_from_tree(self):
-    #     # we pick the rows from our dataframe which were chose
-    #     index_list = self.df_tree[self.df_tree["chosen"] == True].index
-    #     # based on these indexes we pick the data from within our original dataframe
-    #     df_list = self.df.iloc[self.df.index.isin(index_list)]
-    #     # we make a list of the objectnumbers, as they are needed to retrieve images
-    #     object_id_list = df_list["objectnumber"].values
-    #     # todo improvement possible speedup if we rewrite with threads? Need to make sure order is maintained though.
-    #     _, img_list = list(map(lambda x: self.get_image_uri(x), object_id_list))
-    #     for i in img_list:
-    #         print(i)
-    #     # Using filter() method to filter None values
-    #     filtered_img_list = list(filter(None, img_list))
-    #     print(len(filtered_img_list))
-
 
 if __name__ == '__main__':
     _file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG.csv')
@@ -435,7 +422,7 @@ if __name__ == '__main__':
     # fOL.save_tree()
     # print("saved tree")
     fOL.load_tree()
-    fOL.visualize_tree()
+    fOL.visualize_tree(depth=4)
     # fOL.get_image_list_from_tree()
 
     # index_list = fOL.df_tree[fOL.df_tree["chosen"] == True].index

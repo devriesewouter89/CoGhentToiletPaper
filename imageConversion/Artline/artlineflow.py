@@ -18,7 +18,8 @@ class FeatureLoss(nn.Module):
         self.loss_features = [self.m_feat[i] for i in layer_ids]
         self.hooks = hook_outputs(self.loss_features, detach=False)
         self.wgts = layer_wgts
-        self.metric_names = ['pixel', ] + [f'feat_{i}' for i in range(len(layer_ids))] + [f'gram_{i}' for i in range(len(layer_ids))]
+        self.metric_names = ['pixel', ] + [f'feat_{i}' for i in range(len(layer_ids))] + [f'gram_{i}' for i in
+                                                                                          range(len(layer_ids))]
 
     def make_features(self, x, clone=False):
         self.m_feat(x)
@@ -55,6 +56,7 @@ def convert_dir_to_lineart(input_dir: Path, output_dir: Path):
         p.save(os.path.join(output_dir, img_name))
     print("finished conversion")
 
+
 def convert_dir_to_vectors(input_dir: Path, output_dir: Path):
     for img_name in os.listdir(input_dir):
         fig_pth = os.path.join(input_dir, '{}.png'.format(img_name))
@@ -89,9 +91,9 @@ if __name__ == '__main__':
     # urllib.request.urlretrieve(MODEL_URL, "ArtLine_920.pkl")
     path = Path(".")
     learn = load_learner(path, 'ArtLine_920.pkl')
-    input_dir = Path(Path.cwd() / "coghent_input")
-    vector_dir = Path(Path.cwd() / "coghent_vectors")
-    lineart_dir = Path(Path.cwd() / "coghent_lineart")
+    input_dir = Path(Path.cwd() / "input")
+    vector_dir = Path(Path.cwd() / "output"/"vectors")
+    lineart_dir = Path(Path.cwd() / "output"/"lineart")
     # os.makedirs(temp_dir, exist_ok=True)
     convert_dir_to_lineart(input_dir, lineart_dir)
     convert_dir_to_vectors(lineart_dir, vector_dir)

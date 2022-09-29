@@ -91,7 +91,7 @@ class PrepDf:
 
     def set_image_uri_to_df(self):
         que = Queue()
-        threads_list = list()
+        threads_list = []  # list()
         id_list = self.df.index.values.tolist()
         print("amount of ids to process: {}".format(len(id_list)))
         for pos, chunk in chunker(id_list, 10):
