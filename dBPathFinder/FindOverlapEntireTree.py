@@ -1,30 +1,22 @@
-"""
-python file to check two or more lines from a csv file
-
-"""
 import ast
 import math
-import os
-import random
-import time
 from contextlib import suppress
-from datetime import date
-from pathlib import Path
+from datetime import time, date
+from lib2to3.pytree import Node
 from queue import Queue
 from threading import Thread
 
 import numpy as np
 import pandas as pd
-from anytree import Node
 from anytree.exporter import DotExporter
 from colorama import Fore, Style
 from tabulate import tabulate
 
-from preprocess_df import PrepDf, chunker
-from stemmer import sentence_to_stems, start_WordListCorpusReader
+from dBPathFinder.preprocess_df import chunker
+from dBPathFinder.stemmer import sentence_to_stems, start_WordListCorpusReader
 
 
-class FindOverlapOneBranch:
+class FindOverlapEntireTree:
     def __init__(self, df, tree_csv, list_cols: list[str], stemmer_cols: list[str], steps: int = 50, spread: int = 15,
                  max_amount_of_threads=10):
         """
@@ -44,11 +36,8 @@ class FindOverlapOneBranch:
         # print("Initial reading of the data: {}".format(self.df.describe))
         self.end_date: int = date.today().year
         self.object_tree = []  # list()
-        self.df_tree = pd.DataFrame(columns=["layer", "df_idx", "overlap", "parent", "img_uri", "chosen",
-                                             "has_already_been_chosen"])
-
-        self.df_tree = self.df_tree.astype({"chosen": bool, "has_already_been_chosen": bool})
-
+        self.df_tree = pd.DataFrame(columns=["layer", "df_idx", "overlap", "parent", "img_uri"])  # "chosen",
+        # "has_already_been_chosen"])
         self.start_date: int = 0  # start_date we want to retrieve from the clean_time_col
         self.start_object = None
         self.start_idx: int = 0
@@ -119,10 +108,9 @@ class FindOverlapOneBranch:
         self.start_idx = idx
         self.start_object = self.df.iloc[idx]
         self.start_date = self.df.iloc[idx][self.clean_time_col]
-        img_uri = self.df.iloc[idx]["img_uri"]
         self.df_tree = pd.concat([self.df_tree, pd.DataFrame.from_records(
-            [{"layer": 0, "df_idx": self.start_idx, "overlap": "", "parent": None, "img_uri": img_uri, "chosen": True,
-        "has_already_been_chosen": True}])])
+            [{"layer": 0, "df_idx": self.start_idx, "previous_match": "", "parent": None}])])  # "chosen": True,
+        # "has_already_been_chosen": True}])])
 
     def get_date_from_original_df(self, idx) -> int:
         return int(self.df.iloc[idx][self.clean_time_col])
@@ -175,105 +163,85 @@ class FindOverlapOneBranch:
         # todo find per column the overlaps
         # todo return: boolean 'foundsmth', which indexes with which parameters: multiple options possible!
 
-    def build_tree(self):
-        print(tabulate(self.df_tree, headers='keys'))
-        # Initialize the wordListcorpusreader object
-        start_WordListCorpusReader()
-
-        while self.next_layer < self.steps:
-            chosen_in_previous_layer = self.df_tree[
-                (self.df_tree["layer"] == self.next_layer - 1) & (self.df_tree['chosen'])]
-            origin_idx = chosen_in_previous_layer["df_idx"].values[0]
-            rows_found, row_indices = self.return_indices_in_list_range(start_idx=origin_idx,
-                                                                        idx_distance=self.distance_per_step,
-                                                                        idx_spread=self.spread)
-            if rows_found:
-                # 4. we remove the start index if present and check if we find semantic matches
-                # FORWARD MOTION
-                forward_build_success = self.forward_tree_build(row_indices=row_indices, origin_idx=origin_idx)
-                if forward_build_success:
-                    self.next_layer += 1
-                else:
-                    print("need to go to backward motion")
-                    break
-            else:
-                print("we came at a dead end, there were no indices found in the timezone")
-                print("end result:")
-                print(tabulate(self.df_tree, headers='keys'))
-                print('last date found: {}'.format(
-                    self.get_date_from_original_df(
-                        self.df_tree[self.df_tree["layer"] == self.next_layer - 1]["df_idx"])))
-                break
-        self.save_tree()
-
-    def forward_tree_build(self, row_indices, origin_idx):
+    def forward_tree_build_no_child_chosen(self, row_indices, origin_idx) -> pd.DataFrame:
         """
         @param row_indices: these are the indices in the original dataframe in which to look for matches
         @param origin_idx: this was the index in the original dataframe from the previous layer in the df_tree
         @return: True if successful, can be nested if no matches were immediately found!
         """
+        df_temp = pd.DataFrame()
+
         if origin_idx in row_indices:
             print('found original object, removing it')
             row_indices = row_indices.delete(origin_idx)
         if len(row_indices) < 1:
             print("no results")
-            return False
+            return df_temp  # todo return value necessary?
         matches_found, matches = self.find_overlap_threaded_in_series(origin_idx, row_indices)
         if matches_found:
-            print("{} matches found for layer {}".format(len(matches), self.next_layer))
-            # we choose a random start option
-            choose_idx = random.randint(0, len(matches) - 1)
             for idx, i in enumerate(matches):
-                if idx == choose_idx:
-                    choose_this = True
-                else:
-                    choose_this = False
                 df_idx = i["index"]
-                prev_match = i["overlap"]
                 img_uri = i["img_uri"]
-                temp = pd.DataFrame.from_records(
-                    [{"layer": self.next_layer, "df_idx": df_idx, "overlap": prev_match, "img_uri": img_uri,
-                      "chosen": choose_this, "has_already_been_chosen": choose_this, "parent": int(origin_idx)}])
-                temp = temp.astype({"chosen": bool, "has_already_been_chosen": bool})
-                self.df_tree = pd.concat([self.df_tree, temp],
-                                         ignore_index=True)
-            # print('matches had been found')
-            # self.df_tree.reset_index()
-            return True
-        else:
-            # print("we came at a dead-end by no matches found, return a layer and try another index")
-            # print(tabulate(self.df_tree, headers='keys'))
-            # return False  # todo call backward motion
-            updated_origin_idx = self.backward_motion()
-            return self.forward_tree_build(row_indices, updated_origin_idx)
+                overlap = i["overlap"]
+                df_temp = pd.concat([df_temp, pd.DataFrame.from_records(
+                    [{"layer": self.next_layer, "df_idx": df_idx, "overlap": overlap, "img_uri": img_uri,
+                      "parent": int(origin_idx)}])], ignore_index=True)
+        # else:
+        #     print("No matches found")
+        return df_temp  # todo return value necessary?
 
-    def backward_motion(self):
-        """
-        backward motion steps up the ladder of our tree which we've created, as we've reached a dead end somewhere.
-        In case we've tried all alternatives in a certain layer, we go up a layer extra and execture backward motion
-        again.
-        @return: we return the new index (of the original dataframe) of the new chosen path in the tree
-        """
-        # we return one layer to fetch a dead-end (self.next_layer - 1)
-        # find the row where chosen was true and set it to false
-        self.df_tree.loc[(self.df_tree["layer"] == (self.next_layer - 1)) & (self.df_tree["chosen"]), "chosen"] = False
-        # choose a random other row and place it at true, as long as 'has_already_been_chosen' was false
-        other_rows = self.df_tree.loc[
-            (self.df_tree["layer"] == (self.next_layer - 1)) & (self.df_tree["chosen"] == False)
-            & (self.df_tree["has_already_been_chosen"] == False)]
-        if other_rows.empty:
-            print("no more options in layer {}, we're going up one more".format(self.next_layer))
-            self.df_tree.drop(self.df_tree.loc[self.df_tree["layer"] == self.next_layer].index, inplace=True)
-            self.next_layer -= 1
-            # todo: lower next_layer + remove df_tree entries which are belonging to next_layer
-            return self.backward_motion()
-        rand_idx = random.choice(other_rows.index.values)  # int(random.randrange(0, len(other_rows) - 1, 1))
-        other_rows.at[rand_idx, "chosen"] = True
-        other_rows.at[rand_idx, "has_already_been_chosen"] = True
-        new_origin_idx = other_rows.at[rand_idx, "df_idx"]
-        self.df_tree.update(other_rows)
-        print("went back, new origin: {}".format(new_origin_idx))
-        return new_origin_idx
+    def forward_build_thread(self, origin_idx):
+        rows_found, row_indices = self.return_indices_in_list_range(start_idx=origin_idx,
+                                                                    idx_distance=self.distance_per_step,
+                                                                    idx_spread=self.spread)
+        if rows_found:
+            df_temp = self.forward_tree_build_no_child_chosen(row_indices=row_indices,
+                                                              origin_idx=origin_idx)
+            return df_temp
+        # else:
+        #     return
+
+    def build_tree(self):
+        print(tabulate(self.df_tree, headers='keys'))
+        # Initialize the wordListcorpusreader object
+        start_WordListCorpusReader()
+        queue = Queue()
+        while self.next_layer < self.steps:
+            print("===> upping to layer {}".format(self.next_layer))
+            # we look for the "new" to become parents: Pandas Series
+            chosen_in_previous_layer = self.df_tree[
+                (self.df_tree["layer"] == self.next_layer - 1)]
+            origin_idx_list = chosen_in_previous_layer["df_idx"].values
+            print("amount of ids to check: {}".format(len(origin_idx_list)))
+            for pos, chunk in chunker(origin_idx_list, self.max_amount_of_threads):
+                thread_list_parent = []  # list()
+
+                for origin_idx in chunk:
+                    t = Thread(target=lambda q, arg1: q.put(self.forward_build_thread(arg1)), args=(queue, origin_idx))
+                    # t = Thread(target=self.forward_build_thread, args=[queue, origin_idx])
+                    thread_list_parent.append(t)
+                _time = time.strftime("%H:%M:%S", time.localtime())
+                print(
+                    Fore.CYAN + "amount of threads to be started is: {} at pos {}. {} total threads this layer".format(
+                        len(chunk * self.spread * 2),
+                        pos,
+                        len(thread_list_parent)) + Style.RESET_ALL
+                )
+                print("time is {}".format(_time))
+                for i in thread_list_parent:
+                    i.start()
+                for i in thread_list_parent:
+                    i.join(timeout=120.0)
+                    if i.is_alive():
+                        print("=============thread {} has timed out================".format(i))
+                while not queue.empty():
+                    df_temp = queue.get()
+                    self.df_tree = pd.concat([self.df_tree, df_temp], ignore_index=True)
+            self.save_tree()
+
+            # self.forward_build_thread(origin_idx)
+            self.next_layer += 1
+        # todo now we need a function to find the path
 
     def visualize_tree(self, depth: int):
         """
@@ -307,32 +275,3 @@ class FindOverlapOneBranch:
     def print_tree(self):
         print(tabulate(self.df_tree, headers='keys'))
 
-
-if __name__ == '__main__':
-    _file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG.csv')
-    list_cols_DMG = ['object_name', 'creator']
-    stemmer_cols_DMG = ['title', 'description']
-    amount_of_tissues = 100
-    amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
-
-    # 1. we make a pandas dataframe for manipulation
-    clean_df = PrepDf(file=_file, institute="dmg", time_col="creation_date", steps=amount_of_imgs_to_find)
-
-    # 2. to get some insights in the distribution of the data: enable next statement
-    # clean_df.plot_distribution()
-    #
-    fOL = FindOverlapOneBranch(df=clean_df.df, tree_csv="DMG_tree.csv", list_cols=list_cols_DMG,
-                               stemmer_cols=stemmer_cols_DMG,
-                               steps=amount_of_imgs_to_find, spread=3, max_amount_of_threads=1000)
-    # 3. we search for initial objects in a time-range from the first found object
-    fOL.build_tree()
-    fOL.print_tree()
-    # fOL.save_tree()
-    # print("saved tree")
-    # fOL.load_tree()
-    fOL.visualize_tree(depth=50)
-    # fOL.get_image_list_from_tree()
-
-    # index_list = fOL.df_tree[fOL.df_tree["chosen"] == True].index
-    # for i in index_list:
-    #     print(fOL.get_image_uri(fOL.get_object_id(i)))

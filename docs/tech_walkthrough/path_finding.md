@@ -166,3 +166,18 @@ So I've rewritten my flow for easier reuse:
 As I only keep a link to the images, I don't have this huge memory bounty.
 
 Now, after having some hassles rewriting the code in threads. It takes a **long** time to make the tree structure. That made me think that I check often for the same entry if there's an image present as they appear in different branches. Thus, I'll rewrite the code again to add the uri, if available, to the original dataframe. Then I don't need to have so many requests (which is the bottleneck, together with my sense of patience)
+
+I now preprocess the data to first go through all images and find their URI, if there's none I don't keep them. 
+My initial plan was to process all data into a tree, yet after running an entire night I came to next conclusion: it's becoming way to large and slow. I need 50 layers, by morning I had 9 (with 1000 threads in parallel, and a spread of 3):
+
+- layer 1: 1 id to check @ 22:25:34
+- layer 2: 5 ids to check
+- layer 3: 30 ids to check
+- layer 4: 150 ids to check
+- layer 5: 738 ids to check
+- layer 6: 3947
+- layer 7: 19849
+- layer 8: 94446
+- layer 9: 444545  (400000 @ 08:35:35) ==> I'm not that patient!
+
+each 1000 threads took approx 2 minutes at layer 9. Perhaps my dataframe is becoming too large to be efficient... At layer 8 it was about 20 seconds...
