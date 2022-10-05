@@ -3,4 +3,4 @@
 	url = https://github.com/devriesewouter89/LDES_TO_PG
 [submodule "imageConversion/linedraw"]
 	path = imageConversion/linedraw
-	url = https://github.com/LingDong-/linedraw
+	url = https://github.com/devriesewouter89/linedraw
