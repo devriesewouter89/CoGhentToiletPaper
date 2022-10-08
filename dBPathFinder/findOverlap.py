@@ -309,24 +309,30 @@ class FindOverlapOneBranch:
 
 
 if __name__ == '__main__':
-    _file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG.csv')
-    list_cols_DMG = ['object_name', 'creator']
-    stemmer_cols_DMG = ['title', 'description']
+    dataset = "STAM"
+    clean_file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / "clean_data"/ '{}.csv'.format(dataset))
+    orig_file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / '{}.csv'.format(dataset))
+    if clean_file.is_file():
+        input_file = clean_file
+    else:
+        input_file = orig_file
+    list_cols = ['object_name', 'creator']
+    stemmer_cols = ['title', 'description']
     amount_of_tissues = 100
     amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
 
     # 1. we make a pandas dataframe for manipulation
-    clean_df = PrepDf(file=_file, institute="dmg", time_col="creation_date", steps=amount_of_imgs_to_find)
+    clean_df = PrepDf(input_csv=input_file, clean_csv=clean_file, institute= dataset, time_col= "creation_date", steps=amount_of_imgs_to_find)
 
     # 2. to get some insights in the distribution of the data: enable next statement
-    # clean_df.plot_distribution()
+    clean_df.plot_distribution()
     #
-    fOL = FindOverlapOneBranch(df=clean_df.df, tree_csv="DMG_tree.csv", list_cols=list_cols_DMG,
-                               stemmer_cols=stemmer_cols_DMG,
+    fOL = FindOverlapOneBranch(df=clean_df.df, tree_csv="{}_tree.csv".format(dataset), list_cols=list_cols,
+                               stemmer_cols=stemmer_cols,
                                steps=amount_of_imgs_to_find, spread=3, max_amount_of_threads=1000)
     # 3. we search for initial objects in a time-range from the first found object
     fOL.build_tree()
-    fOL.print_tree()
+    # fOL.print_tree()
     # fOL.save_tree()
     # print("saved tree")
     # fOL.load_tree()

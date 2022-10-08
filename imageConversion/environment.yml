@@ -7,3 +7,4 @@ dependencies:
   - pip
   - pip:
       - opencv-python
+      - svgelements==1.8.4
