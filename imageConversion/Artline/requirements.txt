@@ -1,7 +1,0 @@
-fastai==1.0.61
-numpy==1.23.3
-pandas==1.5.0
-torch==1.12.0
-torchvision
-pypotrace==0.3
-svglue==0.3.0

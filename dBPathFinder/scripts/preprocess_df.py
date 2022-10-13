@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import urllib
 from threading import Thread
@@ -9,6 +10,8 @@ from matplotlib import pyplot as plt
 from queue import Queue
 from urllib.error import HTTPError
 from urllib.request import urlopen
+
+from pathlib import Path
 
 
 def chunker(seq, size):
@@ -132,3 +135,23 @@ class PrepDf:
             data_json = json.loads(response.read())
             image_uri = data_json["sequences"][0]['canvases'][0]["images"][0]["resource"]["@id"]
             return df_idx, image_uri
+
+
+if __name__ == '__main__':
+    dataset = "stam"
+    clean_file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / "clean_data" / '{}.csv'.format(dataset))
+    orig_file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / '{}.csv'.format(dataset))
+    if clean_file.is_file():
+        input_file = clean_file
+    else:
+        input_file = orig_file
+    list_cols = ['object_name', 'creator']
+    stemmer_cols = ['title', 'description']
+    amount_of_tissues = 100
+    amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
+    # 1. we make a pandas dataframe for manipulation
+    clean_df = PrepDf(input_csv=input_file, clean_csv=clean_file, institute=dataset, time_col="creation_date",
+                      steps=amount_of_imgs_to_find)
+
+    # 2. to get some insights in the distribution of the data: enable next statement
+    clean_df.plot_distribution()
