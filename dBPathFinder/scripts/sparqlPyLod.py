@@ -14,15 +14,15 @@ def launch_query(location: str, csv_output: Path, df_return: bool = False):
     
     FROM <http://stad.gent/ldes/%s>
     WHERE {
-        # ?o cidoc:P102_has_title ?title.
-        # ?o cidoc:P3_has_note ?note.
-        # ?o cidoc:P129i_is_subject_of ?image.
+        ?o cidoc:P102_has_title ?title.
+        ?o cidoc:P3_has_note ?note.
+        ?o cidoc:P129i_is_subject_of ?image.
         # ?o cidoc:P14_carried_out_by ?actor.
-        # ?o cidoc:P41i_was_classified_by ?classified.
-        # ?classified cidoc:P42_assigned ?assigned.
-        # ?assigned skos:prefLabel ?objectname.
-        # ?o adms:identifier ?identifier.
-        # ?identifier skos:notation ?objectnumber.
+        ?o cidoc:P41i_was_classified_by ?classified.
+        ?classified cidoc:P42_assigned ?assigned.
+        ?assigned skos:prefLabel ?objectname.
+        ?o adms:identifier ?identifier.
+        ?identifier skos:notation ?objectnumber.
     } 
         """ % location)
 
