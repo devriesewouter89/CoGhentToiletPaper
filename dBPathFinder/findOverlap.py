@@ -4,9 +4,7 @@ python file to check two or more lines from a csv file
 """
 import ast
 import math
-import os
 import random
-import time
 from contextlib import suppress
 from datetime import date
 from pathlib import Path
@@ -17,11 +15,15 @@ import numpy as np
 import pandas as pd
 from anytree import Node
 from anytree.exporter import DotExporter
-from colorama import Fore, Style
 from tabulate import tabulate
 
-from preprocess_df import PrepDf, chunker
-from stemmer import sentence_to_stems, start_WordListCorpusReader
+from dBPathFinder.scripts.stemmer import sentence_to_stems, start_WordListCorpusReader
+
+"""
+#todo write documentation
+
+
+"""
 
 
 class FindOverlapOneBranch:
@@ -122,7 +124,7 @@ class FindOverlapOneBranch:
         img_uri = self.df.iloc[idx]["img_uri"]
         self.df_tree = pd.concat([self.df_tree, pd.DataFrame.from_records(
             [{"layer": 0, "df_idx": self.start_idx, "overlap": "", "parent": None, "img_uri": img_uri, "chosen": True,
-        "has_already_been_chosen": True}])])
+              "has_already_been_chosen": True}])])
 
     def get_date_from_original_df(self, idx) -> int:
         return int(self.df.iloc[idx][self.clean_time_col])
@@ -205,6 +207,7 @@ class FindOverlapOneBranch:
                         self.df_tree[self.df_tree["layer"] == self.next_layer - 1]["df_idx"])))
                 break
         self.save_tree()
+        return True
 
     def forward_tree_build(self, row_indices, origin_idx):
         """
@@ -308,10 +311,22 @@ class FindOverlapOneBranch:
         print(tabulate(self.df_tree, headers='keys'))
 
 
+def find_tree(input_file, output_file, dataset, list_cols, stemmer_cols, amount_of_imgs_to_find):
+    df = pd.read_csv(input_file)
+
+    f_ol = FindOverlapOneBranch(df=df, tree_csv=output_file, list_cols=list_cols,
+                               stemmer_cols=stemmer_cols,
+                               steps=amount_of_imgs_to_find, spread=3, max_amount_of_threads=1000)
+    # 3. we search for initial objects in a time-range from the first found object
+    f_ol.build_tree()
+    # fOL.print_tree()
+    f_ol.visualize_tree(depth=50)
+
+
 if __name__ == '__main__':
-    dataset = "STAM"
-    clean_file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / "clean_data"/ '{}.csv'.format(dataset))
-    orig_file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / '{}.csv'.format(dataset))
+    dataset = "dmg"
+    clean_file = Path(Path.cwd() / 'data' / "clean_data" / '{}.csv'.format(dataset))
+    orig_file = Path(Path.cwd() / 'data' / '{}.csv'.format(dataset))
     if clean_file.is_file():
         input_file = clean_file
     else:
@@ -321,24 +336,4 @@ if __name__ == '__main__':
     amount_of_tissues = 100
     amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
 
-    # 1. we make a pandas dataframe for manipulation
-    clean_df = PrepDf(input_csv=input_file, clean_csv=clean_file, institute= dataset, time_col= "creation_date", steps=amount_of_imgs_to_find)
-
-    # 2. to get some insights in the distribution of the data: enable next statement
-    clean_df.plot_distribution()
-    #
-    fOL = FindOverlapOneBranch(df=clean_df.df, tree_csv="{}_tree.csv".format(dataset), list_cols=list_cols,
-                               stemmer_cols=stemmer_cols,
-                               steps=amount_of_imgs_to_find, spread=3, max_amount_of_threads=1000)
-    # 3. we search for initial objects in a time-range from the first found object
-    fOL.build_tree()
-    # fOL.print_tree()
-    # fOL.save_tree()
-    # print("saved tree")
-    # fOL.load_tree()
-    fOL.visualize_tree(depth=50)
-    # fOL.get_image_list_from_tree()
-
-    # index_list = fOL.df_tree[fOL.df_tree["chosen"] == True].index
-    # for i in index_list:
-    #     print(fOL.get_image_uri(fOL.get_object_id(i)))
+    find_tree(clean_file, "{}_tree.csv".format(dataset), dataset, list_cols, stemmer_cols, amount_of_imgs_to_find)

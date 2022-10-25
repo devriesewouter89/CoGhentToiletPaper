@@ -7,7 +7,7 @@ from dataclasses import dataclass
 @dataclass
 class Config:
 
-    location = "stam"
+    location = "dmg"
 
 
 

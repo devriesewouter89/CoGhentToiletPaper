@@ -12,8 +12,8 @@ from anytree.exporter import DotExporter
 from colorama import Fore, Style
 from tabulate import tabulate
 
-from dBPathFinder.preprocess_df import chunker
-from dBPathFinder.stemmer import sentence_to_stems, start_WordListCorpusReader
+from dBPathFinder.scripts.preprocess_df import chunker
+from dBPathFinder.scripts.stemmer import sentence_to_stems, start_WordListCorpusReader
 
 
 class FindOverlapEntireTree:
@@ -264,7 +264,7 @@ class FindOverlapEntireTree:
                 node_sub_list.append(Node(name="{}_{}".format(layer, idx_list[i]), parent=parent))
             node_list_next = np.array(node_sub_list)
             node_list.append(node_list_next)
-        DotExporter(node_list[0][0]).to_picture("tree.png")
+        DotExporter(node_list[0][0]).to_picture("../tree.png")
 
     def save_tree(self):
         self.df_tree.to_csv(self.tree_csv, mode='a')

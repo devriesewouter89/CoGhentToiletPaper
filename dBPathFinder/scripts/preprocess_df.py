@@ -1,9 +1,10 @@
+import argparse
 import json
 import math
 import os
 import urllib
 from threading import Thread
-from typing import Any
+from typing import Any, Tuple
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -12,6 +13,12 @@ from urllib.error import HTTPError
 from urllib.request import urlopen
 
 from pathlib import Path
+
+"""
+#todo write documentation
+
+
+"""
 
 
 def chunker(seq, size):
@@ -32,11 +39,11 @@ class PrepDf:
         self.clean_csv = clean_csv
         self.clean_time_col = "converted_creation_date"
         self.df = pd.read_csv(input_csv, index_col=0).drop_duplicates()
-
+        self.count_err = dict()  # {"403": 0, "404": 0, "500": 0, "502": 0}
         # 1. the dates are not easily human-readable, let's convert them
         if not self.clean_time_col in self.df:
             self.convert_column_first_year_via_regex()
-
+        self.amount_of_entries = 0
         self.set_dtypes()
         # 2. sort the dataframe and drop the elements which have no clear date
         self.sort_and_drop_na_df()
@@ -53,13 +60,17 @@ class PrepDf:
         """
         self.df = self.df.sort_values(by=self.clean_time_col, ignore_index=True)
         self.df.drop(self.df[self.df[self.clean_time_col].isna()].index, inplace=True)
+        if 'timestamp' in self.df:
+            self.df.drop(columns="timestamp", inplace=True)
+        self.df.drop_duplicates(inplace=True)
         # we'll check if it's necessary to add the img_uris to the dataframe
-        if not "img_uri" in self.df:
+        if "img_uri" not in self.df:
             print("img_uri is not yet set, we'll first initialise this, hang on")
             self.set_image_uri_to_df()
-        # self.write_to_clean_csv("{}_clean.csv".format(os.path.splitext(self.file)[0]))
-        print("Before image filtering, {} entries".format(len(self.df)))
-        self.df.drop(columns='0', inplace=True)
+        self.amount_of_entries = len(self.df)
+        print("Before image filtering, {} entries".format(self.amount_of_entries))
+        if '0' in self.df:
+            self.df.drop(columns='0', inplace=True)
         self.df.drop(self.df[self.df["img_uri"].isna()].index, inplace=True)
         self.df.reset_index(drop=True, inplace=True)
         print("after filtering, {} entries left".format(len(self.df)))
@@ -77,23 +88,39 @@ class PrepDf:
         convert_column_first_year_via_regex is a function that formats the "converted_creation_date" column in the pd
         dataframe to something readable
         """
+        # extract the date from the time_col
         res = self.df[self.time_col].str.extract(r"([\d+]{4})").squeeze()
+        # in the provenance_date col, sometimes we get nan's, we replace these with empty strings
+        self.df["provenance_date"] = self.df["provenance_date"].fillna("")
+        # we then also extract a possible date of the provenance_date col
         res2 = self.df["provenance_date"].str.extract(r"([\d+]{4})").squeeze()
+        # from the provenance date, we remove values below 1000
         res2.where(res2.astype('Int64') > 1000, inplace=True)
+        # we give priority to the time_col, yet use the provenance_date as a backup date
         res_combined = res.where(res.notnull(), res2)
+        # sometimes in the title there's also date information
+        res3 = self.df["title"].str.extract(r"([\d+]{4})").squeeze()
+        res_combined = res_combined.where(res_combined.notnull(), res3)
         self.df.insert(10, self.clean_time_col,
                        pd.to_numeric(res_combined), True)
 
     def plot_distribution(self):
         plt.figure(figsize=(20, 20))
         try:
-            ax = self.df[self.clean_time_col].groupby(self.df[self.clean_time_col]).value_counts().plot(kind="bar")
+            ax = self.df[self.clean_time_col] \
+                .groupby(self.df[self.clean_time_col]) \
+                .value_counts() \
+                .plot(kind="bar")
         except:
             print("not enough values?")
         plt.title("distribution of the collection")
-        plt.suptitle("Amount of pieces with a date is {}\nAmount of pieces with no date is {}".format(
-            self.amount_of_valid, self.amount_of_nan))
-        plt.show()
+        plt.suptitle(
+            "StartAmount: {}\nAmount of pieces with a date is {}\n"
+            "Amount of pieces with no date is {} \n errors: {}".format(
+                self.amount_of_entries, self.amount_of_valid,
+                self.amount_of_nan, self.count_err))
+        # plt.show()
+        plt.savefig("{}.jpg".format(os.path.splitext(self.clean_csv)[0]))
 
     def write_to_clean_csv(self, path):
         self.df.to_csv(path)
@@ -103,55 +130,74 @@ class PrepDf:
         threads_list = []  # list()
         id_list = self.df.index.values.tolist()
         print("amount of ids to process: {}".format(len(id_list)))
+
         for pos, chunk in chunker(id_list, 100):
             for idx in chunk:
-                t = Thread(target=lambda q, arg1, arg2: q.put(self.get_image_uri(arg1, arg2)),
-                           args=(que, self.get_object_id(idx), idx))
+                t = Thread(target=lambda q, arg1, arg2, arg3: q.put(self.get_image_uri(arg1, arg2, arg3)),
+                           args=(que, self.get_object_id(idx), idx, self.count_err,))
                 t.start()
                 threads_list.append(t)
             for t in threads_list:
                 t.join()
-
+            count_error_temp = {"403": 0, "404": 0, "502": 0}
             while not que.empty():
-                idx, img_uri = que.get()
+                idx, img_uri, count_error_temp = que.get()
                 self.df.at[idx, "img_uri"] = img_uri
+            # count_err = dict(map(lambda x, y: (x[0], x[1]+y[1]), count_err.items(), count_error_temp.items()))
+            count_err = count_error_temp
             print("{} of {} done".format(pos, len(id_list)))
+        print("of {} ids, we got next HTTP errors: {}".format(
+            len(id_list), self.count_err))
 
-    def get_image_uri(self, img_id, df_idx=None) -> tuple[Any, None] | tuple[Any, Any]:
-        iiif_manifest = "https://api.collectie.gent/iiif/presentation/v2/manifest/{}:{}".format(self.institute.lower(),
-                                                                                                img_id)
-        print(iiif_manifest)
+    def get_image_uri(self, img_id, df_idx=None, count_err=None) -> tuple[Any, None, dict] | \
+                                                                    tuple[Any, Any, dict]:
+        iiif_manifest = "https://api.collectie.gent/iiif/presentation/v2/manifest/{}:{}".format(
+            self.institute.lower(), img_id).replace(" ", "%20") # todo is de replace nodig of is er een fout in de brondata?
+        # print(iiif_manifest)
         try:
             req = urllib.request.Request(iiif_manifest, headers={'User-Agent': 'Mozilla/5.0'})
             response = urllib.request.urlopen(req)
             # response = urlopen(iiif_manifest)
         except ValueError as e:
             print('ValueError, no image found '.format(e))
-            return df_idx, None
+            return df_idx, None, count_err
         except HTTPError as e:
-            print('HTTPError, no image found {} '.format(e))
-            return df_idx, None
+            # print('HTTPError, no image found {} '.format(e))
+            if str(e.code) not in count_err:
+                new_error_code = {str(e.code): 1}
+                count_err.update(new_error_code)
+            else:
+                count_err[str(e.code)] += 1
+            return df_idx, None, count_err
         else:
             data_json = json.loads(response.read())
             image_uri = data_json["sequences"][0]['canvases'][0]["images"][0]["resource"]["@id"]
-            return df_idx, image_uri
+            return df_idx, image_uri, count_err
 
 
 if __name__ == '__main__':
-    dataset = "stam"
-    clean_file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / "clean_data" / '{}.csv'.format(dataset))
-    orig_file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / '{}.csv'.format(dataset))
-    if clean_file.is_file():
-        input_file = clean_file
-    else:
-        input_file = orig_file
-    list_cols = ['object_name', 'creator']
-    stemmer_cols = ['title', 'description']
-    amount_of_tissues = 100
-    amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
-    # 1. we make a pandas dataframe for manipulation
-    clean_df = PrepDf(input_csv=input_file, clean_csv=clean_file, institute=dataset, time_col="creation_date",
-                      steps=amount_of_imgs_to_find)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_path', '-dp', default=Path(Path.cwd().parent / 'data'))
+    parser.add_argument("--dataset", '-ds', help="choose collections to preprocess",
+                        choices=["dmg", "im", "stam", "hva",
+                                 "archiefgent", "thesaurus", "AGENT"], default=["dmg"])
+    args = parser.parse_args()
 
-    # 2. to get some insights in the distribution of the data: enable next statement
-    clean_df.plot_distribution()
+    data_path = Path(args.data_path)
+    datasets = args.dataset
+    for dataset in datasets:
+        input_file = Path(data_path / '{}.csv'.format(dataset))
+        clean_data_path = Path(data_path / "clean_data")
+        clean_data_path.mkdir(parents=True, exist_ok=True)
+        clean_file = Path(clean_data_path / '{}.csv'.format(dataset))
+
+        list_cols = ['object_name', 'creator']
+        stemmer_cols = ['title', 'description']
+        amount_of_tissues = 100
+        amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
+        # 1. we make a pandas dataframe for manipulation
+        clean_df = PrepDf(input_csv=input_file, clean_csv=clean_file, institute=dataset, time_col="creation_date",
+                          steps=amount_of_imgs_to_find)
+
+        # 2. to get some insights in the distribution of the data: enable next statement
+        clean_df.plot_distribution()

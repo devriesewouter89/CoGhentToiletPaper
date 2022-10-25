@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def test_find_overlap():
-    _file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'DMG.csv')
+    _file = Path(Path.cwd() / 'LDES_TO_PG' / 'data' / 'dmg.csv')
     print(_file)
     assert _file
     df = pd.read_csv(_file)

@@ -1,4 +1,4 @@
-'''
+"""
 Coghent toilet
 
 we want a state machine calling the different blocks of code:
@@ -29,41 +29,73 @@ we want a state machine calling the different blocks of code:
 6. roll back toilet paper state
     DEBUG: the waiting light is shown that we're ready
     We roll back the paper already a bit in approx of the amount of rotations already done
-'''
-from statemachine import StateMachine, State
-from statemachine.exceptions import StateMachineError
+"""
+
+import configparser
+
+from finite_state_machine import StateMachine, transition
+from finite_state_machine.exceptions import InvalidStartState
+
+from config_toilet import Config
+from dBPathFinder.findOverlap import find_tree
+
+"""
+#todo write documentation
+
+
+"""
 
 
 class ToiletPaperStateMachine(StateMachine):
-    waiting_state = State("waiting", initial=True)
-    path_finding_state = State("path_finding")
-    prep_images_state = State("prep_images")
-    roll_paper_state = State("roll_paper")
-    print_image_state = State("print_image")
-    roll_back_paper_state = State("roll_back")
+    initial_state = "waiting"
 
-    start = waiting_state.to(path_finding_state)
-    prep_images = path_finding_state.to(prep_images_state)
-    roll_paper = prep_images_state.to(roll_paper_state) | print_image_state.to(roll_paper_state)
-    print_image = roll_paper_state.to(print_image_state)
-    roll_back_paper = print_image_state.to(roll_back_paper_state)
-    wait = roll_back_paper_state.to(waiting_state)
+    def __init__(self, config):
+        self.config = config
+        self.state = self.initial_state
+        super().__init__()
 
-    def on_roll_back_paper(self):
-        print("printed the entire roll, rolling back now folks")
+    @transition(source="waiting", target="path_finding")
+    def find_path(self):
+        ftree = find_tree(input_file=config.clean_data_path, output_file=config.tree_path, dataset=config.location,
+                          stemmer_cols=config.stemmer_cols, list_cols=config.list_cols,
+                          amount_of_imgs_to_find=config.amount_of_imgs_to_find)
+
+    @transition(source="path_finding", target="prep_imgs")
+    def prep_imgs(self):
+        pass
+
+    @transition(source=["prep_imgs", "print_img"], target="roll_paper")
+    def roll_paper(self):
+        pass
+
+    @transition(source="roll_paper", target="print_img")
+    def print_img(self):
+        pass
+
+    @transition(source="print_img", target="roll_back_paper")
+    def roll_back(self):
+        pass
+
+    @transition(source="roll_back_paper", target="waiting")
+    def wait(self):
+        pass
 
 
 if __name__ == '__main__':
     print("starting the coghent toilet paper printer software")
-    stm = ToiletPaperStateMachine()
-    stm.start()
-    stm.prep_images()
-    for i in range(0,49):
+    # read config file
+    config = Config()
+
+    stm = ToiletPaperStateMachine(config)
+    stm.find_path()
+    print("finished path creation")
+    stm.prep_imgs()
+    for i in range(0, 49):
         stm.roll_paper()
-        stm.print_image()
-    stm.roll_back_paper()
+        stm.print_img()
+    stm.roll_back()
     stm.wait()
     try:
-        stm.print_image() #should trigger an error
-    except StateMachineError as e:
-        print(e)
+        stm.print_img()  # should trigger an error
+    except InvalidStartState as e:
+        print("Error: {}".format(e))
