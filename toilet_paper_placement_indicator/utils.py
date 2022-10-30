@@ -43,6 +43,22 @@ def edge_detection_sobel(img_path: Path):
     plt.title('Sobel Y')
     plt.axis("off")
 
+def canny_edge_detection(img_path: Path):
+    img = cv2.imread(img_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = cv2.GaussianBlur(gray,(3,3),0)
+    edges = cv2.Canny(image=img, threshold1=100, threshold2=200)
+
+    plt.figure(figsize=(18,19))
+    plt.subplot(121)
+    plt.imshow(img, cmap='gray')
+    plt.title('Original') 
+    plt.axis("off")
+
+    plt.subplot(122)
+    plt.imshow(edges, cmap='gray')
+    plt.title('Edge image')
+    plt.axis("off")
 
 if __name__ == '__main__':
     # convert names in training dir
