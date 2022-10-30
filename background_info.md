@@ -22,3 +22,8 @@ https://ezdxf.readthedocs.io/en/stable/tutorials/hatch.html ?
 [cheap chinese woodworking tools reviewed](https://www.hookedonwood.online/China-Tools/)
 
 [docker+nvidia+vscode development](https://blog.roboflow.com/nvidia-docker-vscode-pytorch/)
+
+
+
+[IIIF tricks](https://iiif.io/api/image/3.0/)
+e.g. rescale images: https://github.com/CoGhent/random_image_viewer/blob/master/getimage/views.py line 45

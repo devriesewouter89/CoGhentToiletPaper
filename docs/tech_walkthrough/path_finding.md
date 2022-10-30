@@ -189,4 +189,4 @@ So I went for again a different approach:
 		- for dmg: out of 9142 ids, we got next HTTP errors: {'403': 1245, '404': 6789, '502': 18}
 		- in DMG there are some weird object ids: `/iiif/presentation/v2/manifest/dmg:DES. 1995.16_0-2` what's the space doing there? the object can't be found + throws an error 
 		- for hva: `of 8574 ids, we got next HTTP errors: {'403': 9, '404': 6700, '502': 2}`
-		- 
+

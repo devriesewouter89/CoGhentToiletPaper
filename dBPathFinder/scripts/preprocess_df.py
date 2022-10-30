@@ -83,6 +83,13 @@ class PrepDf:
         object_number = res["objectnumber"]
         return object_number
 
+    def get_iiif_manifest(self, df_tree_idx):
+        # based on the index we pick the data from within our original dataframe
+        res = self.df.iloc[df_tree_idx]
+        # we retrieve the object number
+        iiif_manifest = res["image"]
+        return iiif_manifest
+
     def convert_column_first_year_via_regex(self):
         """
         convert_column_first_year_via_regex is a function that formats the "converted_creation_date" column in the pd
@@ -91,17 +98,20 @@ class PrepDf:
         # extract the date from the time_col
         res = self.df[self.time_col].str.extract(r"([\d+]{4})").squeeze()
         # in the provenance_date col, sometimes we get nan's, we replace these with empty strings
-        self.df["provenance_date"] = self.df["provenance_date"].fillna("")
-        # we then also extract a possible date of the provenance_date col
-        res2 = self.df["provenance_date"].str.extract(r"([\d+]{4})").squeeze()
-        # from the provenance date, we remove values below 1000
-        res2.where(res2.astype('Int64') > 1000, inplace=True)
-        # we give priority to the time_col, yet use the provenance_date as a backup date
-        res_combined = res.where(res.notnull(), res2)
+        if "provenance_date" in self.df:
+            self.df["provenance_date"] = self.df["provenance_date"].fillna("")
+            # we then also extract a possible date of the provenance_date col
+            res2 = self.df["provenance_date"].str.extract(r"([\d+]{4})").squeeze()
+            # from the provenance date, we remove values below 1000
+            res2.where(res2.astype('Int64') > 1000, inplace=True)
+            # we give priority to the time_col, yet use the provenance_date as a backup date
+            res_combined = res.where(res.notnull(), res2)
+        else:
+            res_combined = res
         # sometimes in the title there's also date information
-        res3 = self.df["title"].str.extract(r"([\d+]{4})").squeeze()
+        res3 = self.df["description"].str.extract(r"([\d+]{4})").squeeze()
         res_combined = res_combined.where(res_combined.notnull(), res3)
-        self.df.insert(10, self.clean_time_col,
+        self.df.insert(self.df.shape[1], self.clean_time_col,
                        pd.to_numeric(res_combined), True)
 
     def plot_distribution(self):
@@ -134,7 +144,7 @@ class PrepDf:
         for pos, chunk in chunker(id_list, 100):
             for idx in chunk:
                 t = Thread(target=lambda q, arg1, arg2, arg3: q.put(self.get_image_uri(arg1, arg2, arg3)),
-                           args=(que, self.get_object_id(idx), idx, self.count_err,))
+                           args=(que, self.get_iiif_manifest(idx), idx, self.count_err,))
                 t.start()
                 threads_list.append(t)
             for t in threads_list:
@@ -149,11 +159,12 @@ class PrepDf:
         print("of {} ids, we got next HTTP errors: {}".format(
             len(id_list), self.count_err))
 
-    def get_image_uri(self, img_id, df_idx=None, count_err=None) -> tuple[Any, None, dict] | \
-                                                                    tuple[Any, Any, dict]:
-        iiif_manifest = "https://api.collectie.gent/iiif/presentation/v2/manifest/{}:{}".format(
-            self.institute.lower(), img_id).replace(" ", "%20") # todo is de replace nodig of is er een fout in de brondata?
-        # print(iiif_manifest)
+    def get_image_uri(self, iiif_manifest, df_idx=None, count_err=None) -> tuple[Any, None, dict] | \
+                                                                           tuple[Any, Any, dict]:
+        # iiif_manifest = "https://api.collectie.gent/iiif/presentation/v2/manifest/{}:{}".format(
+        #     self.institute.lower(), img_id).replace(" ", "%20") # todo is de replace nodig of is er een fout in de brondata?
+
+        print(iiif_manifest)
         try:
             req = urllib.request.Request(iiif_manifest, headers={'User-Agent': 'Mozilla/5.0'})
             response = urllib.request.urlopen(req)
@@ -172,6 +183,8 @@ class PrepDf:
         else:
             data_json = json.loads(response.read())
             image_uri = data_json["sequences"][0]['canvases'][0]["images"][0]["resource"]["@id"]
+            # adapt image_uri for specific resolution
+            # iiif_manifest = iiif_manifest.replace("full/full/0/default.jpg", "full/1000,/0/default.jpg")
             return df_idx, image_uri, count_err
 
 
