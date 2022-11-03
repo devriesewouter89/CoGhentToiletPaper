@@ -60,9 +60,10 @@ class FindOverlapOneBranch:
         # 1. let's set the starting point of our path
         self.find_first_entry()
 
-    def find_overlap(self, origin_idx, target_idx) -> (bool, list[dict], str):
+    def find_overlap(self, origin_idx, target_idx) -> (bool, list[dict], str, int, int):
         """
         find_overlap is a function looking in a set of columns if overlapping text is to be found.
+        @return:
         @param self:
         @param origin_idx: **index** of dataframe row where we'd like to find matches from
         @param target_idx: **index** dataframe row which we'll use to find matches with the origin
@@ -72,7 +73,8 @@ class FindOverlapOneBranch:
         overlap_list = list[dict]()
         origin = self.df_row(origin_idx)
         target = self.df_row(target_idx)
-
+        origin_year = int(origin["converted_creation_date"])
+        target_year = int(target["converted_creation_date"])
         for col in self.list_cols:
             # we need to unpack the strings to list via ast.literal_eval as otherwise we're evaluating character-based.
             # we use the try except statement as not always there are valid entries
@@ -102,7 +104,11 @@ class FindOverlapOneBranch:
             #     print(e)
             #     pass
         img_uri = target["img_uri"]
-        return overlap_found, overlap_list, img_uri, target_idx
+
+        if overlap_found:
+            return overlap_found, overlap_list[0], img_uri, target_idx, origin_year, target_year  # we use overlap_list
+        else:
+            return overlap_found, overlap_list, img_uri, target_idx, origin_year, target_year
 
     def df_row(self, idx):
         """
@@ -165,10 +171,11 @@ class FindOverlapOneBranch:
         for t in threads_list:
             t.join()
         while not que.empty():
-            overlap_found, overlap_list, img_uri, index = que.get()
+            overlap_found, overlap_list, img_uri, index, origin_year, target_year = que.get()
             if overlap_found:
                 # print(Fore.GREEN + "index: {}, origin: {}, overlap: {}".format(index, origin,  overlap_list) + Style.RESET_ALL)
-                res.append({"index": index, "overlap": overlap_list, "img_uri": img_uri})
+                res.append({"index": index, "overlap": overlap_list, "img_uri": img_uri, "origin_year": origin_year,
+                            "target_year": target_year})
                 res_found = True
             else:
                 # print(Fore.RED + "no textual match found" + Style.RESET_ALL)
@@ -234,9 +241,12 @@ class FindOverlapOneBranch:
                 df_idx = i["index"]
                 prev_match = i["overlap"]
                 img_uri = i["img_uri"]
+                orig_year = i["origin_year"]
+                target_year = i["target_year"]
                 temp = pd.DataFrame.from_records(
                     [{"layer": self.next_layer, "df_idx": df_idx, "overlap": prev_match, "img_uri": img_uri,
-                      "chosen": choose_this, "has_already_been_chosen": choose_this, "parent": int(origin_idx)}])
+                      "chosen": choose_this, "has_already_been_chosen": choose_this, "parent": int(origin_idx),
+                      "origin_year": orig_year, "target_year": target_year}])
                 temp = temp.astype({"chosen": bool, "has_already_been_chosen": bool})
                 self.df_tree = pd.concat([self.df_tree, temp],
                                          ignore_index=True)
@@ -315,8 +325,8 @@ def find_tree(input_file, output_file, dataset, list_cols, stemmer_cols, amount_
     df = pd.read_csv(input_file)
 
     f_ol = FindOverlapOneBranch(df=df, tree_csv=output_file, list_cols=list_cols,
-                               stemmer_cols=stemmer_cols,
-                               steps=amount_of_imgs_to_find, spread=3, max_amount_of_threads=1000)
+                                stemmer_cols=stemmer_cols,
+                                steps=amount_of_imgs_to_find, spread=3, max_amount_of_threads=1000)
     # 3. we search for initial objects in a time-range from the first found object
     f_ol.build_tree()
     # fOL.print_tree()
@@ -327,10 +337,10 @@ if __name__ == '__main__':
     dataset = "dmg"
     clean_file = Path(Path.cwd() / 'data' / "clean_data" / '{}.csv'.format(dataset))
     orig_file = Path(Path.cwd() / 'data' / '{}.csv'.format(dataset))
-    if clean_file.is_file():
-        input_file = clean_file
-    else:
-        input_file = orig_file
+    # if clean_file.is_file():
+    # input_file = clean_file
+    # else:
+    # input_file = orig_file
     list_cols = ['object_name', 'creator']
     stemmer_cols = ['title', 'description']
     amount_of_tissues = 100

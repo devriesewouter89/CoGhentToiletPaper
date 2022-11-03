@@ -33,6 +33,14 @@ def chunker(seq, size):
 
 class PrepDf:
     def __init__(self, input_csv, clean_csv, institute: str, time_col: str, steps: int):
+        """
+
+        @param input_csv:
+        @param clean_csv:
+        @param institute:
+        @param time_col:
+        @param steps:
+        """
         self.file = input_csv
         self.time_col = time_col
         self.institute = institute
@@ -193,7 +201,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_path', '-dp', default=Path(Path.cwd().parent / 'data'))
     parser.add_argument("--dataset", '-ds', help="choose collections to preprocess",
                         choices=["dmg", "im", "stam", "hva",
-                                 "archiefgent", "thesaurus", "AGENT"], default=["dmg"])
+                                 "archiefgent", "thesaurus", "AGENT"], default=["industriemuseum"])
     args = parser.parse_args()
 
     data_path = Path(args.data_path)
@@ -214,3 +222,4 @@ if __name__ == '__main__':
 
         # 2. to get some insights in the distribution of the data: enable next statement
         clean_df.plot_distribution()
+

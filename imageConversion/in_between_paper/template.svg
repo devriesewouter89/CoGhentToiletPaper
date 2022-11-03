@@ -70,9 +70,13 @@
        style="white-space:pre;shape-inside:url(#rect242);display:inline;fill:#000000;stroke:#000000"><tspan
          x="219.39648"
          y="387.37539"
-         id="tspan680"><tspan
+         id="tspan680">
+      <tspan
            style="font-size:12px;font-family:FreeSerif;-inkscape-font-specification:'FreeSerif, Normal'"
-           id="tspan678" template-id="text2">textbottom</tspan></tspan></text>
+           id="tspan678" template-id="text2">textbottom
+      </tspan>
+    </tspan>
+    </text>
     <rect
        style="fill:#000000;stroke:#000000;stroke-width:0.264583"
        id="rect447"

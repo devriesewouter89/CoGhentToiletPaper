@@ -15,7 +15,8 @@ object (e.g. https://coghent.github.io/basicqueries.html#union getting to ?maker
 
 
 def launch_query(location: str, csv_output: Path, df_return: bool = False):
-    sparql_query = ("""
+    sparql_query = (
+            """
     PREFIX cidoc:<http://www.cidoc-crm.org/cidoc-crm/>
     PREFIX adms:<http://www.w3.org/ns/adms#>
     PREFIX skos:<http://www.w3.org/2004/02/skos/core#>
@@ -35,8 +36,9 @@ def launch_query(location: str, csv_output: Path, df_return: bool = False):
         ?production cidoc:P4_has_time-span ?creation_date.
         ?production cidoc:P7_took_place_at ?location.
         ?identifier skos:notation ?objectnumber.
-    } limit 100000
-        """ % location)
+    } 
+    LIMIT 100000
+    """ % location)
 
     sparql = SPARQL("https://stad.gent/sparql")
     qlod = sparql.queryAsListOfDicts(sparql_query)
@@ -59,7 +61,7 @@ def launch_query(location: str, csv_output: Path, df_return: bool = False):
 
 
 if __name__ == '__main__':
-    location = "dmg"
+    location = "industriemuseum"
     csv_location = Path(Path.cwd().parent / "data")
     csv_location.mkdir(parents=True, exist_ok=True)
     df = launch_query(location, csv_output=Path(csv_location / "{}.csv".format(location)), df_return=True)
