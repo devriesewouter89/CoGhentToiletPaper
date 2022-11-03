@@ -12,3 +12,4 @@ svgutils==0.3.4
 tabulate==0.8.10
 finite-state-machine==0.5.0
 pylodstorage==0.4.7
+drawsvg==1.8.3
