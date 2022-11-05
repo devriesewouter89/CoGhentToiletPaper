@@ -29,6 +29,8 @@ def sentence_to_stems_spacy(text_arr, model: str = "nl_core_news_lg") -> [str]:
 
 def sentence_to_stems_nltk(text_arr) -> [str]:
     wordnet_lemmatizer = WordNetLemmatizer()
+    _stopwords = stopwords.words("dutch")
+
     res = []  # list()
     punctuations = "?:!.,;"
     for sentence in text_arr:
@@ -38,15 +40,21 @@ def sentence_to_stems_nltk(text_arr) -> [str]:
                 sentence_words.remove(word)
         lemma_words = list(map(lambda x: wordnet_lemmatizer.lemmatize(x, pos="v"), sentence_words))
         res.append(lemma_words)
-    return res
+    _clean_stems = list(filter(lambda w: w not in _stopwords, res[0]))
+
+    return _clean_stems
 
 
 def sentence_to_stems_simplemma(text_arr) -> [str]:
     res = []  # list()
+    _stopwords = stopwords.words("dutch")
+
     for text in text_arr:
         text_l = text_lemmatizer(text, lang="nl")
         res.append(text_l)
-    return res
+    _clean_stems = list(filter(lambda w: w not in _stopwords, res[0]))
+
+    return _clean_stems
 
 
 if __name__ == '__main__':
