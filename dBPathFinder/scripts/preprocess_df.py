@@ -46,7 +46,9 @@ class PrepDf:
         self.institute = institute
         self.clean_csv = clean_csv
         self.clean_time_col = "converted_creation_date"
-        self.df = pd.read_csv(input_csv, index_col=0).drop_duplicates()
+        self.df = pd.read_csv(input_csv, index_col=0, on_bad_lines='skip')
+        self.df.drop_duplicates(inplace=True)
+
         self.count_err = dict()  # {"403": 0, "404": 0, "500": 0, "502": 0}
         # 1. the dates are not easily human-readable, let's convert them
         if not self.clean_time_col in self.df:
@@ -70,7 +72,7 @@ class PrepDf:
         self.df.drop(self.df[self.df[self.clean_time_col].isna()].index, inplace=True)
         if 'timestamp' in self.df:
             self.df.drop(columns="timestamp", inplace=True)
-        self.df.drop_duplicates(inplace=True)
+        self.df.drop_duplicates(subset="image", inplace=True)
         # we'll check if it's necessary to add the img_uris to the dataframe
         if "img_uri" not in self.df:
             print("img_uri is not yet set, we'll first initialise this, hang on")
@@ -84,16 +86,11 @@ class PrepDf:
         print("after filtering, {} entries left".format(len(self.df)))
         self.write_to_clean_csv(self.clean_csv)
 
-    def get_object_id(self, df_tree_idx):
-        # based on the index we pick the data from within our original dataframe
-        res = self.df.iloc[df_tree_idx]
-        # we retrieve the object number
-        object_number = res["objectnumber"]
-        return object_number
-
     def get_iiif_manifest(self, df_tree_idx):
-        # based on the index we pick the data from within our original dataframe
-        res = self.df.iloc[df_tree_idx]
+        """based on the index we pick the data from within our original dataframe
+        attention, we use .loc, not .iloc as our index is not one continuous integer array!
+        """
+        res = self.df.loc[df_tree_idx]
         # we retrieve the object number
         iiif_manifest = res["image"]
         return iiif_manifest
@@ -172,16 +169,17 @@ class PrepDf:
         # iiif_manifest = "https://api.collectie.gent/iiif/presentation/v2/manifest/{}:{}".format(
         #     self.institute.lower(), img_id).replace(" ", "%20") # todo is de replace nodig of is er een fout in de brondata?
 
-        print(iiif_manifest)
         try:
             req = urllib.request.Request(iiif_manifest, headers={'User-Agent': 'Mozilla/5.0'})
-            response = urllib.request.urlopen(req)
+            response = urllib.request.urlopen(req, timeout=10)
+            print("got response from {}".format(iiif_manifest))
+
             # response = urlopen(iiif_manifest)
         except ValueError as e:
-            print('ValueError, no image found '.format(e))
+            # print('ValueError, no image found {}: {}'.format(e, iiif_manifest))
             return df_idx, None, count_err
         except HTTPError as e:
-            # print('HTTPError, no image found {} '.format(e))
+            print('HTTPError, no image found {} for {}'.format(e, iiif_manifest))
             if str(e.code) not in count_err:
                 new_error_code = {str(e.code): 1}
                 count_err.update(new_error_code)
@@ -212,7 +210,7 @@ if __name__ == '__main__':
         clean_data_path.mkdir(parents=True, exist_ok=True)
         clean_file = Path(clean_data_path / '{}.csv'.format(dataset))
 
-        list_cols = ['object_name', 'creator']
+        list_cols = ['object_name']#  'creator']
         stemmer_cols = ['title', 'description']
         amount_of_tissues = 100
         amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
