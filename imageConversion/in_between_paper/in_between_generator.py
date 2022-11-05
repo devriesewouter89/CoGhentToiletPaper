@@ -68,21 +68,28 @@ def wrap_text_if_needed(text: str, max_width_text: int, max_height_text: int) ->
     return word_list
 
 
-def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, text_new: str, year_new: str, overlap_text: str | list[str],
-               output_path: Path, percentage_of_layers: float, max_width_text: int,
-               max_height_text: int):
+def limit_overlap_text(overlap_list: list[str], max_lines: int = 3):
+    if len(overlap_list) > max_lines:
+        overlap_list = overlap_list[:max_lines]
+    return overlap_list
+
+
+def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, text_new: str, year_new: str,
+               overlap_text: str | list[str],
+               output_path: Path, percentage_of_layers: float, max_width_text: int = 20,
+               max_height_text: int = 4):
     """
 
-    @param title_old:
-    @param title_new:
-    @param max_height_text:
-    @param max_width_text:
-    @param text_old:
-    @param year_old:
-    @param text_new:
-    @param year_new:
-    @param output_path:
-    @param overlap_text:
+    @param title_old: title of the older (in time) object
+    @param title_new: title of the newer (in time) object
+    @param max_height_text: maximum amount of lines before we cut off the text
+    @param max_width_text: maximum amount of characters before we split the text
+    @param text_old: text of the older object
+    @param year_old: year of the creation of the older object
+    @param text_new: text of the newer object
+    @param year_new: year of the creation of the newer object
+    @param output_path: Path, with the name, where to store the object
+    @param overlap_text: a list of the words which are common to both objects
     @param percentage_of_layers: we'll use the layer parameter to alter the diagonal line
     """
     width = 200
@@ -120,7 +127,7 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
     d.append(p)
 
     # Draw text
-    d.append(draw.Text(title_old, font_size+2, path=p, text_anchor='middle'))
+    d.append(draw.Text(title_old, font_size + 2, path=p, text_anchor='middle'))
     # -----------------NEW TEXT-----------------------
     p = draw.Path(stroke_width=2, stroke='lime',
                   fill='black', fill_opacity=0.2)
@@ -141,7 +148,7 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
     d.append(p)
 
     # Draw text
-    d.append(draw.Text(title_new, font_size+2, path=p, text_anchor='middle'))
+    d.append(draw.Text(title_new, font_size + 2, path=p, text_anchor='middle'))
     # --------------CENTER CIRCLE FIGURE--------------
     angle_offset = 20
     angle = percentage_of_layers * 2 * angle_offset - angle_offset  # function to make diagonal "move" throughout time
@@ -158,6 +165,7 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
     d.append(p)
     # text path
     p = draw.Path(stroke='none', stroke_width=2, fill='none')
+    overlap_text = limit_overlap_text(overlap_text)
     d.append(draw.Text(overlap_text, font_size, path=p, text_anchor='middle'))
     p.M(0, -radius).L(0, radius)
     d.append(p)
@@ -178,6 +186,7 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
 
 if __name__ == '__main__':
     # replace_text_in_svg('template.svg', "vorige wc-rol", "2000", "volgende wc-rol", "2001", "test_output", 20)
-    create_svg("titel","vorige wc-rol met veel meer tekst dan de lijn toelaat", "2000", "titel", "volgende wc-rol", "2001",
+    create_svg("titel", "vorige wc-rol met veel meer tekst dan de lijn toelaat", "2000", "titel", "volgende wc-rol",
+               "2001",
                ["wc-rol", "test", "3"], Path("test_output.svg"),
                0, 20, 2)
