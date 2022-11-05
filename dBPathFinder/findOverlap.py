@@ -153,9 +153,6 @@ class FindOverlapOneBranch:
         @param origin: the index in the original dataframe for which we're looking for childs in <indexes> with a textual overlap
         @param indexes: the indexes of possible children
         """
-
-        # print("origin:")
-        # print(self.df_row(origin))
         res = []  # list()
         res_found = False
 
@@ -251,12 +248,10 @@ class FindOverlapOneBranch:
                 self.df_tree = pd.concat([self.df_tree, temp],
                                          ignore_index=True)
             # print('matches had been found')
-            # self.df_tree.reset_index()
             return True
         else:
             # print("we came at a dead-end by no matches found, return a layer and try another index")
             # print(tabulate(self.df_tree, headers='keys'))
-            # return False  # todo call backward motion
             updated_origin_idx = self.backward_motion()
             return self.forward_tree_build(row_indices, updated_origin_idx)
 
