@@ -145,7 +145,6 @@ class PrepDf:
         threads_list = []  # list()
         id_list = self.df.index.values.tolist()
         print("amount of ids to process: {}".format(len(id_list)))
-
         for pos, chunk in chunker(id_list, 100):
             for idx in chunk:
                 t = Thread(target=lambda q, arg1, arg2, arg3: q.put(self.get_image_uri(arg1, arg2, arg3)),
@@ -156,8 +155,11 @@ class PrepDf:
                 t.join()
             count_error_temp = {"403": 0, "404": 0, "502": 0}
             while not que.empty():
-                idx, img_uri, count_error_temp = que.get()
-                self.df.at[idx, "img_uri"] = img_uri
+                try:
+                    idx, img_uri, count_error_temp = que.get()
+                    self.df.at[idx, "img_uri"] = img_uri
+                except TypeError as e:
+                    print(e)
             # count_err = dict(map(lambda x, y: (x[0], x[1]+y[1]), count_err.items(), count_error_temp.items()))
             count_err = count_error_temp
             print("{} of {} done".format(pos, len(id_list)))
@@ -171,7 +173,7 @@ class PrepDf:
 
         try:
             req = urllib.request.Request(iiif_manifest, headers={'User-Agent': 'Mozilla/5.0'})
-            response = urllib.request.urlopen(req, timeout=10)
+            response = urllib.request.urlopen(req, timeout=500)
             print("got response from {}".format(iiif_manifest))
 
             # response = urlopen(iiif_manifest)
@@ -186,6 +188,9 @@ class PrepDf:
             else:
                 count_err[str(e.code)] += 1
             return df_idx, None, count_err
+        except TimeoutError as e:
+            print('timeout error for {}'.format(iiif_manifest))
+            return df_idx, None, count_err
         else:
             data_json = json.loads(response.read())
             image_uri = data_json["sequences"][0]['canvases'][0]["images"][0]["resource"]["@id"]
@@ -198,7 +203,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', '-dp', default=Path(Path.cwd().parent / 'data'))
     parser.add_argument("--dataset", '-ds', help="choose collections to preprocess",
-                        choices=["dmg", "im", "stam", "hva",
+                        choices=["dmg", "industriemuseum", "stam", "hva",
                                  "archiefgent", "thesaurus", "AGENT"], default=["industriemuseum"])
     args = parser.parse_args()
 

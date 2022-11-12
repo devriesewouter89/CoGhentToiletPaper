@@ -1,4 +1,5 @@
 import os
+from itertools import zip_longest
 
 import SPARQLWrapper.SPARQLExceptions
 from lodstorage.sparql import SPARQL
@@ -17,6 +18,8 @@ object (e.g. https://coghent.github.io/basicqueries.html#union getting to ?maker
 """
 
 
+# https://api.collectie.gent/iiif/image/iiif/2/1f28135dd9a495db544d9f702729afac-transcode-V04548-014.jpg/full/full/0/default.jpg
+
 def launch_query(location: str, csv_output: Path, df_return: bool = False):
     def return_query(location, offset):
         sparql_query = (
@@ -24,7 +27,7 @@ def launch_query(location: str, csv_output: Path, df_return: bool = False):
         PREFIX cidoc:<http://www.cidoc-crm.org/cidoc-crm/>
         PREFIX adms:<http://www.w3.org/ns/adms#>
         PREFIX skos:<http://www.w3.org/2004/02/skos/core#>
-        SELECT DISTINCT ?title ?image ?description ?creation_date ?object_name 
+        SELECT DISTINCT ?object ?title ?image ?description ?creation_date ?object_name 
         
         FROM <http://stad.gent/ldes/%s>
         WHERE {
@@ -34,25 +37,47 @@ def launch_query(location: str, csv_output: Path, df_return: bool = False):
             ?object cidoc:P108i_was_produced_by ?production.       
             ?production cidoc:P4_has_time-span ?creation_date. 
             # OPTIONAL {
-            ?object cidoc:P41i_was_classified_by ?classified.
-            ?classified cidoc:P42_assigned ?assigned.
-            ?assigned skos:prefLabel ?object_name.       
+            # ?object cidoc:P41i_was_classified_by ?classified.
+            # ?classified cidoc:P42_assigned ?assigned.
+            # ?assigned skos:prefLabel ?object_name.       
             # }
             
         } 
-        LIMIT 100000
-        # OFFSET %s
+        LIMIT 1000
+        OFFSET %s
         """ % (location, str(offset * 1000)))
-        return sparql_query
+
+        sparql_query2 = (
+                """
+        PREFIX cidoc:<http://www.cidoc-crm.org/cidoc-crm/>
+        PREFIX adms:<http://www.w3.org/ns/adms#>
+        PREFIX skos:<http://www.w3.org/2004/02/skos/core#>
+        SELECT DISTINCT ?object ?object_name 
+
+        FROM <http://stad.gent/ldes/%s>
+        WHERE {         
+            ?object cidoc:P41i_was_classified_by ?classified.
+            ?classified cidoc:P42_assigned ?assigned.
+            ?assigned skos:prefLabel ?object_name.       
+        } 
+        LIMIT 1000
+        OFFSET %s
+        """ % (location, str(offset * 1000)))
+
+        return sparql_query, sparql_query2
 
     print('launching query')
     sparql = SPARQL("https://stad.gent/sparql")
     df = pd.DataFrame()
-    for i in range(100):
-        query = return_query(location=location, offset=i)
+    for i in range(1000):
+        # we have multiple queries, as one big query is too slow for the back-end
+        query, query2 = return_query(location=location, offset=i)
         try:
             qlod = sparql.queryAsListOfDicts(query)
-            csv = CSV.toCSV(qlod)
+            qlod2 = sparql.queryAsListOfDicts(query2)
+            # we'll combine the two qlods to stitch the results
+            qlod3 = [{**u, **v} for u, v in zip_longest(qlod, qlod2, fillvalue={})]
+            csv = CSV.toCSV(qlod3)
             print("got results in csv, writing them now")
             with open(csv_output, 'a+') as out:
                 out.write(csv)
@@ -78,7 +103,7 @@ def launch_query(location: str, csv_output: Path, df_return: bool = False):
 
 
 if __name__ == '__main__':
-    location = "stam"
+    location = "archiefgent"
     csv_location = Path(Path.cwd().parent / "data")
     csv_location.mkdir(parents=True, exist_ok=True)
     csv_output_file = Path(csv_location / "{}.csv".format(location))
