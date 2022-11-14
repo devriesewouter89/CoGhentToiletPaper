@@ -4,5 +4,6 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/dBPathFinder/LDES_TO_PG" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/imageConversion/linedraw" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/saxi" vcs="Git" />
   </component>
 </project>

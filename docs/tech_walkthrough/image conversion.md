@@ -6,3 +6,8 @@ Found a cool repo: artline, If combined with some tracing programs, this was a g
 
 I found a different repo which did 
 
+
+
+https://monokai.medium.com/how-to-wirelessly-plot-with-the-axidraw-f9e0a872138e
+
+try with e.g. `saxi plot -sA5 git/coghent/CoGhentToiletPaper/imageConversion/images/linedraw/0.svg`
