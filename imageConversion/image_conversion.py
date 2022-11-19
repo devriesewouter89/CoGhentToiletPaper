@@ -28,6 +28,22 @@ def download_images_from_tree(csv_path: Path, output_path: Path):
             handler.write(img_data)
 
 
+def convert_polyline_to_path(svg_file: Path):
+    """
+    the [saxi](https://github.com/nornagon/saxi) library is not capable of using polylines, due to dependency issue.
+    A quick fix is to convert polylines to paths in svg
+    @param svg_file: file to convert to use only paths and no polylines
+    """
+    with open(svg_file, 'r') as f:
+        data = f.read()
+    # replace polyline with path
+    data = data.replace("polyline", "path")
+    # replace points=" with d="M
+    data = data.replace('points="', 'd="M')
+    with open(svg_file, 'w') as file:
+        file.write(data)
+
+
 def convert_folder_to_linedraw(input_path: Path, output_path: Path, draw_contour: bool = True, draw_hatch: bool = True,
                                hatch_size: int = 16, contour_simplify: int = 2, resolution: int = 1024):
     """
@@ -43,10 +59,11 @@ def convert_folder_to_linedraw(input_path: Path, output_path: Path, draw_contour
     ld = LineDraw(draw_contours=draw_contour, draw_hatch=draw_hatch, hatch_size=hatch_size,
                   contour_simplify=contour_simplify, resolution=resolution)
     for img in input_path.iterdir():
-        output = Path(output_path / "{}.svg".format(os.path.splitext(img)[0]))
+        output = Path(output_path / "{}.svg".format(img.stem))
         ld.export_path = output
         input_img = Path(input_path / img)
         ld.sketch(str(input_img))
+        convert_polyline_to_path(output)
 
 
 def create_in_between_images(csv_path: Path, output_path: Path):
@@ -96,11 +113,11 @@ def resize_svgs_from_folder():
 if __name__ == '__main__':
     print(Path.cwd())
     parent = Path.cwd().parent
-    in_between_out = Path(Path.cwd() / "images" / "in_between")
-    in_between_out.mkdir(parents=True, exist_ok=True)
+    # in_between_out = Path(Path.cwd() / "images" / "in_between")
+    # in_between_out.mkdir(parents=True, exist_ok=True)
     # download_images_from_tree(csv_path=Path(parent / "dBPathFinder" / "DMG_tree.csv"),
     #                           output_path=Path(Path.cwd() / "images" / "input"))
-    # convert_folder_to_linedraw(input_path=Path(Path.cwd() / "images" / "input"),
-    #                            output_path=Path(Path.cwd() / "images" / "linedraw"))
-    create_in_between_images(output_path=in_between_out,
-                             csv_path=Path(parent / "dBPathFinder" / "dmg_tree.csv"))
+    convert_folder_to_linedraw(input_path=Path(Path.cwd() / "images" / "input"),
+                               output_path=Path(Path.cwd() / "images" / "linedraw"))
+    # create_in_between_images(output_path=in_between_out,
+    #                          csv_path=Path(parent / "dBPathFinder" / "dmg_tree.csv"))
