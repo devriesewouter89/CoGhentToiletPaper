@@ -1,7 +1,9 @@
 import argparse
+import datetime
 import json
 import math
 import os
+import time
 import urllib
 from threading import Thread
 from typing import Any, Tuple
@@ -72,7 +74,7 @@ class PrepDf:
         self.df.drop(self.df[self.df[self.clean_time_col].isna()].index, inplace=True)
         if 'timestamp' in self.df:
             self.df.drop(columns="timestamp", inplace=True)
-        self.df.drop_duplicates(subset="image", inplace=True)
+        self.df.drop_duplicates(subset="manifest", inplace=True)
         # we'll check if it's necessary to add the img_uris to the dataframe
         if "img_uri" not in self.df:
             print("img_uri is not yet set, we'll first initialise this, hang on")
@@ -92,7 +94,7 @@ class PrepDf:
         """
         res = self.df.loc[df_tree_idx]
         # we retrieve the object number
-        iiif_manifest = res["image"]
+        iiif_manifest = res["manifest"]
         return iiif_manifest
 
     def convert_column_first_year_via_regex(self):
@@ -143,34 +145,48 @@ class PrepDf:
     def set_image_uri_to_df(self):
         que = Queue()
         threads_list = []  # list()
-        id_list = self.df.index.values.tolist()
-        print("amount of ids to process: {}".format(len(id_list)))
-        for pos, chunk in chunker(id_list, 100):
-            for idx in chunk:
-                t = Thread(target=lambda q, arg1, arg2, arg3: q.put(self.get_image_uri(arg1, arg2, arg3)),
-                           args=(que, self.get_iiif_manifest(idx), idx, self.count_err,))
-                t.start()
-                threads_list.append(t)
-            for t in threads_list:
-                t.join()
-            count_error_temp = {"403": 0, "404": 0, "502": 0}
-            while not que.empty():
-                try:
-                    idx, img_uri, count_error_temp = que.get()
-                    self.df.at[idx, "img_uri"] = img_uri
-                except TypeError as e:
-                    print(e)
-            # count_err = dict(map(lambda x, y: (x[0], x[1]+y[1]), count_err.items(), count_error_temp.items()))
-            count_err = count_error_temp
-            print("{} of {} done".format(pos, len(id_list)))
-        print("of {} ids, we got next HTTP errors: {}".format(
-            len(id_list), self.count_err))
+        retry_times = 10
+        retry_id_list = []
+        for i in range(retry_times):
+            # first time we process the dataframe we've given, consecutive times we try to go over the 404s as they
+            # should have some answer. #HACK
+            if i == 0:
+                id_list = self.df.index.values.tolist()
+            else:
+                id_list = retry_id_list.copy()
+            # clear the retry list each new iteration
+            retry_id_list.clear()
+            self.count_err["404"] = 0
 
-    def get_image_uri(self, iiif_manifest, df_idx=None, count_err=None) -> tuple[Any, None, dict] | \
-                                                                           tuple[Any, Any, dict]:
-        # iiif_manifest = "https://api.collectie.gent/iiif/presentation/v2/manifest/{}:{}".format(
-        #     self.institute.lower(), img_id).replace(" ", "%20") # todo is de replace nodig of is er een fout in de brondata?
+            print("amount of ids to process in retry {}: {}".format(i, len(id_list)))
+            for pos, chunk in chunker(id_list, 100):
+                for idx in chunk:
+                    t = Thread(target=lambda q, arg1, arg2, arg3: q.put(self.get_image_uri(arg1, arg2, arg3)),
+                               args=(que, self.get_iiif_manifest(idx), idx, self.count_err,))
+                    t.start()
+                    threads_list.append(t)
+                for t in threads_list:
+                    t.join()
+                count_error_temp = {"403": 0, "404": 0, "502": 0}
+                while not que.empty():
+                    try:
+                        idx, img_uri, count_error_temp, return_code = que.get()
+                        if return_code == 404:
+                            retry_id_list.append(idx)
+                        self.df.at[idx, "img_uri"] = img_uri
+                        self.df.at[idx, "return_code"] = return_code
+                    except TypeError as e:
+                        print(e)
+                # count_err = dict(map(lambda x, y: (x[0], x[1]+y[1]), count_err.items(), count_error_temp.items()))
+                count_err = count_error_temp
+                print("{} of {} done".format(pos, len(id_list)))
+                time.sleep(5)  # todo a test to see if a delay between threads helps?
+            print("of {} ids, we got next HTTP errors: {}".format(
+                len(id_list), self.count_err))
+            #TODO : is my index correctly passed through AND where do my non-200 errors go???
 
+    def get_image_uri(self, iiif_manifest, df_idx=None, count_err=None) -> tuple[Any, None, Any, Any] | tuple[
+        Any, None, Any, int] | tuple[Any, Any, Any, None]:
         try:
             req = urllib.request.Request(iiif_manifest, headers={'User-Agent': 'Mozilla/5.0'})
             response = urllib.request.urlopen(req, timeout=500)
@@ -179,7 +195,7 @@ class PrepDf:
             # response = urlopen(iiif_manifest)
         except ValueError as e:
             # print('ValueError, no image found {}: {}'.format(e, iiif_manifest))
-            return df_idx, None, count_err
+            return df_idx, None, count_err, e
         except HTTPError as e:
             print('HTTPError, no image found {} for {}'.format(e, iiif_manifest))
             if str(e.code) not in count_err:
@@ -187,35 +203,39 @@ class PrepDf:
                 count_err.update(new_error_code)
             else:
                 count_err[str(e.code)] += 1
-            return df_idx, None, count_err
+            return df_idx, None, count_err, e.code
         except TimeoutError as e:
             print('timeout error for {}'.format(iiif_manifest))
-            return df_idx, None, count_err
+            return df_idx, None, count_err, e
         else:
             data_json = json.loads(response.read())
             image_uri = data_json["sequences"][0]['canvases'][0]["images"][0]["resource"]["@id"]
             # adapt image_uri for specific resolution
             # iiif_manifest = iiif_manifest.replace("full/full/0/default.jpg", "full/1000,/0/default.jpg")
-            return df_idx, image_uri, count_err
+            return df_idx, image_uri, count_err, 200
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', '-dp', default=Path(Path.cwd().parent / 'data'))
-    parser.add_argument("--dataset", '-ds', help="choose collections to preprocess",
+    parser.add_argument("--dataset", '-ds',
+                        help="choose collections to preprocess",
                         choices=["dmg", "industriemuseum", "stam", "hva",
-                                 "archiefgent", "thesaurus", "AGENT"], default=["industriemuseum"])
+                                 "archiefgent", "thesaurus", "AGENT"],
+                        default=["industriemuseum", "hva", "archiefgent"])
     args = parser.parse_args()
 
     data_path = Path(args.data_path)
     datasets = args.dataset
+
+    print("start preprocessing at {}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     for dataset in datasets:
         input_file = Path(data_path / '{}.csv'.format(dataset))
         clean_data_path = Path(data_path / "clean_data")
         clean_data_path.mkdir(parents=True, exist_ok=True)
         clean_file = Path(clean_data_path / '{}.csv'.format(dataset))
 
-        list_cols = ['object_name']#  'creator']
+        list_cols = ['object_name']  # 'creator']
         stemmer_cols = ['title', 'description']
         amount_of_tissues = 100
         amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
@@ -225,4 +245,4 @@ if __name__ == '__main__':
 
         # 2. to get some insights in the distribution of the data: enable next statement
         clean_df.plot_distribution()
-
+    print("finished preprocessing at {}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))

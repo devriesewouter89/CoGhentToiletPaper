@@ -66,6 +66,7 @@ class ToiletPaperStateMachine(StateMachine):
 
     @transition(source=["prep_imgs", "print_img"], target="roll_paper")
     def roll_paper(self):
+        #! bijhouden hoeveel we afrollen
         pass
 
     @transition(source="roll_paper", target="print_img")

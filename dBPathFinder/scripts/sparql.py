@@ -11,12 +11,12 @@ def launch_query(location: str, csv_output: Path):
         PREFIX cidoc:<http://www.cidoc-crm.org/cidoc-crm/>
         PREFIX adms:<http://www.w3.org/ns/adms#>
         PREFIX skos:<http://www.w3.org/2004/02/skos/core#>
-        SELECT DISTINCT ?title ?image ?description ?creation_date ?object_name 
+        SELECT DISTINCT ?title ?manifest ?description ?creation_date ?object_name 
 
         FROM <http://stad.gent/ldes/%s>
         WHERE {
             ?object cidoc:P102_has_title ?title.
-            ?object cidoc:P129i_is_subject_of ?image.
+            ?object cidoc:P129i_is_subject_of ?manifest.
             ?object cidoc:P3_has_note ?description.
             ?object cidoc:P108i_was_produced_by ?production.       
             ?production cidoc:P4_has_time-span ?creation_date. 
@@ -45,11 +45,11 @@ def launch_query(location: str, csv_output: Path):
             for r in ret["results"]["bindings"]:
                 # print(r)
                 title = r.get('title').get('value')
-                image = r.get('image').get('value')
+                manifest = r.get('manifest').get('value')
                 descr = r.get('description').get('value')
                 creation_date = r.get('creation_date').get('value')
                 df = pd.concat([df, pd.DataFrame.from_records(
-                    [{'title': title, 'image': image, 'description': descr, 'creation_date': creation_date}])])
+                    [{'title': title, 'manifest': manifest, 'description': descr, 'creation_date': creation_date}])])
         except Exception as e:
             print(e)
     df.to_csv(csv_output)

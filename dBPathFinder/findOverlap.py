@@ -4,9 +4,11 @@ python file to check two or more lines from a csv file
 """
 import ast
 import math
+import os
 import random
 from contextlib import suppress
 from datetime import date
+from os.path import join, dirname
 from pathlib import Path
 from queue import Queue
 from threading import Thread
@@ -15,9 +17,12 @@ import numpy as np
 import pandas as pd
 from anytree import Node
 from anytree.exporter import DotExporter
+from dotenv import load_dotenv
+from supabase_py import client
 from tabulate import tabulate
 
 from dBPathFinder.scripts.stemmer import sentence_to_stems, start_WordListCorpusReader
+from dBPathFinder.scripts.supabase_link import get_sb_data
 
 """
 #todo write documentation
@@ -38,7 +43,7 @@ class FindOverlapOneBranch:
         self.tree_csv = tree_csv
         self.list_cols = list_cols
         self.stemmer_cols = stemmer_cols
-        self.clean_time_col = "converted_creation_date"
+        self.clean_time_col = "creation_date" #"converted_creation_date"
         self.steps = steps
         self.amount_of_valid = self.df[self.clean_time_col].count()
         self.distance_per_step = math.floor(self.amount_of_valid / self.steps)
@@ -316,16 +321,18 @@ class FindOverlapOneBranch:
         print(tabulate(self.df_tree, headers='keys'))
 
 
-def find_tree(input_file, output_file, dataset, list_cols, stemmer_cols, amount_of_imgs_to_find):
-    df = pd.read_csv(input_file)
+def find_tree(input_df, output_file, dataset, list_cols, stemmer_cols, amount_of_imgs_to_find):
 
-    f_ol = FindOverlapOneBranch(df=df, tree_csv=output_file, list_cols=list_cols,
+
+    f_ol = FindOverlapOneBranch(df=input_df, tree_csv=output_file, list_cols=list_cols,
                                 stemmer_cols=stemmer_cols,
                                 steps=amount_of_imgs_to_find, spread=3, max_amount_of_threads=1000)
     # 3. we search for initial objects in a time-range from the first found object
     f_ol.build_tree()
     # fOL.print_tree()
     f_ol.visualize_tree(depth=50)
+
+
 
 
 if __name__ == '__main__':
@@ -341,4 +348,16 @@ if __name__ == '__main__':
     amount_of_tissues = 100
     amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
 
-    find_tree(clean_file, "{}_tree.csv".format(dataset), dataset, list_cols, stemmer_cols, amount_of_imgs_to_find)
+    dotenv_path = join(dirname(__file__), '.env')
+    load_dotenv(dotenv_path)
+
+    # warning, make sure your key is the secret key, not anon key if row level policy is enabled.
+    URL = os.environ.get("URL")
+    KEY = os.environ.get("KEY")
+    sb = client.create_client(supabase_url=URL, supabase_key=KEY)
+    input_df = get_sb_data(sb, dataset)
+
+    input_df2 = pd.read_csv(clean_file)
+
+
+    find_tree(input_df, "{}_tree.csv".format(dataset), dataset, list_cols, stemmer_cols, amount_of_imgs_to_find)

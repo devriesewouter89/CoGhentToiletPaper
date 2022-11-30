@@ -1,4 +1,6 @@
+import argparse
 import os
+from datetime import datetime
 from itertools import zip_longest
 
 import SPARQLWrapper.SPARQLExceptions
@@ -27,12 +29,12 @@ def launch_query(location: str, csv_output: Path, df_return: bool = False):
         PREFIX cidoc:<http://www.cidoc-crm.org/cidoc-crm/>
         PREFIX adms:<http://www.w3.org/ns/adms#>
         PREFIX skos:<http://www.w3.org/2004/02/skos/core#>
-        SELECT DISTINCT ?object ?title ?image ?description ?creation_date ?object_name 
+        SELECT DISTINCT ?object ?title ?manifest ?description ?creation_date ?object_name 
         
         FROM <http://stad.gent/ldes/%s>
         WHERE {
             ?object cidoc:P102_has_title ?title.
-            ?object cidoc:P129i_is_subject_of ?image.
+            ?object cidoc:P129i_is_subject_of ?manifest.
             ?object cidoc:P3_has_note ?description.
             ?object cidoc:P108i_was_produced_by ?production.       
             ?production cidoc:P4_has_time-span ?creation_date. 
@@ -66,7 +68,7 @@ def launch_query(location: str, csv_output: Path, df_return: bool = False):
 
         return sparql_query, sparql_query2
 
-    print('launching query')
+    print('launching query for {}'.format(location))
     sparql = SPARQL("https://stad.gent/sparql")
     df = pd.DataFrame()
     for i in range(1000):
@@ -78,7 +80,7 @@ def launch_query(location: str, csv_output: Path, df_return: bool = False):
             # we'll combine the two qlods to stitch the results
             qlod3 = [{**u, **v} for u, v in zip_longest(qlod, qlod2, fillvalue={})]
             csv = CSV.toCSV(qlod3)
-            print("got results in csv, writing them now")
+            print("{}: got results in csv, writing them now".format(i))
             with open(csv_output, 'a+') as out:
                 out.write(csv)
             if df_return:
@@ -103,12 +105,22 @@ def launch_query(location: str, csv_output: Path, df_return: bool = False):
 
 
 if __name__ == '__main__':
-    location = "archiefgent"
-    csv_location = Path(Path.cwd().parent / "data")
-    csv_location.mkdir(parents=True, exist_ok=True)
-    csv_output_file = Path(csv_location / "{}.csv".format(location))
-    if csv_output_file.exists():
-        os.remove(csv_output_file)
-    df = launch_query(location, csv_output=csv_output_file, df_return=True)
-    pd.set_option('display.max_columns', None)
-    print(df.head(5))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_path', '-dp', default=Path(Path.cwd().parent / 'data'))
+    parser.add_argument("--dataset", '-ds', help="choose collections to preprocess",
+                        choices=["dmg", "industriemuseum", "stam", "hva",
+                                 "archiefgent", "thesaurus", "AGENT"], default=["hva", "archiefgent"])
+    args = parser.parse_args()
+
+    data_path = Path(args.data_path)
+    datasets = args.dataset
+    print("start preprocessing at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    for location in datasets:
+        csv_location = Path(Path.cwd().parent / "data")
+        csv_location.mkdir(parents=True, exist_ok=True)
+        csv_output_file = Path(csv_location / "{}.csv".format(location))
+        if csv_output_file.exists():
+            os.remove(csv_output_file)
+        df = launch_query(location, csv_output=csv_output_file, df_return=True)
+        pd.set_option('display.max_columns', None)
+        print(df.head(5))
