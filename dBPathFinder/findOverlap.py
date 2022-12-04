@@ -41,7 +41,7 @@ class FindOverlapOneBranch:
         @type list_cols: array of strings
         """
         self.df = df
-        self.tree_csv = tree_csv
+        self.output_fname = tree_csv
         self.list_cols = list_cols
         self.stemmer_cols = stemmer_cols
         self.clean_time_col = "creation_date"  # "converted_creation_date"
@@ -135,7 +135,6 @@ class FindOverlapOneBranch:
         """
         # todo we expand this to have an array of possible starting points
         self.df = self.df.sort_values(by=self.clean_time_col)
-        # idx = self.df[self.clean_time_col].idxmin(skipna=True)
         row_o_items = self.df.iloc[:self.spread]
         # we pick a random starting point in row_0
         self.insert_match_list_to_df(row_o_items, None)
@@ -198,8 +197,6 @@ class FindOverlapOneBranch:
                 # print(Fore.RED + "no textual match found" + Style.RESET_ALL)
                 continue
         return res_found, res_df
-        # todo find per column the overlaps
-        # todo return: boolean 'foundsmth', which indexes with which parameters: multiple options possible!
 
     def build_tree(self):
         print(tabulate(self.df_tree, headers='keys'))
@@ -212,7 +209,9 @@ class FindOverlapOneBranch:
             origin_idx = chosen_in_previous_layer["id"].values[0]
             print(origin_idx)  # printing origin idx as sometimes its a nan
             rows_found, row_indices = self.return_indices_in_list_range(start_idx=self.layer * self.distance_per_step,
-                                                                        # origin_idx, todo changed this as otherwise I don't have control over when we'll reach the end point
+                                                                        # origin_idx, todo changed this as otherwise
+                                                                        #  I don't have control over when we'll reach
+                                                                        #  the end point
                                                                         idx_distance=self.distance_per_step,
                                                                         idx_spread=self.spread)
             if rows_found:
@@ -235,7 +234,14 @@ class FindOverlapOneBranch:
         self.save_tree()
         return True
 
-    def insert_match_list_to_df(self, item_list: pd.DataFrame | list[str], origin_idx: int | None):
+    def insert_match_list_to_df(self, item_list: pd.DataFrame, origin_idx: int | None):
+        """
+        this function takes a sub-selection of the entire dataframe, extracts the useful information
+        and adds some columns for further processing
+        @param item_list:
+        @param origin_idx:
+        @return:
+        """
         # pick a random starting point
         choose_idx = item_list["id"].sample(1).values[0]
         if self.layer == 0:
@@ -328,11 +334,7 @@ class FindOverlapOneBranch:
         Function that creates tree.png with in each layer the nodes written as "layer"_"identifier"
         @type depth: amount of layers we want to show (becomes easily very big)
         """
-        # todo validate if this is correct by printing some links
-        base_of_tree = self.df_tree[self.df_tree["layer"] == 0]["id"].values[0]
         node_list = []
-        # node_list.append([Node(name="{}_{}".format(0, base_of_tree))])
-        # node_list = [[Node(name="{}_{}".format(0, base_of_tree))]]
         root = Node("root")
         try:
             for layer in range(0, depth):
@@ -347,8 +349,9 @@ class FindOverlapOneBranch:
                     if layer > 0:
                         for j in node_list[layer - 1]:
                             if int(j.name.split("_")[1]) == parent_list[i]:
-                                parent = j  # todo is the right parent given?
-                    else: parent = root
+                                parent = j
+                    else:
+                        parent = root
                     node_sub_list.append(Node(name="{}_{}".format(layer, idx_list[i]), parent=parent))
                 node_list_next = np.array(node_sub_list)
                 node_list.append(node_list_next)
@@ -356,15 +359,15 @@ class FindOverlapOneBranch:
             print(e)
             pass
         dot_exp = DotExporter(root)
-        dot_exp.to_picture("tree.png")
+        dot_exp.to_picture("{}.png".format(self.output_fname))
         for line in dot_exp:
-            print(line)  # todo dotexporter only takes topnode??
+            print(line)
 
     def save_tree(self):
-        self.df_tree.to_csv(self.tree_csv, mode='a')
+        self.df_tree.to_csv("{}.csv".format(self.output_fname), mode='a')
 
     def load_tree(self):
-        self.df_tree = pd.read_csv(self.tree_csv)
+        self.df_tree = pd.read_csv(self.output_fname)
 
     def print_tree(self):
         print(tabulate(self.df_tree, headers='keys'))
@@ -382,12 +385,9 @@ def find_tree(input_df, output_file, dataset, list_cols, stemmer_cols, amount_of
 
 if __name__ == '__main__':
     dataset = "dmg"
-    clean_file = Path(Path.cwd() / 'data' / "clean_data" / '{}.csv'.format(dataset))
-    orig_file = Path(Path.cwd() / 'data' / '{}.csv'.format(dataset))
-    # if clean_file.is_file():
-    # input_file = clean_file
-    # else:
-    # input_file = orig_file
+    clean_file = Path(Path.cwd().parent / 'data' / "clean_data" / '{}.csv'.format(dataset))
+    orig_file = Path(Path.cwd().parent / 'data' / "raw_data" / '{}.csv'.format(dataset))
+    output_file = Path(Path.cwd().parent / "data" / "tree_data" / '{}'.format(dataset))
     list_cols = ['object_name', 'creator']
     stemmer_cols = ['title', 'description']
     amount_of_tissues = 100
@@ -404,4 +404,4 @@ if __name__ == '__main__':
 
     input_df2 = pd.read_csv(clean_file)
 
-    find_tree(input_df, "{}_tree.csv".format(dataset), dataset, list_cols, stemmer_cols, amount_of_imgs_to_find)
+    find_tree(input_df, output_file, dataset, list_cols, stemmer_cols, amount_of_imgs_to_find)
