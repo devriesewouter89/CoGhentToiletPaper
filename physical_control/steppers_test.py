@@ -6,7 +6,7 @@ import time
 import board
 from adafruit_motorkit import MotorKit
 from adafruit_motor import stepper
-from pynput import keyboard
+from sshkeyboard import listen_keyboard
 
 
 class stepperControl:
@@ -52,21 +52,10 @@ def on_press(key):
             key))
 
 
-def on_release(key):
-    print('{0} released'.format(
-        key))
-    if key == keyboard.Key.esc:
-        # Stop listener
-        return False
-
-
 if __name__ == '__main__':
     stepperControl = stepperControl()
     # Collect events until released
-    with keyboard.Listener(
-            on_press=on_press,
-            on_release=on_release) as listener:
-        listener.join()
+    listen_keyboard(on_press=on_press)
 
     # ...or, in a non-blocking fashion:
     # listener = keyboard.Listener(
