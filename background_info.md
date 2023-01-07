@@ -27,3 +27,8 @@ https://ezdxf.readthedocs.io/en/stable/tutorials/hatch.html ?
 
 [IIIF tricks](https://iiif.io/api/image/3.0/)
 e.g. rescale images: https://github.com/CoGhent/random_image_viewer/blob/master/getimage/views.py line 45
+
+
+To align toilet paper, should I be using segmentation masks?
+https://blog.roboflow.com/how-to-create-segmentation-masks-with-roboflow/
+
