@@ -1,5 +1,5 @@
 anytree==2.8.0
-graphviz==2.50.0
+# graphviz==2.50.0 either its an ubuntu package with this version, or pypi version
 nltk==3.6.7
 numpy==1.23.3
 opencv-python==4.6.0.66
@@ -13,3 +13,7 @@ tabulate==0.8.10
 finite-state-machine==0.5.0
 pylodstorage==0.4.7
 drawsvg==1.8.3
+adafruit-circuitpython-motorkit==1.6.11
+board==1.0
+keyboard==0.13.5
+
