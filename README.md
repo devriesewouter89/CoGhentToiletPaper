@@ -4,28 +4,30 @@
 
 ## installation
 
-Start with a **64-bit** raspberry pi OS as Git lfs needs 64 bits
+1. Start with a **64-bit** raspberry pi OS as Git lfs needs 64 bits
 
 	tip: enable SSH & setup headless wifi via raspberry pi Imager and CTRL+SHIFT+X
 
-Install GIT-lfs:
+2. Install GIT-lfs:
 ```bash
 wget -c https://github.com/git-lfs/git-lfs/releases/download/v3.2.0/git-lfs-linux-arm64-v3.2.0.tar.gz -O - | tar -xvzf -
 cd git-lfs-3.2.0
 sudo ./install.sh
 ```
 
-clone the repo with submodules and lfs:
+3. clone the repo with submodules and lfs:
 ```bash
 git clone --recurse-submodules https://github.com/devriesewouter89/CoGhentToiletPaper/
 cd CoGhentToiletPaper
 git lfs pull
+git submodule update --init --recursive
 ```
+4. copy `.env.template` to `.env` and adapt to your needs.
+5. install graphviz: `sudo apt install graphviz`
+3. install poetry: `curl -sSL https://install.python-poetry.org | python3 -`
+4. install all packages: `poetry install`
+5. enable the environment: `poetry shell`
 
-##
-
-in directory dBPathFinder:
-copy `.env.template` to `.env` and adapt to your needs.
 
 [//]: # ()
 [//]: # (**optional:** Want to run docker containers? install docker:)
