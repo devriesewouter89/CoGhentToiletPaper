@@ -6,10 +6,11 @@ from pathlib import Path
 import pandas
 import pandas as pd
 from supabase import create_client, Client
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import os
 from os.path import join, dirname
 import csv
+from config_toilet import Config
 
 
 def upload_data(csv_path: Path, sb: Client, location: str):
@@ -42,9 +43,11 @@ def get_sb_data(sb: Client, location: str) -> pandas.DataFrame:
         print('from', offset)
         query = sb.table(location).select("*").gt('id', str(offset))
         data2 = query.execute()
-        if len(data2.get("data")) > 1:
+        # Assert we pulled real data.
+
+        if len(data2.data) > 1:
             offset += 1000
-            data1 = json.dumps(data2.get("data"), indent=2)
+            data1 = json.dumps(data2.data, indent=2)
             data = pd.read_json(data1, typ="frame")
             print(data.head)
             df = pd.concat([df, data])
@@ -53,35 +56,19 @@ def get_sb_data(sb: Client, location: str) -> pandas.DataFrame:
             break
     return df
 
-def link_supabase(dotenv_path: str) -> Client:
-    load_dotenv(dotenv_path)
+def link_supabase(config) -> Client:
 
-    # warning, make sure your key is the secret key, not anon key if row level policy is enabled.
-    URL = os.environ.get("URL")
-    KEY = os.environ.get("KEY")
-    sb = create_client(supabase_url=URL, supabase_key=KEY)
+    sb = create_client(supabase_url=config.URL, supabase_key=config.KEY)
     return sb
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', '-dp', default=Path(Path.cwd().parent / 'data'))
-    parser.add_argument("--dataset", '-ds',
-                        help="choose collections to preprocess",
-                        choices=["dmg", "industriemuseum", "stam", "hva",
-                                 "archiefgent", "thesaurus", "AGENT"],
-                        default=["dmg"])#"industriemuseum", "hva", "archiefgent"])
-    args = parser.parse_args()
+    config = Config()
+    sb = link_supabase(config)
 
-    data_path = Path(args.data_path)
-    dotenv_path = join(dirname(__file__), '../.env')
-    sb = link_supabase(dotenv_path)
+    # print("start supa injection at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    # upload_data(config.clean_data_path, sb, config.location)
 
-
-    datasets = args.dataset
-    for dataset in datasets:
-        # print("start supa injection at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
-        # upload_data(Path(Path.cwd().parent / 'data' / 'clean_data'), sb, dataset)
-        print("start supa extraction at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
-        df = get_sb_data(sb, dataset)
-        print(df.head())
-        print(df.info)
+    print("start supa extraction at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    df = get_sb_data(sb, config.location)
+    print(df.head())
+    print(df.info)

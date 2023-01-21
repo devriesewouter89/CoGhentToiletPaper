@@ -20,7 +20,13 @@ def start_WordListCorpusReader():
     environment)
     """
     print(wn.__class__)  # <class 'nltk.corpus.util.LazyCorpusLoader'>
-    wn.ensure_loaded()  # first access to wn transforms it
+    try:
+        wn.ensure_loaded()  # first access to wn transforms it
+    except LookupError as e:
+        print(e)
+        import nltk
+        nltk.download()
+        start_WordListCorpusReader()
     print(wn.__class__)  # <class 'nltk.corpus.reader.wordnet.WordNetCorpusReader'>
 
 

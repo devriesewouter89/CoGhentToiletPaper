@@ -30,14 +30,15 @@ we want a state machine calling the different blocks of code:
     DEBUG: the waiting light is shown that we're ready
     We roll back the paper already a bit in approx of the amount of rotations already done
 """
-
-import configparser
-
+import pandas as pd
 from finite_state_machine import StateMachine, transition
 from finite_state_machine.exceptions import InvalidStartState
 
 from config_toilet import Config
 from dBPathFinder.findOverlap import find_tree
+from dBPathFinder.scripts.supabase_link import link_supabase, get_sb_data
+from imageConversion.image_conversion import convert_folder_to_linedraw, create_in_between_images, \
+    download_images_from_tree
 
 """
 #todo write documentation
@@ -53,22 +54,56 @@ class ToiletPaperStateMachine(StateMachine):
         self.config = config
         self.state = self.initial_state
         super().__init__()
+        self.df_tree = None
 
     @transition(source="waiting", target="path_finding")
     def find_path(self):
-        ftree = find_tree(input_file=config.clean_data_path,
-                          output_file=config.tree_path,
-                          stemmer_cols=config.stemmer_cols,
-                          list_cols=config.list_cols,
-                          amount_of_imgs_to_find=config.amount_of_imgs_to_find)
+        """
 
-    @transition(source="path_finding", target="prep_imgs")
+        we find a possible path for this run and generate the csvs for this
+        """
+        # 1. Make connection with supabase database
+        sb = link_supabase(config)
+        # 2. fetch the dataframe for current location
+        input_df = get_sb_data(sb, config.location)
+        # 3. find the tree path
+        self.df_tree = find_tree(input_df=input_df,
+                                 output_file=config.tree_path,
+                                 stemmer_cols=config.stemmer_cols,
+                                 list_cols=config.list_cols,
+                                 amount_of_imgs_to_find=config.amount_of_imgs_to_find)
+
+    @transition(source="waiting", target="test_df")
+    def test_df(self):
+        self.df_tree = pd.read_csv(config.tree_path, index_col=0)
+
+    @transition(source=["path_finding", "test_df"], target="prep_imgs")
     def prep_imgs(self):
-        pass
+        """
+        1. we download the images for this tree
+        2. we create the in-between pages
+        3. we convert the images to lineart
+        """
+
+        # 1.
+        # download_images_from_tree(df=self.df_tree,
+        #                           output_path=config.tree_img_path)
+        # print("images downloaded")
+        # # 2.
+        # create_in_between_images(df=self.df_tree, output_path=config.in_between_page_path)
+        # 3.
+        convert_folder_to_linedraw(input_path=config.tree_img_path,
+                                   output_path=config.converted_img_path,
+                                   draw_hatch=False,
+                                   draw_contour=True,
+                                   contour_simplify=2,
+                                   hatch_size=24)
+
+        # pass
 
     @transition(source=["prep_imgs", "print_img"], target="roll_paper")
     def roll_paper(self):
-        #! bijhouden hoeveel we afrollen
+        # ! bijhouden hoeveel we afrollen
         pass
 
     @transition(source="roll_paper", target="print_img")
@@ -90,15 +125,17 @@ if __name__ == '__main__':
     config = Config()
 
     stm = ToiletPaperStateMachine(config)
-    stm.find_path()
-    print("finished path creation")
+    stm.test_df()
     stm.prep_imgs()
-    for i in range(0, 49):
-        stm.roll_paper()
-        stm.print_img()
-    stm.roll_back()
-    stm.wait()
-    try:
-        stm.print_img()  # should trigger an error
-    except InvalidStartState as e:
-        print("Error: {}".format(e))
+    # stm.find_path()
+    # print("finished path creation")
+    # stm.prep_imgs()
+    # for i in range(0, 49):
+    #     stm.roll_paper()
+    #     stm.print_img()
+    # stm.roll_back()
+    # stm.wait()
+    # try:
+    #     stm.print_img()  # should trigger an error
+    # except InvalidStartState as e:
+    #     print("Error: {}".format(e))

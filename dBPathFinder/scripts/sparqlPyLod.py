@@ -9,6 +9,8 @@ from lodstorage.csv import CSV
 import pandas as pd
 from pathlib import Path
 
+from config_toilet import Config
+
 """
 to build the query: 
 1. go to an object of the collection: eg https://data.collectie.gent/entity/stam:S.1158 
@@ -105,22 +107,12 @@ def launch_query(location: str, csv_output: Path, df_return: bool = False):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', '-dp', default=Path(Path.cwd().parent / 'data'))
-    parser.add_argument("--dataset", '-ds', help="choose collections to preprocess",
-                        choices=["dmg", "industriemuseum", "stam", "hva",
-                                 "archiefgent", "thesaurus", "AGENT"], default=["hva", "archiefgent"])
-    args = parser.parse_args()
-
-    data_path = Path(args.data_path)
-    datasets = args.dataset
-    print("start preprocessing at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
-    for location in datasets:
-        csv_location = Path(Path.cwd().parent / "data")
-        csv_location.mkdir(parents=True, exist_ok=True)
-        csv_output_file = Path(csv_location / "{}.csv".format(location))
-        if csv_output_file.exists():
-            os.remove(csv_output_file)
-        df = launch_query(location, csv_output=csv_output_file, df_return=True)
-        pd.set_option('display.max_columns', None)
-        print(df.head(5))
+    config = Config()
+    print("start fetching data at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
+    config.location_files.mkdir(parents=True, exist_ok=True)
+    csv_output_file = config.raw_data_path
+    if csv_output_file.exists():
+        os.remove(csv_output_file)
+    df = launch_query(config.location, csv_output=csv_output_file, df_return=True)
+    pd.set_option('display.max_columns', None)
+    print(df.head(5))

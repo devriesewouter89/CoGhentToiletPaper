@@ -16,6 +16,8 @@ from urllib.request import urlopen
 
 from pathlib import Path
 
+from config_toilet import Config
+
 """
 #todo write documentation
 
@@ -216,33 +218,18 @@ class PrepDf:
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--data_path', '-dp', default=Path(Path.cwd().parent / 'data'))
-    parser.add_argument("--dataset", '-ds',
-                        help="choose collections to preprocess",
-                        choices=["dmg", "industriemuseum", "stam", "hva",
-                                 "archiefgent", "thesaurus", "AGENT"],
-                        default=["industriemuseum", "hva", "archiefgent"])
-    args = parser.parse_args()
-
-    data_path = Path(args.data_path)
-    datasets = args.dataset
+    config = Config()
 
     print("start preprocessing at {}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
-    for dataset in datasets:
-        input_file = Path(data_path / '{}.csv'.format(dataset))
-        clean_data_path = Path(data_path / "clean_data")
-        clean_data_path.mkdir(parents=True, exist_ok=True)
-        clean_file = Path(clean_data_path / '{}.csv'.format(dataset))
+    input_file = config.raw_data_path
+    clean_data_path = config.clean_data_path
 
-        list_cols = ['object_name']  # 'creator']
-        stemmer_cols = ['title', 'description']
-        amount_of_tissues = 100
-        amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
-        # 1. we make a pandas dataframe for manipulation
-        clean_df = PrepDf(input_csv=input_file, clean_csv=clean_file, institute=dataset, time_col="creation_date",
-                          steps=amount_of_imgs_to_find)
+    amount_of_tissues = 100
+    amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
+    # 1. we make a pandas dataframe for manipulation
+    clean_df = PrepDf(input_csv=input_file, clean_csv=clean_data_path, institute=config.location, time_col="creation_date",
+                      steps=amount_of_imgs_to_find)
 
-        # 2. to get some insights in the distribution of the data: enable next statement
-        clean_df.plot_distribution()
+    # 2. to get some insights in the distribution of the data: enable next statement
+    clean_df.plot_distribution()
     print("finished preprocessing at {}".format(datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")))

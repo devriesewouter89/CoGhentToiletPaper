@@ -5,10 +5,8 @@ python file to check two or more lines from a csv file
 import ast
 import math
 import os
-import random
 from contextlib import suppress
 from datetime import date
-from os.path import join, dirname
 from pathlib import Path
 from queue import Queue
 from threading import Thread
@@ -17,12 +15,11 @@ import numpy as np
 import pandas as pd
 from anytree import Node
 from anytree.exporter import DotExporter
-from dotenv import load_dotenv
-from supabase_py import client
 from tabulate import tabulate
 
+from config_toilet import Config
 from dBPathFinder.scripts.stemmer import sentence_to_stems, start_WordListCorpusReader
-from dBPathFinder.scripts.supabase_link import get_sb_data
+from dBPathFinder.scripts.supabase_link import get_sb_data, link_supabase
 
 """
 #todo write documentation
@@ -198,7 +195,7 @@ class FindOverlapOneBranch:
                 continue
         return res_found, res_df
 
-    def build_tree(self):
+    def build_tree(self) -> pd.DataFrame:
         print(tabulate(self.df_tree, headers='keys'))
         # Initialize the wordListcorpusreader object
         start_WordListCorpusReader()
@@ -232,7 +229,7 @@ class FindOverlapOneBranch:
                         self.df_tree[self.df_tree["layer"] == self.layer - 1]["id"])))
                 break
         self.save_tree()
-        return True
+        return self.df_tree
 
     def insert_match_list_to_df(self, item_list: pd.DataFrame, origin_idx: int | None):
         """
@@ -285,7 +282,7 @@ class FindOverlapOneBranch:
             # print('matches had been found')
             return True
         else:
-            # print("we came at a dead-end by no matches found, return a layer and try another index")
+            print("we came at a dead-end by no matches found, return a layer and try another index")
             # print(tabulate(self.df_tree, headers='keys'))
             updated_origin_idx = self.backward_motion()
             if updated_origin_idx is None:
@@ -359,12 +356,12 @@ class FindOverlapOneBranch:
             print(e)
             pass
         dot_exp = DotExporter(root)
-        dot_exp.to_picture("{}.png".format(self.output_fname))
+        dot_exp.to_picture("{}.png".format(os.path.splitext(self.output_fname)[0]))
         for line in dot_exp:
             print(line)
 
     def save_tree(self):
-        self.df_tree.to_csv("{}.csv".format(self.output_fname), mode='a')
+        self.df_tree.to_csv("{}".format(self.output_fname), mode='w')
 
     def load_tree(self):
         self.df_tree = pd.read_csv(self.output_fname)
@@ -403,24 +400,17 @@ def find_tree(input_df: pd.DataFrame, output_file: Path, list_cols=None,
 
 
 if __name__ == '__main__':
-    dataset = "dmg"
-    clean_file = Path(Path.cwd().parent / 'data' / "clean_data" / '{}.csv'.format(dataset))
-    orig_file = Path(Path.cwd().parent / 'data' / "raw_data" / '{}.csv'.format(dataset))
-    output_file = Path(Path.cwd().parent / "data" / "tree_data" / '{}'.format(dataset))
-    list_cols = ['object_name', 'creator']
-    stemmer_cols = ['title', 'description']
-    amount_of_tissues = 100
-    amount_of_imgs_to_find = math.floor(amount_of_tissues / 2)
+    config = Config()
+    clean_file = config.clean_data_path
 
-    dotenv_path = join(dirname(__file__), '.env')
-    load_dotenv(dotenv_path)
 
-    # warning, make sure your key is the secret key, not anon key if row level policy is enabled.
-    URL = os.environ.get("URL")
-    KEY = os.environ.get("KEY")
-    sb = client.create_client(supabase_url=URL, supabase_key=KEY)
-    input_df = get_sb_data(sb, dataset)
+    # 1. Make connection with supabase database
+    sb = link_supabase(config)
+    # 2. fetch the dataframe for current location
+    input_df = get_sb_data(sb, config.location)
+    # 3. find a path in the data
+    find_tree(input_df, config.tree_path, config.list_cols, config.stemmer_cols, config.amount_of_imgs_to_find)
 
-    input_df2 = pd.read_csv(clean_file)
+    # input_df2 = pd.read_csv(clean_file)
 
-    find_tree(input_df, output_file, list_cols, stemmer_cols, amount_of_imgs_to_find)
+#TODO something goes often wrong here, need to debug

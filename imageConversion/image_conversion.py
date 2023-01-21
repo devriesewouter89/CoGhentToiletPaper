@@ -1,24 +1,24 @@
 import ast
-import json
-import os
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import requests
 
-from imageConversion.in_between_paper.in_between_generator import replace_text_in_svg, create_svg
-from imageConversion.linedraw.linedraw import LineDraw
+from imageConversion.in_between_paper.in_between_generator import create_svg
+from linedraw.linedraw import LineDraw
 
 
-def download_images_from_tree(csv_path: Path, output_path: Path):
+
+def download_images_from_tree(df: pd.DataFrame, output_path: Path):
     """
-
-    @param csv_path:
+    open the tree dataframe, find the chosen entries and download the belonging images
+    @param df:
     @param output_path:
     """
-    df = pd.read_csv(str(csv_path))
-    df = df.loc[(df["chosen"])]
+    if df.chosen.dtypes.name == 'bool':
+        df = df.loc[df['chosen']]
+    else:
+        df = df.loc[(df["chosen"] == 'True')]
     for index, row in df.iterrows():
         # print(index, row)
         print(row["img_uri"])
@@ -58,6 +58,7 @@ def convert_folder_to_linedraw(input_path: Path, output_path: Path, draw_contour
     """
     ld = LineDraw(draw_contours=draw_contour, draw_hatch=draw_hatch, hatch_size=hatch_size,
                   contour_simplify=contour_simplify, resolution=resolution)
+    output_path.mkdir(parents=True, exist_ok=True)
     for img in input_path.iterdir():
         output = Path(output_path / "{}.svg".format(img.stem))
         ld.export_path = output
@@ -66,15 +67,20 @@ def convert_folder_to_linedraw(input_path: Path, output_path: Path, draw_contour
         convert_polyline_to_path(output)
 
 
-def create_in_between_images(csv_path: Path, output_path: Path):
+def create_in_between_images(df: pd.DataFrame, output_path: Path):
     """
 
-    @param csv_path:
+    @param df:
     @param output_path:
     """
-    df = pd.read_csv(str(csv_path), index_col=0)
-    df = df.loc[(df["chosen"])]
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    if df.chosen.dtypes.name == 'bool':
+        df = df.loc[df['chosen']]
+    else:
+        df = df.loc[(df["chosen"] == 'True')]
     print(df.shape)
+    df = df.reset_index()
     amount_of_layers = len(df)
     for index, row in df.iterrows():
         old_image_descr = None
@@ -113,11 +119,14 @@ def resize_svgs_from_folder():
 if __name__ == '__main__':
     print(Path.cwd())
     parent = Path.cwd().parent
-    # in_between_out = Path(Path.cwd() / "images" / "in_between")
-    # in_between_out.mkdir(parents=True, exist_ok=True)
-    # download_images_from_tree(csv_path=Path(parent / "dBPathFinder" / "DMG_tree.csv"),
-    #                           output_path=Path(Path.cwd() / "images" / "input"))
+    csv_path = Path(parent / "dBPathFinder" / "dmg_tree.csv")
+    df = pd.read_csv(str(csv_path), index_col=0)
+
+    download_images_from_tree(df=df,
+                              output_path=Path(Path.cwd() / "images" / "input"))
     convert_folder_to_linedraw(input_path=Path(Path.cwd() / "images" / "input"),
                                output_path=Path(Path.cwd() / "images" / "linedraw"))
-    # create_in_between_images(output_path=in_between_out,
-    #                          csv_path=Path(parent / "dBPathFinder" / "dmg_tree.csv"))
+
+    in_between_out = Path(Path.cwd() / "images" / "in_between")
+    in_between_out.mkdir(parents=True, exist_ok=True)
+    create_in_between_images(df=df, output_path=in_between_out)
