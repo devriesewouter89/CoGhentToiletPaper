@@ -40,13 +40,11 @@ class stepperControl:
 def on_press(key):
     try:
         print('alphanumeric key {0} pressed'.format(
-            key.char))
-        if key.char == "q":
+            key))
+        if key == "q":
             stepperControl.move_paper_left(50)
-        if key.char == "d":
+        if key == "d":
             stepperControl.move_paper_left(50)
-        if key.char == "l":
-            print("bye")
     except AttributeError:
         print('special key {0} pressed'.format(
             key))
@@ -56,20 +54,3 @@ if __name__ == '__main__':
     stepperControl = stepperControl()
     # Collect events until released
     listen_keyboard(on_press=on_press)
-
-    # ...or, in a non-blocking fashion:
-    # listener = keyboard.Listener(
-    #     on_press=on_press)
-    # listener.start()
-    # while True:
-    #     if keyboard.read_key() == "q":
-    #         print("You pressed 'q'.")
-    #         stepperControl.move_paper_left(50)
-    #         continue
-    #     if keyboard.read_key() == "d":
-    #         print("you pressed 'd'")
-    #         stepperControl.move_paper_right(50)
-    #         continue
-    #     if keyboard.read_key() == "l":  # leave
-    #         print("byebye")
-    #         break

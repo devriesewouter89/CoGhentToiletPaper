@@ -36,11 +36,22 @@ def upload_data(csv_path: Path, sb: Client, location: str):
 
 def get_sb_data(sb: Client, location: str) -> pandas.DataFrame:
     # todo only get 1000 results at once, implement jump with offset
-    query = sb.table(location).select("*")
-    data2 = query.execute()
-    data1 = json.dumps(data2.get("data"), indent=2)
-    data = pd.read_json(data1, typ="frame")
-    return data
+    offset = 0
+    df = pd.DataFrame()
+    while True:
+        print('from', offset)
+        query = sb.table(location).select("*").gt('id', str(offset))
+        data2 = query.execute()
+        if len(data2.get("data")) > 1:
+            offset += 1000
+            data1 = json.dumps(data2.get("data"), indent=2)
+            data = pd.read_json(data1, typ="frame")
+            print(data.head)
+            df = pd.concat([df, data])
+        else:
+            print("went up to {}".format(offset))
+            break
+    return df
 
 def link_supabase(dotenv_path: str) -> Client:
     load_dotenv(dotenv_path)
@@ -58,7 +69,7 @@ if __name__ == '__main__':
                         help="choose collections to preprocess",
                         choices=["dmg", "industriemuseum", "stam", "hva",
                                  "archiefgent", "thesaurus", "AGENT"],
-                        default=["industriemuseum", "hva", "archiefgent"])
+                        default=["dmg"])#"industriemuseum", "hva", "archiefgent"])
     args = parser.parse_args()
 
     data_path = Path(args.data_path)
@@ -67,8 +78,10 @@ if __name__ == '__main__':
 
 
     datasets = args.dataset
-    print("start supa injection at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
     for dataset in datasets:
+        # print("start supa injection at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
         # upload_data(Path(Path.cwd().parent / 'data' / 'clean_data'), sb, dataset)
+        print("start supa extraction at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
         df = get_sb_data(sb, dataset)
         print(df.head())
+        print(df.info)
