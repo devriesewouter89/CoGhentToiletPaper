@@ -373,7 +373,26 @@ class FindOverlapOneBranch:
         print(tabulate(self.df_tree, headers='keys'))
 
 
-def find_tree(input_df, output_file, dataset, list_cols, stemmer_cols, amount_of_imgs_to_find):
+def find_tree(input_df: pd.DataFrame, output_file: Path, list_cols=None,
+              stemmer_cols=None, amount_of_imgs_to_find: int = 50):
+    """
+
+    @param input_df: dataframe in which we want to find the path
+    @type input_df: pd.Dataframe
+    @param output_file: path (without an extension) to where we want to save the found path
+    @type output_file: Path
+    @param list_cols: columns which we want to check in the dataframe todo check if this is necessary
+    @type list_cols: [str]
+    @param stemmer_cols:columns which we want to check in the dataframe todo check if this is necessary
+    @type stemmer_cols: [str]
+    @param amount_of_imgs_to_find: half the amount of toilet paper sheets
+    @type amount_of_imgs_to_find: int
+
+    """
+    if list_cols is None:
+        list_cols = ['object_name', 'creator']
+    if stemmer_cols is None:
+        stemmer_cols = ['title', 'description']
     f_ol = FindOverlapOneBranch(df=input_df, tree_csv=output_file, list_cols=list_cols,
                                 stemmer_cols=stemmer_cols,
                                 steps=amount_of_imgs_to_find, spread=3, max_amount_of_threads=1000)
@@ -404,4 +423,4 @@ if __name__ == '__main__':
 
     input_df2 = pd.read_csv(clean_file)
 
-    find_tree(input_df, output_file, dataset, list_cols, stemmer_cols, amount_of_imgs_to_find)
+    find_tree(input_df, output_file, list_cols, stemmer_cols, amount_of_imgs_to_find)

@@ -56,8 +56,10 @@ class ToiletPaperStateMachine(StateMachine):
 
     @transition(source="waiting", target="path_finding")
     def find_path(self):
-        ftree = find_tree(input_file=config.clean_data_path, output_file=config.tree_path, dataset=config.location,
-                          stemmer_cols=config.stemmer_cols, list_cols=config.list_cols,
+        ftree = find_tree(input_file=config.clean_data_path,
+                          output_file=config.tree_path,
+                          stemmer_cols=config.stemmer_cols,
+                          list_cols=config.list_cols,
                           amount_of_imgs_to_find=config.amount_of_imgs_to_find)
 
     @transition(source="path_finding", target="prep_imgs")

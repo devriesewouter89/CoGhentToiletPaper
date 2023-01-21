@@ -9,8 +9,6 @@ class Config:
 
     location = "dmg"
 
-
-
     ROOT_DIR = os.path.abspath(os.curdir)
 
     # check which platform to define path structure.

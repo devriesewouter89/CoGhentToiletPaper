@@ -22,46 +22,85 @@ cd CoGhentToiletPaper
 git lfs pull
 ```
 
-**optional:** Want to run docker containers? install docker:
-```bash
-curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh
-sudo groupadd docker
-sudo usermod -aG docker ${USER}
-sudo reboot
-```
+##
 
+in directory dBPathFinder:
+copy `.env.template` to `.env` and adapt to your needs.
 
+[//]: # ()
+[//]: # (**optional:** Want to run docker containers? install docker:)
 
+[//]: # (```bash)
 
-### image conversion
+[//]: # (curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh)
 
-multiple approaches:
-1. docker
-2. jupyter notebook
-3. directly via python scripts
+[//]: # (sudo groupadd docker)
 
+[//]: # (sudo usermod -aG docker ${USER})
 
-#### docker 
+[//]: # (sudo reboot)
 
-if CUDA cores available:
-```bash
-docker build -f Dockerfile.GPU -t imageconversion .
-```
+[//]: # (```)
 
-else 
+[//]: # ()
+[//]: # ()
+[//]: # ()
+[//]: # ()
+[//]: # (### image conversion)
 
-```bash
-docker build -f Dockerfile.CPU -t imageconversion .
-```
+[//]: # ()
+[//]: # (multiple approaches:)
 
-to run with the example folders: 
-```bash
-docker run --name imgconv --mount type=bind,source="$(pwd)"/input,target=/coghent_input --mount type=bind,source="$(pwd)"/output/lineart,target=/workspace/coghent_vectors --mount type=bind,source="$(pwd)"/output/vectors,target=/workspace/coghent_lineart imageconversion
+[//]: # (1. docker)
 
-```
+[//]: # (2. jupyter notebook)
 
-and then to start it:
-```bash
-docker start -a imgconv
-```
+[//]: # (3. directly via python scripts)
 
+[//]: # ()
+[//]: # ()
+[//]: # (#### docker )
+
+[//]: # ()
+[//]: # (if CUDA cores available:)
+
+[//]: # (```bash)
+
+[//]: # (docker build -f Dockerfile.GPU -t imageconversion .)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (else )
+
+[//]: # ()
+[//]: # (```bash)
+
+[//]: # (docker build -f Dockerfile.CPU -t imageconversion .)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (to run with the example folders: )
+
+[//]: # (```bash)
+
+[//]: # (docker run --name imgconv --mount type=bind,source="$&#40;pwd&#41;"/input,target=/coghent_input --mount type=bind,source="$&#40;pwd&#41;"/output/lineart,target=/workspace/coghent_vectors --mount type=bind,source="$&#40;pwd&#41;"/output/vectors,target=/workspace/coghent_lineart imageconversion)
+
+[//]: # ()
+[//]: # (```)
+
+[//]: # ()
+[//]: # (and then to start it:)
+
+[//]: # (```bash)
+
+[//]: # (docker start -a imgconv)
+
+[//]: # (```)
+
+## Nice to haves
+
+### a web ui
+
+perhaps in flutter? to check the state of the statemachine

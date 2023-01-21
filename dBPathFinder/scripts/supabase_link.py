@@ -5,14 +5,14 @@ from pathlib import Path
 
 import pandas
 import pandas as pd
-from supabase_py import client
+from supabase import create_client, Client
 from dotenv import load_dotenv
 import os
 from os.path import join, dirname
 import csv
 
 
-def upload_data(csv_path: Path, sb: client, location: str):
+def upload_data(csv_path: Path, sb: Client, location: str):
     with open(Path(csv_path / "{}.csv".format(location))) as f:
         csv_data = list(csv.DictReader(f, delimiter=','))
 
@@ -34,7 +34,7 @@ def upload_data(csv_path: Path, sb: client, location: str):
     print(response)
 
 
-def get_sb_data(sb: client, location: str) -> pandas.DataFrame:
+def get_sb_data(sb: Client, location: str) -> pandas.DataFrame:
     # todo only get 1000 results at once, implement jump with offset
     query = sb.table(location).select("*")
     data2 = query.execute()
@@ -42,6 +42,14 @@ def get_sb_data(sb: client, location: str) -> pandas.DataFrame:
     data = pd.read_json(data1, typ="frame")
     return data
 
+def link_supabase(dotenv_path: str) -> Client:
+    load_dotenv(dotenv_path)
+
+    # warning, make sure your key is the secret key, not anon key if row level policy is enabled.
+    URL = os.environ.get("URL")
+    KEY = os.environ.get("KEY")
+    sb = create_client(supabase_url=URL, supabase_key=KEY)
+    return sb
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -54,14 +62,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     data_path = Path(args.data_path)
-
     dotenv_path = join(dirname(__file__), '../.env')
-    load_dotenv(dotenv_path)
+    sb = link_supabase(dotenv_path)
 
-    # warning, make sure your key is the secret key, not anon key if row level policy is enabled.
-    URL = os.environ.get("URL")
-    KEY = os.environ.get("KEY")
-    sb = client.create_client(supabase_url=URL, supabase_key=KEY)
 
     datasets = args.dataset
     print("start supa injection at {}".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S")))
