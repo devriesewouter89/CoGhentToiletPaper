@@ -1,4 +1,5 @@
 # Collectie van de Gentenaar: Gentse rol van het wc
+![prototype](./images/prototype.jpg)
 
 ## Oorsprong
 

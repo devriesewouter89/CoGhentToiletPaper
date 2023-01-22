@@ -39,6 +39,7 @@ from dBPathFinder.findOverlap import find_tree
 from dBPathFinder.scripts.supabase_link import link_supabase, get_sb_data
 from imageConversion.image_conversion import convert_folder_to_linedraw, create_in_between_images, \
     download_images_from_tree
+from physical_control.paper_control import StepperControl, SuctionControl
 
 """
 #todo write documentation
@@ -55,6 +56,8 @@ class ToiletPaperStateMachine(StateMachine):
         self.state = self.initial_state
         super().__init__()
         self.df_tree = None
+        self.stepperControl = StepperControl()
+        self.sc = SuctionControl()
 
     @transition(source="waiting", target="path_finding")
     def find_path(self):
@@ -86,11 +89,12 @@ class ToiletPaperStateMachine(StateMachine):
         """
 
         # 1.
-        # download_images_from_tree(df=self.df_tree,
-        #                           output_path=config.tree_img_path)
-        # print("images downloaded")
-        # # 2.
-        # create_in_between_images(df=self.df_tree, output_path=config.in_between_page_path)
+        download_images_from_tree(df=self.df_tree,
+                                  output_path=config.tree_img_path)
+        print("images downloaded")
+        # 2.
+        create_in_between_images(df=self.df_tree, output_path=config.in_between_page_path)
+        print("in beteen images created")
         # 3.
         convert_folder_to_linedraw(input_path=config.tree_img_path,
                                    output_path=config.converted_img_path,
@@ -98,21 +102,24 @@ class ToiletPaperStateMachine(StateMachine):
                                    draw_contour=True,
                                    contour_simplify=2,
                                    hatch_size=24)
-
-        # pass
+        print("images converted to lineart")
 
     @transition(source=["prep_imgs", "print_img"], target="roll_paper")
     def roll_paper(self):
         # ! bijhouden hoeveel we afrollen
-        pass
+        self.stepperControl.roll_towards_next_sheet()
 
     @transition(source="roll_paper", target="print_img")
     def print_img(self):
-        pass
+        # 1. start suction
+        self.sc.enable_relays()
+        # 2. start printing
+
 
     @transition(source="print_img", target="roll_back_paper")
     def roll_back(self):
-        pass
+        self.stepperControl.move_paper_right(self.stepperControl.total_roll)
+        # todo check if we're not pulling too far?
 
     @transition(source="roll_back_paper", target="waiting")
     def wait(self):
@@ -123,6 +130,7 @@ if __name__ == '__main__':
     print("starting the coghent toilet paper printer software")
     # read config file
     config = Config()
+    #TODO add a physical setup function: find height of pen etc
 
     stm = ToiletPaperStateMachine(config)
     stm.test_df()

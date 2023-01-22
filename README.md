@@ -2,6 +2,17 @@
 
 ## Project
 
+	Bringin heritage closer to the people.
+An installation interpreting images from [Collectie van de Gentenaar](https://www.collectie.gent/).
+
+The installation places images on a unique timeline, where each image is semantically connected one way or the other.
+
+This timeline is then printed on toilet paper.
+
+_That's about as close as it gets to the people._
+
+![prototype](./docs/images/prototype.jpg)
+
 ## installation
 
 1. Start with a **64-bit** raspberry pi OS as Git lfs needs 64 bits
@@ -22,6 +33,7 @@ cd CoGhentToiletPaper
 git lfs pull
 git submodule update --init --recursive
 ```
+TODO: adapt [prep_env.sh](./prep_env.sh)
 4. copy `.env.template` to `.env` and adapt to your needs.
 5. install graphviz: `sudo apt install graphviz`
 3. install poetry: `curl -sSL https://install.python-poetry.org | python3 -`
