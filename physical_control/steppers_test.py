@@ -9,9 +9,12 @@ from adafruit_motor import stepper
 from sshkeyboard import listen_keyboard
 
 
-class stepperControl:
+class StepperControl:
     def __init__(self):
+        """
+        """
         self.kit = MotorKit(i2c=board.I2C())
+        self.total_roll = 0
 
     def test_stepper(self):
         for _ in range(10):
@@ -27,14 +30,32 @@ class stepperControl:
         self.kit.stepper2.release()
 
     def move_paper_left(self, amount_of_steps: int = 50):
+        """
+
+        @param amount_of_steps:
+        @return:
+        """
+        self.total_roll += amount_of_steps
+        self.kit.stepper2.release()
         for _ in range(amount_of_steps):
             self.kit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.SINGLE)
-            self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
+            # self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
+        # todo necessary to have both activated afterwards so paper can't move?
 
     def move_paper_right(self, amount_of_steps: int = 50):
+        """
+
+        @param amount_of_steps:
+        @return:
+        """
+        self.total_roll -= amount_of_steps
+        self.kit.stepper1.release()
         for _ in range(amount_of_steps):
-            self.kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
+            # self.kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
             self.kit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.SINGLE)
+        # todo necessary to have both activated afterwards so paper can't move?
+
+
 
 
 def on_press(key):
@@ -51,6 +72,6 @@ def on_press(key):
 
 
 if __name__ == '__main__':
-    stepperControl = stepperControl()
+    stepperControl = StepperControl()
     # Collect events until released
     listen_keyboard(on_press=on_press)
