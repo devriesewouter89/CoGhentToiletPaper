@@ -7,7 +7,11 @@ from pyaxidraw import axidraw
 
 class TimelinePrinter:
     def __init__(self):
-        self.ad = axidraw.AxiDraw()
+        try:
+            self.ad = axidraw.AxiDraw()
+        except Exception as e:
+            print(e)
+        self.comb_list = []
 
     def create_comb_list(self, list1, list2):
         """
@@ -20,8 +24,8 @@ class TimelinePrinter:
         @return:
         """
         temp = itertools.zip_longest(list1, list2)
-        comb_list = [x for x in itertools.chain.from_iterable(temp) if x]
-        return comb_list
+        self.comb_list = [x for x in itertools.chain.from_iterable(temp) if x]
+        return self.comb_list
 
     def get_list_of_files(self, dir_name: str):
         """
@@ -44,12 +48,11 @@ class TimelinePrinter:
                 all_files.append(full_path)
         return all_files
 
-    def plot_img_from_list(self, img_list: [str], index: int = 0):
-        img = img_list[index]
+    def plot_img_from_list(self, index: int = 0):
+        img = self.comb_list[index]
         self.ad.plot_setup(img)
         self.ad.options.pen_pos_up = 70
         self.ad.plot_run()
-
 
 if __name__ == '__main__':
     config = Config()
@@ -58,4 +61,5 @@ if __name__ == '__main__':
     list1 = tp.get_list_of_files(config.converted_img_path)
     list2 = tp.get_list_of_files(config.in_between_page_path)
     res = tp.create_comb_list(list1, list2)
-    tp.plot_img_from_list(res, 0)
+    print(res)
+    tp.plot_img_from_list(0)

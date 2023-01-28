@@ -72,21 +72,7 @@ class StepperControl:
                 self.move_paper_left(amount_of_steps=10)
 
 
-class SuctionControl:
-    def __init__(self):
-        self.relay1 = 8
-        self.relay2 = 9
-        GPIO.setmode(GPIO.BOARD)
-        GPIO.setup(self.relay1, GPIO.OUT)
-        GPIO.setup(self.relay2, GPIO.OUT)
 
-    def enable_relays(self):
-        GPIO.output(self.relay1, GPIO.HIGH)
-        GPIO.output(self.relay2, GPIO.HIGH)
-
-    def disable_relays(self):
-        GPIO.output(self.relay1, GPIO.LOW)
-        GPIO.output(self.relay2, GPIO.LOW)
 
 
 def on_press(key):
@@ -108,6 +94,5 @@ def on_press(key):
 
 if __name__ == '__main__':
     stepperControl = StepperControl()
-    sc = SuctionControl()
     # Collect events until released
     listen_keyboard(on_press=on_press)
