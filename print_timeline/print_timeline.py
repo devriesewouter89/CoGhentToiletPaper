@@ -54,6 +54,7 @@ class TimelinePrinter:
         self.ad.options.pen_pos_up = 70
         self.ad.plot_run()
 
+
 if __name__ == '__main__':
     config = Config()
     tp = TimelinePrinter()

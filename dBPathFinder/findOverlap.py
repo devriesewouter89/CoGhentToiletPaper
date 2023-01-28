@@ -20,6 +20,7 @@ from tabulate import tabulate
 from config_toilet import Config
 from dBPathFinder.scripts.stemmer import sentence_to_stems, start_WordListCorpusReader
 from dBPathFinder.scripts.supabase_link import get_sb_data, link_supabase
+from typing import Union
 
 """
 #todo write documentation
@@ -231,7 +232,7 @@ class FindOverlapOneBranch:
         self.save_tree()
         return self.df_tree
 
-    def insert_match_list_to_df(self, item_list: pd.DataFrame, origin_idx: int | None):
+    def insert_match_list_to_df(self, item_list: pd.DataFrame, origin_idx: Union[int, None]):
         """
         this function takes a sub-selection of the entire dataframe, extracts the useful information
         and adds some columns for further processing

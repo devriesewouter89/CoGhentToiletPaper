@@ -5,6 +5,7 @@ import svglue
 import drawSvg as draw
 from pathlib import Path
 import textwrap
+from typing import Union
 
 # todo: better to use https://github.com/cduck/drawSvg ? and just write svg text at certain locations
 """
@@ -51,7 +52,7 @@ def replace_text_in_svg(svg_path, text_old, year_old, text_new, year_new, output
         cairosvg.svg2pdf(bytestring=src, write_to=out)
 
 
-def wrap_text_if_needed(text: str, max_width_text: int, max_height_text: int) -> str | list[str]:
+def wrap_text_if_needed(text: str, max_width_text: int, max_height_text: int) -> Union[str, list[str]]:
     """
 
     @param text: text to wrap and cut off if necessary
@@ -75,7 +76,7 @@ def limit_overlap_text(overlap_list: list[str], max_lines: int = 3):
 
 
 def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, text_new: str, year_new: str,
-               overlap_text: str | list[str],
+               overlap_text: Union[str, list[str]],
                output_path: Path, percentage_of_layers: float, max_width_text: int = 20,
                max_height_text: int = 4):
     """
