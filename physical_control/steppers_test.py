@@ -52,7 +52,7 @@ class StepperControl:
         self.kit.stepper1.release()
         for _ in range(amount_of_steps):
             # self.kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
-            self.kit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.SINGLE)
+            self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
         # todo necessary to have both activated afterwards so paper can't move?
 
 
@@ -65,7 +65,7 @@ def on_press(key):
         if key == "q":
             stepperControl.move_paper_left(50)
         if key == "d":
-            stepperControl.move_paper_left(50)
+            stepperControl.move_paper_right(50)
     except AttributeError:
         print('special key {0} pressed'.format(
             key))
