@@ -1,14 +1,23 @@
 #!/usr/bin/env python
-import math
 import os
-
 import numpy as np
 import svglue
 import drawSvg as draw
-from pathlib import Path
 import textwrap
 from typing import Union
 import cairo
+import git
+from pathlib import Path
+import sys
+
+def get_project_root():
+    return Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
+
+
+try:
+    sys.path.index(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
+except ValueError:
+    sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 from config_toilet import Config
 from pycairo_arcs import *
 

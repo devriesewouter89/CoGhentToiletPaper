@@ -2,11 +2,20 @@ import itertools
 from natsort import natsorted
 import sys
 import os # if you want this directory
+import git
+from pathlib import Path
+
+
+def get_project_root():
+    return Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
+
+
 try:
-    sys.path.index(os.path.join(os.environ["HOME"], "CoGhentToiletPaper")) # Or os.getcwd() for this directory
+    sys.path.index(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 except ValueError:
-    sys.path.append(os.path.join(os.environ["HOME"], "CoGhentToiletPaper")) # Or os.getcwd() for this directory
+    sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 from config_toilet import Config
+
 from pyaxidraw import axidraw
 
 

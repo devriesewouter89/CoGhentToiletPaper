@@ -5,7 +5,18 @@ from adafruit_motorkit import MotorKit
 from adafruit_motor import stepper
 from sshkeyboard import listen_keyboard
 import RPi.GPIO as GPIO
+import git
+from pathlib import Path
+import sys
 
+def get_project_root():
+    return Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
+
+
+try:
+    sys.path.index(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
+except ValueError:
+    sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 from physical_control.toilet_paper_placement_indicator.sheet_placement import sheet_placement, PLACEMENT
 
 
