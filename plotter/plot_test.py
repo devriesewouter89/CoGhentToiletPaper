@@ -37,6 +37,7 @@ def calibrate_heights(config):
     ad.options.mode = "cycle"
     ad.options.pen_pos_up = config.pen_pos_up
     ad.options.pen_pos_down = config.pen_pos_down
+    print(config.pen_pos_up, config.pen_pos_down)
     ad.plot_run()
 
 
@@ -49,5 +50,6 @@ def disable_axidraw():
 
 if __name__ == '__main__':
     config = Config()
+#    disable_axidraw()
     calibrate_heights(config)
     # plot("test_output_cairo.svg")
