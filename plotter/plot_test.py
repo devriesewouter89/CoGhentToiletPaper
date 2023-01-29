@@ -33,13 +33,13 @@ def plot(svg_file, config):
     ad.plot_run()
 
 
-def calibrate_heights(pen_pos_up, pen_pos_down):
+def calibrate_heights(config):
     ad = axidraw.AxiDraw()
     ad.plot_setup()
     ad.options.mode = "cycle"
-    ad.options.pen_pos_up = pen_pos_up
-    ad.options.pen_pos_down = pen_pos_down
-    print(pen_pos_up, pen_pos_down)
+    ad.options.pen_pos_up = config.pen_pos_up
+    ad.options.pen_pos_down = config.pen_pos_down
+    print(config.pen_pos_up, config.pen_pos_down)
     ad.plot_run()
 
 
@@ -51,25 +51,29 @@ def disable_axidraw():
 
 
 def on_press(key):
-    global pen_pos_up, pen_pos_down
     try:
         print('alphanumeric key {0} pressed'.format(
             key))
         if key == "q":
-            pen_pos_up += 2
-            calibrate_heights(pen_pos_up, pen_pos_down)
+            config.pen_pos_up += 2
+            calibrate_heights(config)
         if key == "e":
-            pen_pos_up -= 2
-            calibrate_heights(pen_pos_up, pen_pos_down)
+            config.pen_pos_up -= 2
+            calibrate_heights(config)
         if key == "a":
-            pen_pos_down += 2
-            calibrate_heights(pen_pos_up, pen_pos_down)
+            config.pen_pos_down += 2
+            calibrate_heights(config)
         if key == "d":
-            pen_pos_down -= 2
-            calibrate_heights(pen_pos_up, pen_pos_down)
+            config.pen_pos_down -= 2
+            calibrate_heights(config)
         if key == "s":  # save
-            config.pen_pos_up = pen_pos_up
-            config.pen_pos_down = pen_pos_down
+            print("adapt the config_toilet.py file with :")
+            print("\t pen_pos_up = {}".format(pen_pos_up))
+            print("\t pen_pos_down = {}".format(pen_pos_down))
+        if key =='p': #plot test file
+            plot("test_output_cairo.svg", config)
+        if key =='h': # halt the steppers for the axidraw
+            disable_axidraw()
     except AttributeError:
         print('special key {0} pressed'.format(
             key))
@@ -78,8 +82,5 @@ def on_press(key):
 if __name__ == '__main__':
     global pen_pos_up, pen_pos_down
     config = Config()
-    #    disable_axidraw()
-    pen_pos_up = config.pen_pos_up
-    pen_pos_down = config.pen_pos_down
-    plot("test_output_cairo.svg", config)
-    #listen_keyboard(on_press=on_press)
+
+    listen_keyboard(on_press=on_press)
