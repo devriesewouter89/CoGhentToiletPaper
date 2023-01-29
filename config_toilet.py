@@ -48,8 +48,8 @@ class Config:
     year_fontsize = 4
 
     # plot settings
-    pen_pos_up = 30 # [0-100]
-    pen_pos_down = 20 # [0-100]
+    pen_pos_up = 26 # [0-100]
+    pen_pos_down = 22 # [0-100]
     speed_pendown = 20 # [1-110]
     model = 4 #  AxiDraw MiniKit
     reordering = 2 # optimize plot before plotting:  Full; Also allow path reversal

@@ -39,7 +39,7 @@ def calibrate_heights(pen_pos_up, pen_pos_down):
     ad.options.mode = "cycle"
     ad.options.pen_pos_up = pen_pos_up
     ad.options.pen_pos_down = pen_pos_down
-    print(config.pen_pos_up, config.pen_pos_down)
+    print(pen_pos_up, pen_pos_down)
     ad.plot_run()
 
 
@@ -75,13 +75,11 @@ def on_press(key):
             key))
 
 
-pen_pos_up = 0
-pen_pos_down = 0
 if __name__ == '__main__':
     global pen_pos_up, pen_pos_down
     config = Config()
     #    disable_axidraw()
     pen_pos_up = config.pen_pos_up
     pen_pos_down = config.pen_pos_down
-    # plot("test_output_cairo.svg")
-    listen_keyboard(on_press=on_press)
+    plot("test_output_cairo.svg", config)
+    #listen_keyboard(on_press=on_press)
