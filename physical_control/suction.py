@@ -5,9 +5,8 @@ import time
 
 class SuctionControl:
     def __init__(self):
-        self.suction_GPIO = 8
-
-        GPIO.setmode(GPIO.BOARD)
+        self.suction_GPIO = 18
+        GPIO.setmode(GPIO.BCM)
         GPIO.setup(self.suction_GPIO, GPIO.OUT)
     def test_suction(self):
         for i in range(10):

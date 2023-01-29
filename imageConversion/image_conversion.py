@@ -4,6 +4,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 
+from config_toilet import Config
 from imageConversion.in_between_paper.in_between_generator import create_svg
 from linedraw.linedraw import LineDraw
 
@@ -67,9 +68,10 @@ def convert_folder_to_linedraw(input_path: Path, output_path: Path, draw_contour
         convert_polyline_to_path(output)
 
 
-def create_in_between_images(df: pd.DataFrame, output_path: Path):
+def create_in_between_images(df: pd.DataFrame, output_path: Path, config: Config):
     """
 
+    @param config:
     @param df:
     @param output_path:
     """
@@ -106,7 +108,10 @@ def create_in_between_images(df: pd.DataFrame, output_path: Path):
         create_svg(title_old="", text_old=old_image_descr, year_old=str(old_image_year),
                    title_new="", text_new=new_image_descr, year_new=str(new_image_year),
                    overlap_text=overlap_text, percentage_of_layers=float(float(layer) / amount_of_layers),
-                   output_path=Path(output_path / "{}.svg".format(layer)))
+                   output_path=Path(output_path / "{}.svg".format(layer)),
+                   sheet_height=config.sheet_height,
+                   sheet_width=config.sheet_width,
+                   font_size=config.font_size)
         # replace_text_in_svg(template_svg, text_old=old_image_descr, year_old=old_image_year,
         # text_new=new_image_descr, year_new=new_image_year, output_path=Path(output_path / "{}".format(layer)),
         # max_len_text=30)

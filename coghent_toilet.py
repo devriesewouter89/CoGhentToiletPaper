@@ -172,3 +172,25 @@ if __name__ == '__main__':
     #     stm.print_img()  # should trigger an error
     # except InvalidStartState as e:
     #     print("Error: {}".format(e))
+
+
+
+'''
+TODOs
+
+This document does not have valid dimensions.
+The page size should be in either millimeters (mm) or inches (in).
+Consider starting with the Letter landscape or 
+the A4 landscape template.
+The page size may also be set in Inkscape,
+using File > Document Properties.
+Note (plain-text): This file contains some plain text
+ found in the document root.
+Please convert text into vector paths before plotting.
+Consider using the Inkscape Path > Object to Path tool.
+Alternately, consider using Hershey Text to render your
+text with stroke-based fonts.
+==> https://catherineh.github.io/programming/2018/02/01/text-to-svg-paths
+
+
+'''

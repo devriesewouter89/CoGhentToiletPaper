@@ -1,58 +1,19 @@
 #!/usr/bin/env python
 import math
 import os
+
+import numpy as np
 import svglue
 import drawSvg as draw
 from pathlib import Path
 import textwrap
 from typing import Union
-
-# todo: better to use https://github.com/cduck/drawSvg ? and just write svg text at certain locations
-"""
-tip: 
-
-    click the element you want to template enter the XML editor (Edit -> XML Editor, or Ctrl+Shift+X for me) add (
-    with plus button) a row in the attribute table, whose Name (1st column) is template-id, and whose Value (2nd 
-    column) is your key text. 
-
-    For text just make sure you do this on the tspan element not the text element that (for me) contains it, 
-    and which inkscape focuses when you click on the text in the document. I had to manually click the tspan element in 
-    the xml editor. from [link](https://github.com/mbr/svglue/issues/9) 
-"""
+import cairo
+from config_toilet import Config
+from pycairo_arcs import *
 
 
-def replace_text_in_svg(svg_path, text_old, year_old, text_new, year_new, output_path, max_len_text: int):
-    # load the template from a file
-    tpl = svglue.load(file=svg_path)
-
-    # todo place \n\r in text if length exceeds some limit
-    # if len(text_old) > max_len_text:
-    #     temp = text_old.split()
-    #     list_0 =
-    #     temp_0 = ' '.join(str(e) for e in list )
-    # replace some text based on id
-    tpl.set_text('text1', text_old)
-    tpl.set_text('text2', text_old)
-
-    # replace the pink box with 'hello.png'. if you do not specify the mimetype,
-    # # the image will get linked instead of embedded
-    # tpl.set_image('pink-box', file='hello.png', mimetype='image/png')
-    #
-    # # svgs are merged into the svg document (i.e. always embedded)
-    # tpl.set_svg('yellow-box', file='Ghostscript_Tiger.svg')
-
-    # to render the template, cast it to a string. this also allows passing it
-    # as a parameter to set_svg() of another template
-    src = tpl.__str__().decode()
-
-    # write out the result as an SVG image and render it to pdf using cairosvg
-    import cairosvg
-    with open('{}.pdf'.format(output_path), 'wb') as out, open('{}.svg'.format(output_path), 'w') as svgout:
-        svgout.write(src)
-        cairosvg.svg2pdf(bytestring=src, write_to=out)
-
-
-def wrap_text_if_needed(text: str, max_width_text: int, max_height_text: int) -> Union[str, list[str]]:
+def wrap_text_if_needed(ctx, text: str, max_width_text: int, max_height_text: int) -> Union[str, list[str]]:
     """
 
     @param text: text to wrap and cut off if necessary
@@ -60,8 +21,11 @@ def wrap_text_if_needed(text: str, max_width_text: int, max_height_text: int) ->
     @param max_height_text: amount of lines
     @return: the original string if cutoff is not needed, otherwise a list of strings
     """
-    # temp = draw.Text(text, font_size, text_anchor="middle")
-    wrapper = textwrap.TextWrapper(width=max_width_text)
+    x_off, y_off, text_width, text_height, dx, dy = ctx.text_extents(text)
+    # we have [text_width] for [len(text)] amount of characters, thus we want our wrapper to cut off at:
+    # tot#char * allowed_width / total_width
+    max_characters = math.floor(len(text) * max_width_text / text_width)
+    wrapper = textwrap.TextWrapper(width=max_characters)
     word_list = wrapper.wrap(text)
     if len(word_list) > max_height_text:
         word_list = word_list[:max_height_text]
@@ -75,119 +39,119 @@ def limit_overlap_text(overlap_list: list[str], max_lines: int = 3):
     return overlap_list
 
 
-def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, text_new: str, year_new: str,
-               overlap_text: Union[str, list[str]],
-               output_path: Path, percentage_of_layers: float, max_width_text: int = 20,
-               max_height_text: int = 4):
-    """
+def text(ctx, string, pos, angle=0.0, face='Georgia', font_size=18):
+    ctx.save()
 
-    @param title_old: title of the older (in time) object
-    @param title_new: title of the newer (in time) object
-    @param max_height_text: maximum amount of lines before we cut off the text
-    @param max_width_text: maximum amount of characters before we split the text
-    @param text_old: text of the older object
-    @param year_old: year of the creation of the older object
-    @param text_new: text of the newer object
-    @param year_new: year of the creation of the newer object
-    @param output_path: Path, with the name, where to store the object
-    @param overlap_text: a list of the words which are common to both objects
-    @param percentage_of_layers: we'll use the layer parameter to alter the diagonal line
-    """
-    width = 200
-    height = 100
-    font_size = 6
-    d = draw.Drawing(width, height, origin='center', displayInline=False)
+    # build up an appropriate font
+    ctx.select_font_face(face, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+    ctx.set_font_size(font_size)
+    fascent, fdescent, fheight, fxadvance, fyadvance = ctx.font_extents()
+    x_off, y_off, text_width, text_height, dx, dy = ctx.text_extents(string)
+    nx = -text_width / 2.0
+    ny = fheight / 2
+    ctx.translate(pos[0], pos[1])
+    ctx.rotate(np.radians(angle))
+    ctx.translate(nx, ny)
+    ctx.move_to(0, 0)
+    ctx.show_text(string)
+    ctx.restore()
 
-    # Draw a rectangle todo: only for readability and debugging!
-    r = draw.Rectangle(-100, -50, width, height, fill='#bbbbbb')
-    r.appendTitle(
-        "in between paper after % is processed {}".format(str(int(percentage_of_layers * 100))))  # Add a tooltip
-    d.append(r)
 
-    # -----------------OLD TEXT -----------------------
-    offset_x_text = 20
+def create_svg_cairo(title_old: str, text_old: str, year_old: str, title_new: str, text_new: str, year_new: str,
+                     overlap_text: Union[str, list[str]], config: Config,
+                     output_path: Path, percentage_of_layers: float, max_width_text: int = 40,
+                     max_height_text: int = 4):
+    surface = cairo.SVGSurface(str(output_path), config.sheet_width,
+                               config.sheet_height)
+    surface.set_document_unit(cairo.SVGUnit.MM)
+    cr = cairo.Context(surface)
+    # TEXT PARAMETERS & PLACEMENT VALUES
+    cr.select_font_face("Sans",
+                        cairo.FONT_SLANT_NORMAL,
+                        cairo.FONT_WEIGHT_NORMAL)
+    offset_x_text = 25
     offset_x_title = 10
-    offset_y = 20
-    p = draw.Path(stroke_width=2, stroke='lime',
-                  fill='black', fill_opacity=0.2)
-    p.M(-width / 2 + offset_x_text, -height / 2 + offset_y)
-    p.L(-width / 2 + offset_x_text, height / 2 - offset_y)
-    d.append(p)
-
-    # adapt the width of the text
-    text_old = wrap_text_if_needed(text_old, max_width_text, max_height_text)
-
-    # Draw text
-    d.append(draw.Text(text_old, font_size, path=p, text_anchor='middle'))
-    # -----------------OLD TITLE -----------------------
-
-    p = draw.Path(stroke_width=2, stroke='lime',
-                  fill='black', fill_opacity=0.2)
-    p.M(-width / 2 + offset_x_title, -height / 2 + offset_y)
-    p.L(-width / 2 + offset_x_title, height / 2 - offset_y)
-    d.append(p)
-
-    # Draw text
-    d.append(draw.Text(title_old, font_size + 2, path=p, text_anchor='middle'))
-    # -----------------NEW TEXT-----------------------
-    p = draw.Path(stroke_width=2, stroke='lime',
-                  fill='black', fill_opacity=0.2)
-    p.M(width / 2 - offset_x_text, height / 2 - offset_y)
-    p.L(width / 2 - offset_x_text, -height / 2 + offset_y)
-    d.append(p)
-
-    # adapt the width of the text
-    text_new = wrap_text_if_needed(text_new, max_width_text, max_height_text)
-
-    # Draw text
-    d.append(draw.Text(text_new, font_size, path=p, text_anchor='middle'))
-    # -----------------NEW TITLE-----------------------
-    p = draw.Path(stroke_width=2, stroke='lime',
-                  fill='None', fill_opacity=0.2)
-    p.M(width / 2 - offset_x_title, height / 2 - offset_y)
-    p.L(width / 2 - offset_x_title, -height / 2 + offset_y)
-    d.append(p)
-
-    # Draw text
-    d.append(draw.Text(title_new, font_size + 2, path=p, text_anchor='middle'))
-    # --------------CENTER CIRCLE FIGURE--------------
     angle_offset = 20
     angle = percentage_of_layers * 2 * angle_offset - angle_offset  # function to make diagonal "move" throughout time
-    radius = 30
+    radius = (config.sheet_width / 2 - offset_x_text) * 0.6
+    cr.set_line_width(0.1)
 
-    d.append(draw.Arc(0, 0, radius, 180, -179, cw=True, stroke='black', stroke_width=1, fill='None'))
-    p = draw.Path(stroke='black', stroke_width=2, fill='none')
+    # --------background color for development---------
+    cr.set_source_rgb(100.0, 0.0, 0.0)
+    cr.rectangle(0, 0, config.sheet_width, config.sheet_height)
+    cr.fill()
+    # -----------------OLD TEXT -----------------------
+    cr.set_source_rgb(0, 0, 0)
+    # adapt the width of the text
+    text_old = wrap_text_if_needed(cr, text_old, max_width_text, max_height_text)
+    # Draw text
+    for idx, i in enumerate(text_old):
+        text(cr, i, (offset_x_text - idx * config.font_size, config.sheet_height / 2), angle=90,
+             font_size=config.font_size)
+    # -----------------OLD TITLE -----------------------
+    text(cr, title_old, (offset_x_title, config.sheet_height / 2), angle=90, font_size=config.font_size + 2)
+    # # -----------------NEW TEXT-----------------------
+    # adapt the width of the text
+    text_new = wrap_text_if_needed(cr, text_new, max_width_text, max_height_text)
+    # Draw text
+    for idx, i in enumerate(text_new):
+        text(cr, i, (config.sheet_width - offset_x_text + idx * config.font_size, config.sheet_height / 2), angle=270,
+             font_size=config.font_size)
+    # -----------------NEW TITLE-----------------------
+    text(cr, title_new, (config.sheet_width - offset_x_title, config.sheet_height / 2), angle=270,
+         font_size=config.font_size + 2)
+    cr.fill()
+    # --------------CENTER CIRCLE FIGURE--------------
+    # circle
+    cr.arc(config.sheet_width / 2.0, config.sheet_height / 2.0, radius, 0, 2 * math.pi)
+    cr.stroke()
+    # moving lines
+    cr.move_to(config.sheet_width / 2 + math.sin(np.radians(angle)) * radius,
+               config.sheet_height / 2 + math.cos(np.radians(angle)) * radius)
+    cr.line_to(config.sheet_width / 2 + math.tan(np.radians(angle)) * config.sheet_height / 2.0, config.sheet_height)
+    cr.stroke()
+    cr.move_to(config.sheet_width / 2 - math.sin(np.radians(angle)) * radius,
+               config.sheet_height / 2 - math.cos(np.radians(angle)) * radius)
+    cr.line_to(config.sheet_width / 2 - math.tan(np.radians(angle)) * config.sheet_height / 2.0, 0)
+    cr.stroke()
 
-    p.M(math.sin(angle * math.pi / 180.0) * radius, math.cos(angle * math.pi / 180.0) * radius) \
-        .L((math.tan(angle * math.pi / 180.0) * height / 2.0), height / 2.0)
-    d.append(p)
-    p.M(-math.sin(angle * math.pi / 180.0) * radius, -math.cos(angle * math.pi / 180.0) * radius) \
-        .L((-math.tan(angle * math.pi / 180.0) * height / 2.0), -height / 2.0)
-    d.append(p)
     # text path
-    p = draw.Path(stroke='none', stroke_width=2, fill='none')
+    # p = draw.Path(stroke='none', stroke_width=2, fill='none')
     overlap_text = limit_overlap_text(overlap_text)
-    d.append(draw.Text(overlap_text, font_size, path=p, text_anchor='middle'))
-    p.M(0, -radius).L(0, radius)
-    d.append(p)
-
+    for idx, i in enumerate(overlap_text):
+        cr.set_font_size(config.circle_fontsize)
+        _text = wrap_text_if_needed(cr, i, 40, 1)
+        text(cr, _text[0],
+             (config.sheet_width / 2,
+              config.sheet_height / 2 -
+              (len(overlap_text) - 1) / 2.0 * config.circle_fontsize * 1.1 + idx * config.circle_fontsize * 1.1),
+             0,
+             font_size=config.circle_fontsize)
     # place the years on the circle as well
-    p = draw.Arc(0, 0, radius + 2, 270, 90, cw=True,
-                 stroke='none', stroke_width=3, fill='none')
-    d.append(draw.Text(year_old, font_size, path=p, text_anchor='middle'))
-    p = draw.Arc(0, 0, radius + 2, 90, 270, cw=True,
-                 stroke='none', stroke_width=3, fill='none')
-    d.append(draw.Text(year_new, font_size, path=p, text_anchor='middle'))
-    # -------------------------------------------------
+    cr.set_font_size(config.year_fontsize)
+    text_arc_path(cr, config.sheet_width / 2.0, config.sheet_height / 2.0, year_old, radius + 0.5,
+                  np.radians(140 - angle))
+    cr.fill()
+    text_arc_path(cr, config.sheet_width / 2.0, config.sheet_height / 2.0, year_new, radius + 0.5, np.radians(angle))
+    cr.fill()
+    surface.write_to_png("{}.png".format(os.path.splitext(output_path)[0]))
 
-    d.setPixelScale(2)  # Set number of pixels per geometry unit
-    # d.setRenderSize(400,200)  # Alternative to setPixelScale
-    d.saveSvg(output_path)
+
+def adapt_svg_for_print(d: draw):
+    """
+    for printing, our in-between images are not suited due to some small issues:
+    - svg dimensions aren't specified for mm or inches
+    - text should be converted to path objects
+    """
+    d.width = "{}mm".format(d.width)
+    d.height = "{}mm".format(d.height)
+    return d
 
 
 if __name__ == '__main__':
-    # replace_text_in_svg('template.svg', "vorige wc-rol", "2000", "volgende wc-rol", "2001", "test_output", 20)
-    create_svg("titel", "vorige wc-rol met veel meer tekst dan de lijn toelaat", "2000", "titel", "volgende wc-rol",
-               "2001",
-               ["wc-rol", "test", "3"], Path("test_output.svg"),
-               0, 20, 2)
+    config = Config()
+    create_svg_cairo("titel", "vorige wc-rol met veel meer tekst dan de lijn toelaat", "2000", "titel",
+                     "volgende wc-rol",
+                     "2001",
+                     ["wc-rol", "test", "3"], config=config, output_path=Path("test_output_cairo.svg"),
+                     percentage_of_layers=0, max_width_text=100, max_height_text=2)

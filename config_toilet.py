@@ -41,3 +41,10 @@ class Config:
     tree_img_path = Path(location_files / "orig_imgs")
     converted_img_path = Path(location_files / "converted_imgs")
     in_between_page_path = Path(location_files / "in_between")
+
+    # toilet paper sheet settings
+    sheet_width = 100 # [mm]
+    sheet_height = 50 # [mm]
+    font_size = 4
+    circle_fontsize = 5
+    year_fontsize = 4

@@ -26,9 +26,14 @@ board = "^1.0"
 sshkeyboard = "^2.3.1"
 supabase = "^0.7.1"
 python-dotenv = "^0.21.1"
-#scripts = "^2.0"
-linedraw = { git = 'git@github.com:devriesewouter89/linedraw.git', branch = 'master' }
 natsort = "^8.2.0"
+
+#linedraw = { git = 'git@github.com:devriesewouter89/linedraw.git', branch = 'master' }
+#python -m pip install 'linedraw@git+https://github.com/devriesewouter89/linedraw.git
+#python -m pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
+
+
+
 
 [build-system]
 requires = ["poetry-core"]
