@@ -12,5 +12,5 @@ class PLACEMENT(Enum):
 def sheet_placement():
     # TODO PLACEHOLDER FUNCTION
     sleep(1)
-    result = PLACEMENT(random.randint(0, 2))
+    result = PLACEMENT(random.randint(0, 1)) # let's skip TOO_FAR for the test, it's confusing
     return result

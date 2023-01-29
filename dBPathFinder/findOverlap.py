@@ -4,7 +4,6 @@ python file to check two or more lines from a csv file
 """
 import ast
 import math
-import os
 from contextlib import suppress
 from datetime import date
 from pathlib import Path
@@ -16,6 +15,12 @@ import pandas as pd
 from anytree import Node
 from anytree.exporter import DotExporter
 from tabulate import tabulate
+import sys
+import os # if you want this directory
+try:
+    sys.path.index(os.path.join(os.environ["HOME"], "CoGhentToiletPaper")) # Or os.getcwd() for this directory
+except ValueError:
+    sys.path.append(os.path.join(os.environ["HOME"], "CoGhentToiletPaper")) # Or os.getcwd() for this directory
 
 from config_toilet import Config
 from dBPathFinder.scripts.stemmer import sentence_to_stems, start_WordListCorpusReader

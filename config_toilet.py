@@ -23,8 +23,6 @@ class Config:
     URL = os.environ.get("URL")
     KEY = os.environ.get("KEY")
 
-    # timestamp: str = "2021-10-20T00:00:00.309Z"
-    # context: str = "src/utils/context.jsonld"
 
     location_files = Path(ROOT_DIR / "location_files" / location)
 
@@ -55,3 +53,6 @@ class Config:
     speed_pendown = 20 # [1-110]
     model = 4 #  AxiDraw MiniKit
     reordering = 2 # optimize plot before plotting:  Full; Also allow path reversal
+
+    # physical connections
+    suction_GPIO = 18 # BCM

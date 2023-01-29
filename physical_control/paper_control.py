@@ -72,9 +72,6 @@ class StepperControl:
                 self.move_paper_left(amount_of_steps=10)
 
 
-
-
-
 def on_press(key):
     try:
         print('alphanumeric key {0} pressed'.format(

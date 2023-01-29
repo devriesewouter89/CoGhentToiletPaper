@@ -1,5 +1,10 @@
 from pyaxidraw import axidraw
-
+import sys
+import os # if you want this directory
+try:
+    sys.path.index(os.path.join(os.environ["HOME"], "CoGhentToiletPaper")) # Or os.getcwd() for this directory
+except ValueError:
+    sys.path.append(os.path.join(os.environ["HOME"], "CoGhentToiletPaper")) # Or os.getcwd() for this directory
 from config_toilet import Config
 
 

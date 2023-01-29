@@ -3,7 +3,13 @@ from pathlib import Path
 
 import pandas as pd
 import requests
-
+import sys
+import os # if you want this directory
+try:
+    sys.path.index(os.path.join(os.environ["HOME"], "CoGhentToiletPaper")) # Or os.getcwd() for this directory
+except ValueError:
+    sys.path.append(os.path.join(os.environ["HOME"], "CoGhentToiletPaper")) # Or os.getcwd() for this directory
+    
 from config_toilet import Config
 from imageConversion.in_between_paper.in_between_generator import create_svg
 from linedraw.linedraw import LineDraw
