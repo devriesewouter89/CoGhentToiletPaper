@@ -103,10 +103,7 @@ class ToiletPaperStateMachine(StateMachine):
         # 3.
         convert_folder_to_linedraw(input_path=config.tree_img_path,
                                    output_path=config.converted_img_path,
-                                   draw_hatch=False,
-                                   draw_contour=True,
-                                   contour_simplify=2,
-                                   hatch_size=24)
+                                   config=config)
         print("images converted to lineart")
 
     @transition(source="prep_imgs", target="prep_timeline")

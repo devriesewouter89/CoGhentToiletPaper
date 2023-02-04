@@ -1,10 +1,10 @@
 #!/usr/bin/python3
-import RPi.GPIO as GPIO
-import time
 import sys
-import os  # if you want this directory
-import git
+import time
 from pathlib import Path
+
+import RPi.GPIO as GPIO
+import git
 
 
 def get_project_root():

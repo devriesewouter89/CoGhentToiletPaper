@@ -9,6 +9,11 @@ import cairo
 import git
 from pathlib import Path
 import sys
+# from pycairo_arcs import *
+import math
+
+from imageConversion.in_between_paper.pycairo_arcs import text_arc_path
+
 
 def get_project_root():
     return Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
@@ -19,7 +24,6 @@ try:
 except ValueError:
     sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 from config_toilet import Config
-from pycairo_arcs import *
 
 
 def wrap_text_if_needed(ctx, text: str, max_width_text: int, max_height_text: int) -> Union[str, list[str]]:
@@ -34,7 +38,7 @@ def wrap_text_if_needed(ctx, text: str, max_width_text: int, max_height_text: in
     # we have [text_width] for [len(text)] amount of characters, thus we want our wrapper to cut off at:
     # tot#char * allowed_width / total_width
     max_characters = math.floor(len(text) * max_width_text / text_width)
-    wrapper = textwrap.TextWrapper(width=max_characters)
+    wrapper = textwrap.TextWrapper(width=max_characters, break_long_words=False)
     word_list = wrapper.wrap(text)
     if len(word_list) > max_height_text:
         word_list = word_list[:max_height_text]
@@ -66,10 +70,26 @@ def text(ctx, string, pos, angle=0.0, face='Georgia', font_size=18):
     ctx.restore()
 
 
-def create_svg_cairo(title_old: str, text_old: str, year_old: str, title_new: str, text_new: str, year_new: str,
-                     overlap_text: Union[str, list[str]], config: Config,
-                     output_path: Path, percentage_of_layers: float, max_width_text: int = 40,
-                     max_height_text: int = 4):
+def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, text_new: str, year_new: str,
+               overlap_text: Union[str, list[str]], config: Config,
+               output_path: Path, percentage_of_layers: float, max_width_text: int = 40,
+               max_height_text: int = 4, to_bitmap: bool=False):
+    """
+
+    @param to_bitmap:
+    @param title_old:
+    @param text_old:
+    @param year_old:
+    @param title_new:
+    @param text_new:
+    @param year_new:
+    @param overlap_text:
+    @param config:
+    @param output_path:
+    @param percentage_of_layers:
+    @param max_width_text:
+    @param max_height_text:
+    """
     surface = cairo.SVGSurface(str(output_path), config.sheet_width,
                                config.sheet_height)
     surface.set_document_unit(cairo.SVGUnit.MM)
@@ -143,7 +163,8 @@ def create_svg_cairo(title_old: str, text_old: str, year_old: str, title_new: st
     cr.fill()
     text_arc_path(cr, config.sheet_width / 2.0, config.sheet_height / 2.0, year_new, radius + 0.5, np.radians(angle))
     cr.fill()
-    surface.write_to_png("{}.png".format(os.path.splitext(output_path)[0]))
+    if to_bitmap:
+        surface.write_to_png("{}.png".format(os.path.splitext(output_path)[0]))
 
 
 def adapt_svg_for_print(d: draw):
@@ -159,8 +180,8 @@ def adapt_svg_for_print(d: draw):
 
 if __name__ == '__main__':
     config = Config()
-    create_svg_cairo("titel", "vorige wc-rol met veel meer tekst dan de lijn toelaat", "2000", "titel",
+    create_svg("titel", "vorige wc-rol met veel meer tekst dan de lijn toelaat", "2000", "titel",
                      "volgende wc-rol",
                      "2001",
-                     ["wc-rol", "test", "3"], config=config, output_path=Path("test_output_cairo.svg"),
-                     percentage_of_layers=0, max_width_text=100, max_height_text=2)
+               ["wc-rol", "test", "3"], config=config, output_path=Path("test_output_cairo.svg"),
+               percentage_of_layers=0, max_width_text=100, max_height_text=2)

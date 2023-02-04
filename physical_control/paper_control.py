@@ -1,13 +1,18 @@
 """Simple test for using adafruit_motorkit with a stepper motor"""
-import time
-import board
-from adafruit_motorkit import MotorKit
-from adafruit_motor import stepper
-from sshkeyboard import listen_keyboard
-import RPi.GPIO as GPIO
-import git
-from pathlib import Path
 import sys
+import time
+from asyncio import sleep
+from pathlib import Path
+
+import board
+import git
+from adafruit_motor import stepper
+from adafruit_motorkit import MotorKit
+from sshkeyboard import listen_keyboard
+
+from config_toilet import Config
+from physical_control.suction import SuctionControl
+
 
 def get_project_root():
     return Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
@@ -17,7 +22,7 @@ try:
     sys.path.index(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 except ValueError:
     sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
-from physical_control.toilet_paper_placement_indicator.sheet_placement import sheet_placement, PLACEMENT
+from physical_control.toilet_paper_placement_indicator.sheet_placement import PLACEMENT
 
 
 class StepperControl:
@@ -26,6 +31,7 @@ class StepperControl:
         """
         self.kit = MotorKit(i2c=board.I2C())
         self.total_roll = 0
+        self.placement = PLACEMENT.NOT_FAR
 
     def test_stepper(self):
         for _ in range(10):
@@ -74,13 +80,14 @@ class StepperControl:
         # 1. first we move the paper a little bit
         self.move_paper_left(amount_of_steps=50)
         # 2. then we go and check the position
-        while True:
-            if sheet_placement() == PLACEMENT.CORRECT:
-                break
-            if sheet_placement() == PLACEMENT.TOO_FAR:
-                self.move_paper_right(amount_of_steps=10)
-            if sheet_placement() == PLACEMENT.NOT_FAR:
-                self.move_paper_left(amount_of_steps=10)
+        while self.placement != PLACEMENT.CORRECT:
+            # if sheet_placement() == PLACEMENT.CORRECT:
+            #     break
+            # if sheet_placement() == PLACEMENT.TOO_FAR:
+            #     self.move_paper_right(amount_of_steps=10)
+            # if sheet_placement() == PLACEMENT.NOT_FAR:
+            #     self.move_paper_left(amount_of_steps=10)
+            sleep(1)
 
 
 def on_press(key):
@@ -92,15 +99,21 @@ def on_press(key):
         if key == "d":
             stepperControl.move_paper_left(50)
         if key == "s":
-            sc.enable_relays()
+            sc.enable_suction()
         if key == "w":
-            sc.disable_relays()
+            sc.disable_suction()
+        if key == "o":
+            print("paper is aligned correctly")
+            stepperControl.placement = PLACEMENT.CORRECT
     except AttributeError:
         print('special key {0} pressed'.format(
             key))
 
 
 if __name__ == '__main__':
+    config = Config()
     stepperControl = StepperControl()
+    sc = SuctionControl(config)
+
     # Collect events until released
     listen_keyboard(on_press=on_press)

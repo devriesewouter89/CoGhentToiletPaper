@@ -1,11 +1,12 @@
 import ast
+import sys
 from pathlib import Path
 
+import git
 import pandas as pd
 import requests
-import sys
-import git
-from pathlib import Path
+from linedraw.linedraw import LineDraw
+from imageConversion.in_between_paper.in_between_generator import create_svg
 
 
 def get_project_root():
@@ -16,12 +17,8 @@ try:
     sys.path.index(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 except ValueError:
     sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
-from config_toilet import Config
 
 from config_toilet import Config
-from imageConversion.in_between_paper.in_between_generator import create_svg
-from linedraw.linedraw import LineDraw
-
 
 
 def download_images_from_tree(df: pd.DataFrame, output_path: Path):
@@ -43,43 +40,27 @@ def download_images_from_tree(df: pd.DataFrame, output_path: Path):
             handler.write(img_data)
 
 
-def convert_polyline_to_path(svg_file: Path):
-    """
-    the [saxi](https://github.com/nornagon/saxi) library is not capable of using polylines, due to dependency issue.
-    A quick fix is to convert polylines to paths in svg
-    @param svg_file: file to convert to use only paths and no polylines
-    """
-    with open(svg_file, 'r') as f:
-        data = f.read()
-    # replace polyline with path
-    data = data.replace("polyline", "path")
-    # replace points=" with d="M
-    data = data.replace('points="', 'd="M')
-    with open(svg_file, 'w') as file:
-        file.write(data)
+def convert_folder_to_linedraw(input_path: Path, output_path: Path, config: Config):
 
-
-def convert_folder_to_linedraw(input_path: Path, output_path: Path, draw_contour: bool = True, draw_hatch: bool = True,
-                               hatch_size: int = 16, contour_simplify: int = 2, resolution: int = 1024):
     """
 
     @param input_path:
     @param output_path:
-    @param draw_contour:
+    @param draw_contour:`
     @param draw_hatch:
     @param hatch_size:
     @param contour_simplify:
     @param resolution:
     """
-    ld = LineDraw(draw_contours=draw_contour, draw_hatch=draw_hatch, hatch_size=hatch_size,
-                  contour_simplify=contour_simplify, resolution=resolution)
+    ld = LineDraw(draw_contours=config.draw_contour, draw_hatch=config.draw_hatch, hatch_size=config.hatch_size,
+                  contour_simplify=config.contour_simplify, no_polylines=config.no_polylines, resize=config.resize,
+                  longest=config.sheet_width, shortest=config.sheet_height, resolution=config.resolution)
     output_path.mkdir(parents=True, exist_ok=True)
     for img in input_path.iterdir():
         output = Path(output_path / "{}.svg".format(img.stem))
         ld.export_path = output
         input_img = Path(input_path / img)
         ld.sketch(str(input_img))
-        convert_polyline_to_path(output)
 
 
 def create_in_between_images(df: pd.DataFrame, output_path: Path, config: Config):
@@ -123,29 +104,21 @@ def create_in_between_images(df: pd.DataFrame, output_path: Path, config: Config
                    title_new="", text_new=new_image_descr, year_new=str(new_image_year),
                    overlap_text=overlap_text, percentage_of_layers=float(float(layer) / amount_of_layers),
                    output_path=Path(output_path / "{}.svg".format(layer)),
-                   sheet_height=config.sheet_height,
-                   sheet_width=config.sheet_width,
-                   font_size=config.font_size)
+                   config=config, to_bitmap=False)
         # replace_text_in_svg(template_svg, text_old=old_image_descr, year_old=old_image_year,
         # text_new=new_image_descr, year_new=new_image_year, output_path=Path(output_path / "{}".format(layer)),
         # max_len_text=30)
 
 
-def resize_svgs_from_folder():
-    print("todo based on svgelements")
-
-
 if __name__ == '__main__':
     print(Path.cwd())
-    parent = Path.cwd().parent
-    csv_path = Path(parent / "dBPathFinder" / "dmg_tree.csv")
+    config = Config()
+    csv_path = config.tree_path
     df = pd.read_csv(str(csv_path), index_col=0)
 
     download_images_from_tree(df=df,
-                              output_path=Path(Path.cwd() / "images" / "input"))
-    convert_folder_to_linedraw(input_path=Path(Path.cwd() / "images" / "input"),
-                               output_path=Path(Path.cwd() / "images" / "linedraw"))
+                              output_path=config.tree_img_path)
+    convert_folder_to_linedraw(input_path=config.tree_img_path,
+                               output_path=config.converted_img_path, config=config)
 
-    in_between_out = Path(Path.cwd() / "images" / "in_between")
-    in_between_out.mkdir(parents=True, exist_ok=True)
-    create_in_between_images(df=df, output_path=in_between_out)
+    create_in_between_images(df=df, output_path=config.in_between_page_path, config=config)
