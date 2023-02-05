@@ -113,6 +113,7 @@ class ToiletPaperStateMachine(StateMachine):
 
     @transition(source=["prep_timeline", "print_img"], target="roll_paper")
     def roll_paper(self):
+        print("preparing sheet {} for {}".format(self.image_number, self.timeline.get_img(self.image_number)))
         # ! bijhouden hoeveel we afrollen
         self.stepperControl.roll_towards_next_sheet()
 

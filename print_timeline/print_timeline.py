@@ -68,6 +68,8 @@ class TimelinePrinter:
         self.ad.options.pen_pos_up = 70
         self.ad.plot_run()
 
+    def get_img(self, index):
+        return self.comb_list[index]
 
 if __name__ == '__main__':
     config = Config()
