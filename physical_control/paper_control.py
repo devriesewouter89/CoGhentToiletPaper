@@ -1,7 +1,7 @@
 """Simple test for using adafruit_motorkit with a stepper motor"""
 import sys
 import time
-from asyncio import sleep
+from time import sleep
 from pathlib import Path
 
 import board
@@ -80,34 +80,37 @@ class StepperControl:
         # 1. first we move the paper a little bit
         self.move_paper_left(amount_of_steps=50)
         # 2. then we go and check the position
-        while self.placement != PLACEMENT.CORRECT:
+        if self.placement != PLACEMENT.CORRECT:
             # if sheet_placement() == PLACEMENT.CORRECT:
             #     break
             # if sheet_placement() == PLACEMENT.TOO_FAR:
             #     self.move_paper_right(amount_of_steps=10)
             # if sheet_placement() == PLACEMENT.NOT_FAR:
             #     self.move_paper_left(amount_of_steps=10)
-            sleep(1)
+            self.insert_sshkeyboard()
+
+    def insert_sshkeyboard(self):
+        listen_keyboard(on_press=self.on_press, until="space")
 
 
-def on_press(key):
-    try:
-        print('alphanumeric key {0} pressed'.format(
-            key))
-        if key == "a":
-            stepperControl.move_paper_left(50)
-        if key == "d":
-            stepperControl.move_paper_left(50)
-        if key == "s":
-            sc.enable_suction()
-        if key == "w":
-            sc.disable_suction()
-        if key == "o":
-            print("paper is aligned correctly")
-            stepperControl.placement = PLACEMENT.CORRECT
-    except AttributeError:
-        print('special key {0} pressed'.format(
-            key))
+    def on_press(self, key):
+        try:
+            print('alphanumeric key {0} pressed'.format(
+                key))
+            if key == "a":
+                self.move_paper_left(50)
+            if key == "d":
+                self.move_paper_left(50)
+            # if key == "s":
+            #     sc.enable_suction()
+            # if key == "w":
+            #     sc.disable_suction()
+            if key == "o":
+                print("paper is aligned correctly")
+                stepperControl.placement = PLACEMENT.CORRECT
+        except AttributeError:
+            print('special key {0} pressed'.format(
+                key))
 
 
 if __name__ == '__main__':
@@ -116,4 +119,4 @@ if __name__ == '__main__':
     sc = SuctionControl(config)
 
     # Collect events until released
-    listen_keyboard(on_press=on_press)
+    stepperControl.insert_sshkeyboard()

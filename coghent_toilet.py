@@ -32,7 +32,6 @@ we want a state machine calling the different blocks of code:
 """
 import pandas as pd
 from finite_state_machine import StateMachine, transition
-from finite_state_machine.exceptions import InvalidStartState
 
 from config_toilet import Config
 from dBPathFinder.findOverlap import find_tree
@@ -54,12 +53,12 @@ class ToiletPaperStateMachine(StateMachine):
     initial_state = "waiting"
 
     def __init__(self, config):
+        super().__init__()
         self.config = config
         self.state = self.initial_state
-        super().__init__()
         self.df_tree = None
         self.stepperControl = StepperControl()
-        self.sc = SuctionControl()
+        self.sc = SuctionControl(config=config)
         self.timeline = TimelinePrinter()
         self.image_number = 0
         self.finished = False
@@ -98,7 +97,7 @@ class ToiletPaperStateMachine(StateMachine):
                                   output_path=config.tree_img_path)
         print("images downloaded")
         # 2.
-        create_in_between_images(df=self.df_tree, output_path=config.in_between_page_path)
+        create_in_between_images(df=self.df_tree, output_path=config.in_between_page_path, config=config)
         print("in beteen images created")
         # 3.
         convert_folder_to_linedraw(input_path=config.tree_img_path,
@@ -169,8 +168,6 @@ if __name__ == '__main__':
     #     stm.print_img()  # should trigger an error
     # except InvalidStartState as e:
     #     print("Error: {}".format(e))
-
-
 
 '''
 TODOs
