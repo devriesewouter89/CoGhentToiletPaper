@@ -107,7 +107,7 @@ class StepperControl:
             #     sc.disable_suction()
             if key == "o":
                 print("paper is aligned correctly")
-                stepperControl.placement = PLACEMENT.CORRECT
+                self.placement = PLACEMENT.CORRECT
         except AttributeError:
             print('special key {0} pressed'.format(
                 key))
