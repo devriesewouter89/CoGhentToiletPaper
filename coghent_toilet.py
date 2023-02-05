@@ -118,6 +118,7 @@ class ToiletPaperStateMachine(StateMachine):
 
     @transition(source="roll_paper", target="print_img")
     def print_img(self):
+        print("plotting image {}".format(self.image_number))
         # 1. start suction
         self.sc.enable_suction()
         # 2. start printing

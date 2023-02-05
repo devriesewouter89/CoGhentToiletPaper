@@ -77,6 +77,7 @@ class StepperControl:
 
         @return:
         """
+        self.placement = PLACEMENT.NOT_FAR
         # 1. first we move the paper a little bit
         self.move_paper_left(amount_of_steps=50)
         # 2. then we go and check the position
