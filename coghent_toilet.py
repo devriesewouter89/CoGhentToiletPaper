@@ -53,9 +53,9 @@ class ToiletPaperStateMachine(StateMachine):
     initial_state = "waiting"
 
     def __init__(self, config):
-        super().__init__()
         self.config = config
         self.state = self.initial_state
+        super().__init__() #init only to be called after setting self.state
         self.df_tree = None
         self.stepperControl = StepperControl()
         self.sc = SuctionControl(config=config)
@@ -105,7 +105,7 @@ class ToiletPaperStateMachine(StateMachine):
                                    config=config)
         print("images converted to lineart")
 
-    @transition(source="prep_imgs", target="prep_timeline")
+    @transition(source=["prep_imgs","waiting"], target="prep_timeline")
     def prep_timeline(self):
         list1 = self.timeline.get_list_of_files(config.converted_img_path)
         list2 = self.timeline.get_list_of_files(config.in_between_page_path)
@@ -148,8 +148,8 @@ if __name__ == '__main__':
     # TODO add a physical setup function: find height of pen etc
 
     stm = ToiletPaperStateMachine(config)
-    stm.test_df()
-    stm.prep_imgs()
+    # stm.test_df()
+    # stm.prep_imgs()
     stm.prep_timeline()
     while not stm.finished:
         stm.roll_paper()
