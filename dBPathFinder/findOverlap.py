@@ -8,6 +8,7 @@ from contextlib import suppress
 from datetime import date
 from pathlib import Path
 from queue import Queue
+import random
 from threading import Thread
 
 import numpy as np
@@ -182,6 +183,8 @@ class FindOverlapOneBranch:
         for i in indexes:
             if i == origin:
                 continue
+            if np.isnan(origin):
+                print("origin is nan")
             t = Thread(target=lambda q, arg1, arg2: q.put(self.find_overlap(arg1, arg2)), args=(que, origin, i))
             t.start()
             threads_list.append(t)
@@ -199,6 +202,7 @@ class FindOverlapOneBranch:
             else:
                 # print(Fore.RED + "no textual match found" + Style.RESET_ALL)
                 continue
+        res_df.set_index("id", inplace=True)
         return res_found, res_df
 
     def build_tree(self) -> pd.DataFrame:
@@ -209,8 +213,10 @@ class FindOverlapOneBranch:
         while self.layer < self.steps:
             chosen_in_previous_layer = self.df_tree[
                 (self.df_tree["layer"] == self.layer - 1) & (self.df_tree['chosen'])]
-            origin_idx = chosen_in_previous_layer["id"].values[0]
+            origin_idx = int(chosen_in_previous_layer.index.values[0]) #["id"].values[0]
             print(origin_idx)  # printing origin idx as sometimes its a nan
+            if np.isnan(origin_idx):
+                print("origin is nan")
             rows_found, row_indices = self.return_indices_in_list_range(start_idx=self.layer * self.distance_per_step,
                                                                         # origin_idx, todo changed this as otherwise
                                                                         #  I don't have control over when we'll reach
@@ -227,6 +233,7 @@ class FindOverlapOneBranch:
                     print("need to go to backward motion")
                     break
             else:
+
                 print("we came at a dead end, there were no indices found in the timezone")
                 print("end result:")
                 print(tabulate(self.df_tree, headers='keys'))
@@ -246,26 +253,29 @@ class FindOverlapOneBranch:
         @return:
         """
         # pick a random starting point
-        choose_idx = item_list["id"].sample(1).values[0]
+        # choose_idx = item_list["id"].sample(1).values[0]
+        choose_idx = int(random.sample(item_list.index.values.tolist(), 1)[0])
         if self.layer == 0:
             # we know we're at the first line
-            df_selection = item_list[["id", "img_uri"]].copy()
+            df_selection = item_list[["img_uri"]].copy() #"id",
             df_selection["overlap"] = ""
             df_selection["origin_year"] = item_list["creation_date"]
             df_selection["target_year"] = item_list["creation_date"]
         else:
-            df_selection = item_list[["id", "overlap", "img_uri", "origin_year", "target_year"]].copy()
+            df_selection = item_list[["overlap", "img_uri", "origin_year", "target_year"]].copy() #"id",
         df_selection["parent"] = origin_idx  # None
         df_selection["layer"] = self.layer
         df_selection["chosen"] = False
 
         df_selection["has_already_been_chosen"] = False
-        df_selection.loc[df_selection["id"] == choose_idx, "chosen"] = True
-        df_selection.loc[df_selection["id"] == choose_idx, "has_already_been_chosen"] = True
+        df_selection.loc[choose_idx, "chosen"] = True #df_selection["id"] == choose_idx
+        df_selection.loc[choose_idx, "has_already_been_chosen"] = True
         df_selection = df_selection.astype({"chosen": bool, "has_already_been_chosen": bool})
-        self.df_tree = pd.concat([df_selection, self.df_tree], ignore_index=True)
-        self.df_tree.sort_values(by=["layer", "id"], inplace=True)
-        self.df_tree.reset_index()
+        self.df_tree = self.df_tree.astype({"chosen": bool, "has_already_been_chosen": bool})
+        self.df_tree = pd.concat([df_selection, self.df_tree])#, ignore_index=True)
+        self.df_tree.sort_values(by=["layer"], inplace=True) #, "id"
+        # self.df_tree.reset_index()
+        # self.df_tree.set_index('id', inplace=True)
         return
 
     def forward_tree_build(self, row_indices, origin_idx):
@@ -324,10 +334,11 @@ class FindOverlapOneBranch:
                 return None
             # todo: lower next_layer + remove df_tree entries which are belonging to next_layer
         # rand_idx = random.choice(other_rows.index.values)  # int(random.randrange(0, len(other_rows) - 1, 1))
-        rand_idx = other_rows["id"].sample(1).values[0]
+
+        rand_idx = int(random.sample(other_rows.index.values.tolist(), 1)[0])
         other_rows.at[rand_idx, "chosen"] = True
         other_rows.at[rand_idx, "has_already_been_chosen"] = True
-        new_origin_idx = other_rows.at[rand_idx, "id"]
+        new_origin_idx = rand_idx # other_rows.loc[]#at[rand_idx, "id"]
         self.df_tree.update(other_rows)
         print("went back, new origin: {}".format(new_origin_idx))
         return new_origin_idx
@@ -341,7 +352,7 @@ class FindOverlapOneBranch:
         root = Node("root")
         try:
             for layer in range(0, depth):
-                idx_list = self.df_tree.loc[self.df_tree["layer"] == layer, "id"].values.tolist()
+                idx_list = self.df_tree.loc[self.df_tree["layer"] == layer].index.values.tolist()
                 if layer > 0:
                     parent_list = self.df_tree.loc[self.df_tree["layer"] == layer, "parent"].values.astype(int).tolist()
                 else:
@@ -355,16 +366,34 @@ class FindOverlapOneBranch:
                                 parent = j
                     else:
                         parent = root
-                    node_sub_list.append(Node(name="{}_{}".format(layer, idx_list[i]), parent=parent))
+                    used = self.df_tree.loc[i]#, not self.df_tree["chosen"] & self.df_tree["has_already_been_chosen"]]
+                    color = "black"
+                    if used.loc["chosen"]:
+                        color="green"
+                    if (not used.loc["chosen"]) & (used.loc["has_already_been_chosen"]):
+                        color="red"
+                    print(i, idx_list)
+                    print(used)
+                    node_sub_list.append(Node(name="{}_{}".format(layer, idx_list[i]), parent=parent, color=color))
                 node_list_next = np.array(node_sub_list)
                 node_list.append(node_list_next)
         except Exception as e:
             print(e)
             pass
-        dot_exp = DotExporter(root)
+        dot_exp = DotExporter(root, nodeattrfunc=self.set_color_shape)
         dot_exp.to_picture("{}.png".format(os.path.splitext(self.output_fname)[0]))
         for line in dot_exp:
             print(line)
+
+    def set_color_shape(self, node):
+        """
+        function to be able to set colors for our generated tree
+        @return:
+        """
+        attrs = []
+        attrs += [f'color={node.color}'] if hasattr(node, 'color') else []
+        attrs += [f'shape={node.shape}'] if hasattr(node, 'shape') else []
+        return ', '.join(attrs)
 
     def save_tree(self):
         self.df_tree.to_csv("{}".format(self.output_fname), mode='w')
@@ -420,3 +449,5 @@ if __name__ == '__main__':
     # input_df2 = pd.read_csv(clean_file)
 
 #TODO something goes often wrong here, need to debug
+#TODO bug in visualizing of tree, wrong parent gets chosen, colors are correct
+#TODO sometimes we remove the old index and then things go wrong

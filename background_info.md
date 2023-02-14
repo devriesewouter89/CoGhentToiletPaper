@@ -32,3 +32,8 @@ e.g. rescale images: https://github.com/CoGhent/random_image_viewer/blob/master/
 To align toilet paper, should I be using segmentation masks?
 https://blog.roboflow.com/how-to-create-segmentation-masks-with-roboflow/
 
+
+
+# rpi camera mount
+
+- https://www.thingiverse.com/thing:3079477 ?
