@@ -106,9 +106,13 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
     cr.set_line_width(0.1)
 
     # --------background color for development---------
-    cr.set_source_rgb(100.0, 0.0, 0.0)
+    # cr.set_source_rgb(100.0, 0.0, 0.0)
+    # cr.rectangle(0, 0, config.sheet_width, config.sheet_height)
+    # cr.fill()
+    # --------rectangle for paper positioning---------
+    cr.set_source_rgb(0.0, 0.0, 0.0)
     cr.rectangle(0, 0, config.sheet_width, config.sheet_height)
-    cr.fill()
+    cr.stroke()
     # -----------------OLD TEXT -----------------------
     cr.set_source_rgb(0, 0, 0)
     # adapt the width of the text

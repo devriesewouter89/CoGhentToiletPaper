@@ -143,3 +143,5 @@ imageConversion/images/
 
 location_files/
 poetry.lock
+*.h264
+*.png

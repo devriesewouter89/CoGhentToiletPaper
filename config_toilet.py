@@ -64,3 +64,7 @@ class Config:
 
     # physical connections
     suction_GPIO = 18  # BCM
+
+
+    # camera settings
+    region_of_interest = (341, 7, 106, 346)

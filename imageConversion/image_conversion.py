@@ -54,7 +54,7 @@ def convert_folder_to_linedraw(input_path: Path, output_path: Path, config: Conf
     """
     ld = LineDraw(draw_contours=config.draw_contour, draw_hatch=config.draw_hatch, hatch_size=config.hatch_size,
                   contour_simplify=config.contour_simplify, no_polylines=config.no_polylines, resize=config.resize,
-                  longest=config.sheet_width, shortest=config.sheet_height, resolution=config.resolution)
+                  longest=config.sheet_width, shortest=config.sheet_height, resolution=config.resolution, draw_border=True)
     output_path.mkdir(parents=True, exist_ok=True)
     for img in input_path.iterdir():
         output = Path(output_path / "{}.svg".format(img.stem))
