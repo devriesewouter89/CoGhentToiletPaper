@@ -178,22 +178,23 @@ def qualify_position(input_image, template, region_of_ok):
 
 
 def prepare(config: Config):
-    # capture image
-    picam2 = Picamera2()
-    # half_resolution = [dim // 2 for dim in picam2.sensor_resolution]
-    half_resolution = (640, 480)
-    preview_config = picam2.create_preview_configuration(main={"size": half_resolution})
-    picam2.configure(preview_config)
+    if not os.path.isfile(str(config.prep_img)):
+        # capture image
+        picam2 = Picamera2()
+        # half_resolution = [dim // 2 for dim in picam2.sensor_resolution]
+        half_resolution = (640, 480)
+        preview_config = picam2.create_preview_configuration(main={"size": half_resolution})
+        picam2.configure(preview_config)
 
-    picam2.start_preview(Preview.QTGL)
+        picam2.start_preview(Preview.QTGL)
 
-    picam2.start()
-    time.sleep(2)
+        picam2.start()
+        time.sleep(2)
 
-    metadata = picam2.capture_file(str(config.prep_img))
-    print(metadata)
+        metadata = picam2.capture_file(str(config.prep_img))
+        print(metadata)
 
-    picam2.close()
+        picam2.close()
     # create template
     template = create_template(config)
     region_of_ok = create_region_of_interest(config.prep_img, "region of ok")
