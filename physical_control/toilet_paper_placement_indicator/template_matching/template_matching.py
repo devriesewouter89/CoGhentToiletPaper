@@ -141,14 +141,14 @@ def open_stream_until_OK(template, region_of_ok):
     picam2.configure(video_config)
 
     encoder = H264Encoder(10000000)
-
+    print("ready for recording")
     picam2.start_recording(encoder, 'test.h264')
     time.sleep(2)
     result = "NOK"
     while (result == "NOK"):
         # It's better to capture the still in this thread, not in the one driving the camera.
         request = picam2.capture_request()
-        result = qualify_position()
+        result = qualify_position(request, template, region_of_ok)
         # request.save("main", "test.jpg")
         request.release()
         print("Still image captured!")
@@ -175,8 +175,8 @@ def prepare(git_path: str):
     template = create_template(os.path.join(git_path,
                                             'physical_control/toilet_paper_placement_indicator/template_matching/frames/plexi/backlit/OK/284.png'))
     region_of_ok = create_region_of_interest(os.path.join(git_path,
-                                                          'physical_control/toilet_paper_placement_indicator/template_matching/frames/plexi/backlit/OK/294.png',
-                                                          "region of ok"))
+                                                          'physical_control/toilet_paper_placement_indicator/template_matching/frames/plexi/backlit/OK/294.png'),
+                                                          "region of ok")
     config_path = os.path.join(git_path, "config_toilet.py")
 
     save_region_of_interest(config_path, region_of_ok)
