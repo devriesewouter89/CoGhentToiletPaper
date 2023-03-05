@@ -170,11 +170,14 @@ def qualify_position(input_image, template, region_of_ok):
         return "NOK"
 
 
-def prepare():
+def prepare(git_path: str):
     # create template
-    template = create_template('./frames/plexi/backlit/OK/284.png')
-    region_of_ok = create_region_of_interest('./frames/plexi/backlit/OK/294.png', "region of ok")
-    config_path = os.path.join(get_git_root(os.getcwd()), "config_toilet.py")
+    template = create_template(os.path.join(git_path,
+                                            'physical_control/toilet_paper_placement_indicator/template_matching/frames/plexi/backlit/OK/284.png'))
+    region_of_ok = create_region_of_interest(os.path.join(git_path,
+                                                          'physical_control/toilet_paper_placement_indicator/template_matching/frames/plexi/backlit/OK/294.png',
+                                                          "region of ok"))
+    config_path = os.path.join(git_path, "config_toilet.py")
 
     save_region_of_interest(config_path, region_of_ok)
     return template, region_of_ok
@@ -188,12 +191,14 @@ the input image, and the cropped region containing the notch.
 '''
 
 if __name__ == '__main__':
-    template, region_of_ok = prepare()
-    # Load the template image and the input image
     config = Config()
+    template, region_of_ok = prepare(get_git_root(os.getcwd()))
+
+    # Load the template image and the input image
     region_of_ok = config.region_of_interest
+
     manual = False
-    if(manual==True):
+    if (manual == True):
         template = cv2.imread('template.jpg', 0)
         # img_path = Path(Path.cwd().parent / "training_init_toilet_roll" / "too_far")
         # img_path = './frames/backlit/NF/0056.png'
