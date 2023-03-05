@@ -154,8 +154,8 @@ def open_stream_until_OK(template, region_of_ok):
     while (result == "NOK"):
         # It's better to capture the still in this thread, not in the one driving the camera.
         request = picam2.capture_request()
-        request.save("main", config.temp_img)
-        result = qualify_position(config.temp_img, template, region_of_ok)
+        request.save("main", str(config.temp_img))
+        result = qualify_position(str(config.temp_img), template, region_of_ok)
 
         request.release()
         print("Still image captured!")
