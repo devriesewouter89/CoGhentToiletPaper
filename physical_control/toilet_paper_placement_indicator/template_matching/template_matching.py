@@ -197,7 +197,7 @@ def prepare(config: Config):
         picam2.close()
     # create template
     template = create_template(config)
-    region_of_ok = create_region_of_interest(config.prep_img, "region of ok")
+    region_of_ok = create_region_of_interest(str(config.prep_img), "region of ok")
     config_path = os.path.join(get_git_root(os.getcwd()), "config_toilet.py")
 
     save_region_of_interest(config_path, region_of_ok)
