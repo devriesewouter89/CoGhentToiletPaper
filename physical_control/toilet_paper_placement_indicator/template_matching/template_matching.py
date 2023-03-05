@@ -29,7 +29,7 @@ def create_template(config: Config):
     roi = create_region_of_interest(str(config.prep_img), "template creation")
 
     # crop the image
-    cropped_template = cropped_img_via_roi(img, roi)
+    cropped_template = cropped_img_via_roi(str(config.prep_img), roi)
 
     # Convert the template image to grayscale
     gray_template = cv2.cvtColor(cropped_template, cv2.COLOR_BGR2GRAY)
@@ -139,7 +139,8 @@ def open_stream_until_OK(template, region_of_ok):
     # Encode a VGA stream, and capture a higher resolution still image half way through.
 
     picam2 = Picamera2()
-    half_resolution = [dim // 2 for dim in picam2.sensor_resolution]
+    # half_resolution = [dim // 2 for dim in picam2.sensor_resolution]
+    half_resolution = (640, 480)
     main_stream = {"size": half_resolution}
     lores_stream = {"size": (640, 480)}
     video_config = picam2.create_video_configuration(main_stream, lores_stream, encode="lores")
@@ -180,7 +181,8 @@ def prepare(config: Config):
     # capture image
 
     picam2 = Picamera2()
-    half_resolution = [dim // 2 for dim in picam2.sensor_resolution]
+    # half_resolution = [dim // 2 for dim in picam2.sensor_resolution]
+    half_resolution = (640, 480)
     preview_config = picam2.create_preview_configuration(main={"size": half_resolution})
     picam2.configure(preview_config)
 
