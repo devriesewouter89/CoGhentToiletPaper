@@ -41,12 +41,13 @@ def create_template(img: str):
     ret, thresh = cv2.threshold(filtered_template, 180, 255, cv2.THRESH_BINARY)
 
     # Display the result
-    cv2.imshow('cropped template', cropped_template)
-    cv2.imshow('gray_template', gray_template)
-    cv2.imshow('filtered_template', filtered_template)
-    cv2.imshow('thresh', thresh)
+    # cv2.imshow('cropped template', cropped_template)
+    # cv2.imshow('gray_template', gray_template)
+    # cv2.imshow('filtered_template', filtered_template)
+    # cv2.imshow('thresh', thresh)
     cv2.imwrite('template.jpg', thresh)
     cv2.waitKey(0)
+    cv2.destroyAllWindows()
     return thresh
 
 
@@ -64,6 +65,7 @@ def test_roi():
     # Display cropped image
     cv2.imshow("Image", imCrop)
     cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 def cropped_img_via_roi(img, roi):
@@ -105,7 +107,10 @@ def save_region_of_interest(config_path: str, region_of_interest):
 
 
 def return_matched_image(input_image, template, min_height=0, max_height=3840):
+    input_image = cv2.imread(input_image,0)
     cv2.imshow("input normal", input_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
     # # todo change with roi
     input_image = input_image[min_height: max_height, 0: input_image.shape[1]]
     # cv2.imshow("input cropped", input_image)
@@ -148,8 +153,9 @@ def open_stream_until_OK(template, region_of_ok):
     while (result == "NOK"):
         # It's better to capture the still in this thread, not in the one driving the camera.
         request = picam2.capture_request()
-        result = qualify_position(request, template, region_of_ok)
-        # request.save("main", "test.jpg")
+        request.save("main", "test.jpg")
+        result = qualify_position("test.jpg", template, region_of_ok)
+        
         request.release()
         print("Still image captured!")
 
