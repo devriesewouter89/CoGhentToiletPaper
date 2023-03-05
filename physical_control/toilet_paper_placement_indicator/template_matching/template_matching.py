@@ -45,7 +45,7 @@ def create_template(config: Config):
     # cv2.imshow('gray_template', gray_template)
     # cv2.imshow('filtered_template', filtered_template)
     # cv2.imshow('thresh', thresh)
-    cv2.imwrite(config.template, thresh)
+    cv2.imwrite(str(config.template), thresh)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     return thresh
@@ -179,7 +179,6 @@ def qualify_position(input_image, template, region_of_ok):
 
 def prepare(config: Config):
     # capture image
-
     picam2 = Picamera2()
     # half_resolution = [dim // 2 for dim in picam2.sensor_resolution]
     half_resolution = (640, 480)
