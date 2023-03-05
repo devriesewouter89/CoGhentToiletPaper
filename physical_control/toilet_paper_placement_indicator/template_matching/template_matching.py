@@ -10,7 +10,7 @@ from picamera2.encoders import H264Encoder
 from config_toilet import get_git_root, Config
 
 
-def create_template(img: str, config: Config):
+def create_template(config: Config):
     '''
     This code will first convert the template image to grayscale, which is necessary for some image processing operations.
     It will then apply a bilateral filter to the grayscale image to improve the contrast and remove noise.
@@ -26,6 +26,8 @@ def create_template(img: str, config: Config):
     '''
 
     # define the region of interest
+    img = cv2.imread(str(config.prep_img))
+
     roi = create_region_of_interest(img, "template creation")
 
     # crop the image
@@ -189,12 +191,12 @@ def prepare(config: Config):
     picam2.start()
     time.sleep(2)
 
-    metadata = picam2.capture_file(config.prep_img)
+    metadata = picam2.capture_file(str(config.prep_img))
     print(metadata)
 
     picam2.close()
     # create template
-    template = create_template(config.prep_img)
+    template = create_template(config)
     region_of_ok = create_region_of_interest(config.prep_img, "region of ok")
     config_path = os.path.join(get_git_root(os.getcwd()), "config_toilet.py")
 
