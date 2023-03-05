@@ -26,9 +26,7 @@ def create_template(config: Config):
     '''
 
     # define the region of interest
-    img = cv2.imread(str(config.prep_img))
-
-    roi = create_region_of_interest(img, "template creation")
+    roi = create_region_of_interest(str(config.prep_img), "template creation")
 
     # crop the image
     cropped_template = cropped_img_via_roi(img, roi)
