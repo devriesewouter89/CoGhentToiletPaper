@@ -4,13 +4,13 @@ import os
 import time
 
 import cv2
-from picamera2 import Picamera2
+from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder
 
 from config_toilet import get_git_root, Config
 
 
-def create_template(img: str):
+def create_template(img: str, config: Config):
     '''
     This code will first convert the template image to grayscale, which is necessary for some image processing operations.
     It will then apply a bilateral filter to the grayscale image to improve the contrast and remove noise.
@@ -45,7 +45,7 @@ def create_template(img: str):
     # cv2.imshow('gray_template', gray_template)
     # cv2.imshow('filtered_template', filtered_template)
     # cv2.imshow('thresh', thresh)
-    cv2.imwrite('template.jpg', thresh)
+    cv2.imwrite(config.template, thresh)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     return thresh
@@ -107,10 +107,10 @@ def save_region_of_interest(config_path: str, region_of_interest):
 
 
 def return_matched_image(input_image, template, min_height=0, max_height=3840):
-    input_image = cv2.imread(input_image,0)
-    cv2.imshow("input normal", input_image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    input_image = cv2.imread(input_image, 0)
+    # cv2.imshow("input normal", input_image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
     # # todo change with roi
     input_image = input_image[min_height: max_height, 0: input_image.shape[1]]
     # cv2.imshow("input cropped", input_image)
@@ -153,9 +153,9 @@ def open_stream_until_OK(template, region_of_ok):
     while (result == "NOK"):
         # It's better to capture the still in this thread, not in the one driving the camera.
         request = picam2.capture_request()
-        request.save("main", "test.jpg")
-        result = qualify_position("test.jpg", template, region_of_ok)
-        
+        request.save("main", config.temp_img)
+        result = qualify_position(config.temp_img, template, region_of_ok)
+
         request.release()
         print("Still image captured!")
 
@@ -176,14 +176,27 @@ def qualify_position(input_image, template, region_of_ok):
         return "NOK"
 
 
-def prepare(git_path: str):
+def prepare(config: Config):
+    # capture image
+
+    picam2 = Picamera2()
+    half_resolution = [dim // 2 for dim in picam2.sensor_resolution]
+    preview_config = picam2.create_preview_configuration(main={"size": half_resolution})
+    picam2.configure(preview_config)
+
+    picam2.start_preview(Preview.QTGL)
+
+    picam2.start()
+    time.sleep(2)
+
+    metadata = picam2.capture_file(config.prep_img)
+    print(metadata)
+
+    picam2.close()
     # create template
-    template = create_template(os.path.join(git_path,
-                                            'physical_control/toilet_paper_placement_indicator/template_matching/frames/plexi/backlit/OK/284.png'))
-    region_of_ok = create_region_of_interest(os.path.join(git_path,
-                                                          'physical_control/toilet_paper_placement_indicator/template_matching/frames/plexi/backlit/OK/294.png'),
-                                                          "region of ok")
-    config_path = os.path.join(git_path, "config_toilet.py")
+    template = create_template(config.prep_img)
+    region_of_ok = create_region_of_interest(config.prep_img, "region of ok")
+    config_path = os.path.join(get_git_root(os.getcwd()), "config_toilet.py")
 
     save_region_of_interest(config_path, region_of_ok)
     return template, region_of_ok
@@ -198,7 +211,7 @@ the input image, and the cropped region containing the notch.
 
 if __name__ == '__main__':
     config = Config()
-    template, region_of_ok = prepare(get_git_root(os.getcwd()))
+    template, region_of_ok = prepare(config)
 
     # Load the template image and the input image
     region_of_ok = config.region_of_interest

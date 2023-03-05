@@ -68,3 +68,6 @@ class Config:
 
     # camera settings
     region_of_interest = (341, 7, 106, 346)
+    prep_img = Path(location_files / "prep.jpg")
+    template = Path(location_files / "template.jpg")
+    temp_img = Path(location_files / "temp.jpg")
