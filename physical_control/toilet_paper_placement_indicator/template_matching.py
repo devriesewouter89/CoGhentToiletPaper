@@ -52,7 +52,7 @@ def create_template(config: Config):
 
 
 def test_roi():
-    img = os.path.join(os.getcwd(), "../1.jpg")
+    img = os.path.join(os.getcwd(), "1.jpg")
     print(img)
     roi = create_region_of_interest(img)
     imCrop = cropped_img_via_roi(img, roi)
@@ -60,7 +60,7 @@ def test_roi():
     cv2.imshow("Image", imCrop)
     cv2.waitKey(0)
     # test roi on other images:
-    img2 = os.path.join(os.getcwd(), "../2.jpg")
+    img2 = os.path.join(os.getcwd(), "2.jpg")
     imCrop = cropped_img_via_roi(img2, roi)
     # Display cropped image
     cv2.imshow("Image", imCrop)
@@ -88,6 +88,8 @@ def create_region_of_interest(img, window_name: str = ""):
 
     # Select ROI
     r = cv2.selectROI(window_name, im)
+    cv2.destroyAllWindows()
+
     return r
 
 
@@ -223,7 +225,7 @@ if __name__ == '__main__':
         template = cv2.imread('template.jpg', 0)
         # img_path = Path(Path.cwd().parent / "training_init_toilet_roll" / "too_far")
         # img_path = './frames/backlit/NF/0056.png'
-        img_path = './frames/plexi/backlit/NF/032.png'
+        img_path = 'template_matching/frames/plexi/backlit/NF/032.png'
         #
         input_image = cv2.imread(img_path, 0)
         overlay, max_loc = return_matched_image(input_image, template)
