@@ -52,7 +52,7 @@ class CamControl:
         self.picam2.start_preview(Preview.QTGL)
         self.picam2.start()
         time.sleep(2)
-        metadata = self.picam2.capture_file(str(config.prep_img.resolve()))
+        metadata = self.picam2.capture_file(str(self.config.prep_img.resolve()))
         print(metadata)
         self.picam2.close()
 
