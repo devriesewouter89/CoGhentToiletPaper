@@ -48,7 +48,7 @@ class StepperControl:
         self.kit.stepper1.release()
         self.kit.stepper2.release()
 
-    def move_paper_left(self, amount_of_steps: int = 50):
+    def move_paper_right(self, amount_of_steps: int = 50):
         """
 
         @param amount_of_steps:
@@ -61,7 +61,7 @@ class StepperControl:
             # self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
         # todo necessary to have both activated afterwards so paper can't move?
 
-    def move_paper_right(self, amount_of_steps: int = 50):
+    def move_paper_left(self, amount_of_steps: int = 50):
         """
 
         @param amount_of_steps:
