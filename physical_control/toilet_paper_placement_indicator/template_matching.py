@@ -88,12 +88,17 @@ class SheetPlacement():
             print("OK")
             return PLACEMENT.CORRECT
         else:
-            if max_loc[0] > region_of_ok[0] + region_of_ok[2]:
-                print("Not far")
-                return PLACEMENT.NOT_FAR
-            else:
-                print("Too far")
-                return PLACEMENT.TOO_FAR
+            # todo right now I start with not far, as otherwise we keep returning to the same page,
+            # todo ?how to tackle this problem?
+            # todo perhaps check the distance of too far at start and have the paper move out of sight, only then enable
+            # todo the option TOO FAR again?
+            return PLACEMENT.NOT_FAR
+            # if max_loc[0] > region_of_ok[0] + region_of_ok[2]:
+            #     print("Not far")
+            #     return PLACEMENT.NOT_FAR
+            # else:
+            #     print("Too far")
+            #     return PLACEMENT.TOO_FAR
 
     def open_stream_until_OK(self, template, region_of_ok):
         self.cc.start_vid_rec()
