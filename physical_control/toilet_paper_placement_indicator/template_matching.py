@@ -70,7 +70,7 @@ class SheetPlacement():
             self.cc.capture_jpeg()
         # create template
         template = self.create_template()
-        region_of_ok = self.create_region_of_interest(str(self.config), "region of ok")
+        region_of_ok = self.create_region_of_interest(str(self.config.prep_img.resolve()), "region of ok")
         config_path = os.path.join(get_git_root(os.getcwd()), "config_toilet.py")
 
         self.save_region_of_interest(config_path, region_of_ok)
@@ -244,7 +244,7 @@ if __name__ == '__main__':
     cc = CamControl()
     sheet = SheetPlacement(cc, config)
     manual = False
-    prep = False
+    prep = True
     if (prep):
         template, region_of_ok = sheet.prepare()
     else:
