@@ -44,7 +44,7 @@ class CamControl:
         if not self.video:
             self.start_vid_rec()
         request = self.picam2.capture_request()
-        request.save("main", str(config.temp_img))
+        request.save("main", str(config.temp_img.resolve()))
         request.release()
 
     def capture_jpeg(self):
@@ -52,7 +52,7 @@ class CamControl:
         self.picam2.start_preview(Preview.QTGL)
         self.picam2.start()
         time.sleep(2)
-        metadata = self.picam2.capture_file(str(config.prep_img))
+        metadata = self.picam2.capture_file(str(config.prep_img.resolve()))
         print(metadata)
         self.picam2.close()
 
@@ -61,16 +61,16 @@ class SheetPlacement():
     def __init__(self, cc: CamControl, config: Config):
         self.cc = cc
         self.config = config
-        self.template = cv2.imread(self.config.template, 0)
+        self.template = cv2.imread(str(self.config.template.resolve()), 0)
         self.region_of_ok = self.config.region_of_interest
 
     def prepare(self):
-        if not os.path.isfile(str(self.config.prep_img)):
+        if not os.path.isfile(str(self.config.prep_img.resolve())):
             # capture image
             self.cc.capture_jpeg()
         # create template
         template = self.create_template()
-        region_of_ok = self.create_region_of_interest(str(self.config.prep_img), "region of ok")
+        region_of_ok = self.create_region_of_interest(str(self.config..resolve()), "region of ok")
         config_path = os.path.join(get_git_root(os.getcwd()), "config_toilet.py")
 
         self.save_region_of_interest(config_path, region_of_ok)
@@ -97,7 +97,7 @@ class SheetPlacement():
         while result != PLACEMENT.CORRECT:
             # It's better to capture the still in this thread, not in the one driving the camera.
             self.cc.capture_during_rec()
-            result = self.qualify_position(str(self.config.temp_img), template, region_of_ok)
+            result = self.qualify_position(str(self.config.temp_img.resolve()), template, region_of_ok)
             print("Still image captured!")
 
         # time.sleep(5)
@@ -105,7 +105,7 @@ class SheetPlacement():
 
     def check_placement_via_pic(self):
         self.cc.capture_jpeg()
-        img_to_verify = cv2.imread(self.config.prep_img, 0)
+        img_to_verify = cv2.imread(self.config.prep_img.resolve(), 0)
         placement = self.qualify_position(img_to_verify, self.template, self.region_of_ok)
         print("PLACEMENT via pic {}".format(placement))
         return placement
@@ -126,10 +126,10 @@ class SheetPlacement():
         '''
 
         # define the region of interest
-        roi = self.create_region_of_interest(str(self.config.prep_img), "template creation")
+        roi = self.create_region_of_interest(str(self.config.prep_img.resolve()), "template creation")
 
         # crop the image
-        cropped_template = self.cropped_img_via_roi(str(self.config.prep_img), roi)
+        cropped_template = self.cropped_img_via_roi(str(self.config.prep_img.resolve()), roi)
 
         # Convert the template image to grayscale
         gray_template = cv2.cvtColor(cropped_template, cv2.COLOR_BGR2GRAY)
@@ -145,7 +145,7 @@ class SheetPlacement():
         # cv2.imshow('gray_template', gray_template)
         # cv2.imshow('filtered_template', filtered_template)
         # cv2.imshow('thresh', thresh)
-        cv2.imwrite(str(self.config.template), thresh)
+        cv2.imwrite(str(self.config.template.resolve()), thresh)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
         return thresh
