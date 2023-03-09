@@ -71,7 +71,7 @@ class StepperControl:
         self.kit.stepper1.release()
         for _ in range(amount_of_steps):
             # self.kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
-            self.kit.stepper2.onestep(direction=stepper.FORWARD, style=stepper.SINGLE)
+            self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
         # todo necessary to have both activated afterwards so paper can't move?
 
     def roll_towards_next_sheet(self):
