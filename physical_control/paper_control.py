@@ -83,7 +83,7 @@ class StepperControl:
         # 1. first we move the paper a little bit
         self.move_paper_left(amount_of_steps=50)
         # 2. then we go and check the position
-        while self.placement != PLACEMENT.CORRECT:
+        while True:
             self.placement = self.sheet.check_placement_via_pic()
             print('placement : {}'.format(self.placement))
             if self.placement == PLACEMENT.CORRECT:
