@@ -249,7 +249,7 @@ if __name__ == '__main__':
     cc = CamControl(config)
     sheet = SheetPlacement(cc, config)
     manual = False
-    prep = True
+    prep = False
     if (prep):
         template, region_of_ok = sheet.prepare()
     else:
