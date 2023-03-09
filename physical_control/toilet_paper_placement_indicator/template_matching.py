@@ -81,7 +81,6 @@ class SheetPlacement():
     def qualify_position(self, input_image: str, template, region_of_ok):
 
         overlay, max_loc = self.return_matched_image(input_image, template)
-        print("overlay {} max_loc {} ".format(overlay, max_loc))
         # cv2.imshow("overlay", cv2.resize(overlay, (int(overlay.shape[1] * 0.6), int(overlay.shape[0] * 0.6))))
         # cv2.waitKey(0)
         # print("region of ok {}".format(region_of_ok))
@@ -89,10 +88,12 @@ class SheetPlacement():
             print("OK")
             return PLACEMENT.CORRECT
         else:
-            print("Not OK")
+
             if max_loc[0] > region_of_ok[0] + region_of_ok[2]:
+                print("Not far")
                 return PLACEMENT.NOT_FAR
             else:
+                print("Too far")
                 return PLACEMENT.TOO_FAR
 
     def open_stream_until_OK(self, template, region_of_ok):
