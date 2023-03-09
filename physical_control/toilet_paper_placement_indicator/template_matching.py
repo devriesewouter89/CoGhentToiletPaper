@@ -47,6 +47,7 @@ class CamControl:
         request = self.picam2.capture_request()
         request.save("main", str(self.config.temp_img.resolve()))
         request.release()
+        return
 
     def capture_jpeg(self):
         self.picam2.configure(self.preview_config)
