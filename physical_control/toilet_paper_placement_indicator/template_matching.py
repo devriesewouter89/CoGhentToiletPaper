@@ -2,13 +2,19 @@
 
 import os
 import time
+from enum import Enum
 
 import cv2
 from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder
 
 from config_toilet import get_git_root, Config
-from physical_control.paper_control import PLACEMENT
+
+
+class PLACEMENT(Enum):
+    NOT_FAR = 0
+    CORRECT = 1
+    TOO_FAR = 2
 
 
 class CamControl:

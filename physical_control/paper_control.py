@@ -1,7 +1,6 @@
 """Simple test for using adafruit_motorkit with a stepper motor"""
 import sys
 import time
-from enum import Enum
 from pathlib import Path
 
 import board
@@ -12,7 +11,7 @@ from sshkeyboard import listen_keyboard
 
 from config_toilet import Config
 from physical_control.suction import SuctionControl
-from physical_control.toilet_paper_placement_indicator.template_matching import CamControl, SheetPlacement
+from physical_control.toilet_paper_placement_indicator.template_matching import CamControl, SheetPlacement, PLACEMENT
 
 
 def get_project_root():
@@ -23,12 +22,6 @@ try:
     sys.path.index(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 except ValueError:
     sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
-
-
-class PLACEMENT(Enum):
-    NOT_FAR = 0
-    CORRECT = 1
-    TOO_FAR = 2
 
 
 class StepperControl:
