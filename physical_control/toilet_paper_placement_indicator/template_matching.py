@@ -204,7 +204,7 @@ class SheetPlacement():
             file.writelines(data)
 
     def return_matched_image(self, input_image, template, min_height=0, max_height=3840):
-        input_image = cv2.imread(input_image, 0)
+        # input_image = cv2.imread(input_image, 0)
         # cv2.imshow("input normal", input_image)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
