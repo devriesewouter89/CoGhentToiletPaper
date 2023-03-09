@@ -223,7 +223,7 @@ class SheetPlacement():
         bottom_right = (top_left[0] + w, top_left[1] + h)
         cropped = input_image[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
         overlay = cv2.rectangle(input_image.copy(), max_loc, (max_loc[0] + w, max_loc[1] + h), (0, 0, 255), 2)
-        print("coordinates of max loc: {}".format(max_loc))
+        print("coordinates of max loc: {} with certainty {}".format(max_loc, max_val))
         # Display the result
         # cv2.imshow('template', template)
         # cv2.imshow('input', cv2.resize(input_image, (int(input_image.shape[1]*0.6), int(input_image.shape[0]*0.6)),
