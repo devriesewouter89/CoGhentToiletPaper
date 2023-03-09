@@ -7,6 +7,7 @@ from enum import Enum
 import cv2
 from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder
+import atexit
 
 from config_toilet import get_git_root, Config
 
@@ -29,6 +30,7 @@ class CamControl:
         self.video_config = self.picam2.create_video_configuration(main_stream, lores_stream, encode="lores")
         self.preview_config = self.picam2.create_preview_configuration(main={"size": half_resolution})
         self.config = config
+        atexit.register(self.close)
 
     def start_vid_rec(self):
         self.picam2.configure(self.video_config)
@@ -51,11 +53,12 @@ class CamControl:
 
     def capture_jpeg(self):
         self.picam2.configure(self.preview_config)
-        self.picam2.start_preview(Preview.QTGL)
+        # self.picam2.start_preview(Preview.QTGL)
         self.picam2.start()
         time.sleep(2)
         metadata = self.picam2.capture_file(str(self.config.prep_img.resolve()))
         print(metadata)
+    def close(self):
         self.picam2.close()
 
 
@@ -203,8 +206,6 @@ class SheetPlacement():
         for idx, i in enumerate(data):
             if "region_of_interest" in i:
                 line_to_change = idx
-
-        print(data)
         data[line_to_change] = "    region_of_interest = {}\r\n".format(region_of_interest)
 
         with open(config_path, 'w', encoding='utf-8') as file:
