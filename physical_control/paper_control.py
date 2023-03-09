@@ -82,11 +82,15 @@ class StepperControl:
         @return:
         """
         self.placement = PLACEMENT.NOT_FAR
-        # 1. first we move the paper a little bit
-        self.move_paper_left(amount_of_steps=20)
-        # 2. then we go and check the position
+        # # 1. first we move the paper a little bit
+        # self.move_paper_left(amount_of_steps=20)
+        # 1. the idea is that first we have to move from PLACEMENT.CORRECT towards PLACEMENT.NOT_FAR ( with a bool)
+        # and only
+        # then start listening again to PLACEMENT.CORRECT
+        # 2. we go and check the position
         self.cc.start_vid_rec()
-        # self.placement = self.sheet.check_placement_via_pic()
+
+        paper_has_left_original_position = False
         while True:
             # It's better to capture the still in this thread, not in the one driving the camera.
             self.cc.capture_during_rec()
@@ -95,13 +99,18 @@ class StepperControl:
             print('placement : {}'.format(self.placement))
             if self.placement == PLACEMENT.CORRECT:
                 print("found correct location")
-
-                break
+                if paper_has_left_original_position:
+                    break
+                else:
+                    #we need to get the paper first far enough to start measuring again
+                    self.move_paper_left(amount_of_steps=5)
+                    continue
             if self.placement == PLACEMENT.TOO_FAR:
-                self.move_paper_right(amount_of_steps=10)
+                self.move_paper_right(amount_of_steps=5)
                 continue
             if self.placement == PLACEMENT.NOT_FAR:
-                self.move_paper_left(amount_of_steps=10)
+                paper_has_left_original_position = True
+                self.move_paper_left(amount_of_steps=5)
                 continue
         self.cc.stop_vid_rec()
             # self.insert_sshkeyboard()
