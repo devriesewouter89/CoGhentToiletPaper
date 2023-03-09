@@ -29,6 +29,7 @@ class CamControl:
         self.video_config = self.picam2.create_video_configuration(main_stream, lores_stream, encode="lores")
         self.preview_config = self.picam2.create_preview_configuration(main={"size": half_resolution})
         self.config = config
+
     def start_vid_rec(self):
         self.picam2.configure(self.video_config)
         encoder = H264Encoder(10000000)
@@ -67,11 +68,11 @@ class SheetPlacement():
         self.region_of_ok = self.config.region_of_interest
 
     def prepare(self):
-        if not os.path.isfile(str(self.config.prep_img.resolve())):
-            # capture image
-            self.cc.capture_jpeg()
+        # capture image
+        self.cc.capture_jpeg()
         # create template
         template = self.create_template()
+        # create region where the paper lies correctly
         region_of_ok = self.create_region_of_interest(str(self.config.prep_img.resolve()), "region of ok")
         config_path = os.path.join(get_git_root(os.getcwd()), "config_toilet.py")
 
@@ -88,7 +89,6 @@ class SheetPlacement():
             print("OK")
             return PLACEMENT.CORRECT
         else:
-
             if max_loc[0] > region_of_ok[0] + region_of_ok[2]:
                 print("Not far")
                 return PLACEMENT.NOT_FAR
@@ -208,7 +208,7 @@ class SheetPlacement():
         with open(config_path, 'w', encoding='utf-8') as file:
             file.writelines(data)
 
-    def return_matched_image(self, input_image : str, template, min_height=0, max_height=3840):
+    def return_matched_image(self, input_image: str, template, min_height=0, max_height=3840):
         input_image = cv2.imread(input_image, 0)
         # cv2.imshow("input normal", input_image)
         # cv2.waitKey(0)
@@ -229,11 +229,10 @@ class SheetPlacement():
         cropped = input_image[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
         overlay = cv2.rectangle(input_image.copy(), max_loc, (max_loc[0] + w, max_loc[1] + h), (0, 0, 255), 2)
         print("coordinates of max loc: {} with certainty {}".format(max_loc, max_val))
-        # Display the result
-        # cv2.imshow('template', template)
-        # cv2.imshow('input', cv2.resize(input_image, (int(input_image.shape[1]*0.6), int(input_image.shape[0]*0.6)),
-        #                                interpolation=cv2.INTER_LINEAR))
-        # cv2.imshow('cropped', cropped)
+        # Display the result for debugging
+        # cv2.imshow("overlay", overlay)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
         return overlay, max_loc
 
 
