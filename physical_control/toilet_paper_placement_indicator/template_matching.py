@@ -105,7 +105,7 @@ class SheetPlacement():
 
     def check_placement_via_pic(self):
         self.cc.capture_jpeg()
-        img_to_verify = cv2.imread(self.config.prep_img.resolve(), 0)
+        img_to_verify = cv2.imread(str(self.config.prep_img.resolve()), 0)
         placement = self.qualify_position(img_to_verify, self.template, self.region_of_ok)
         print("PLACEMENT via pic {}".format(placement))
         return placement
