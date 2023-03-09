@@ -94,6 +94,7 @@ class StepperControl:
             # self.insert_sshkeyboard()
 
     def insert_sshkeyboard(self):
+        print("inserting ssh keyboard")
         listen_keyboard(on_press=self.on_press, until="space")
 
     def on_press(self, key):
@@ -103,7 +104,7 @@ class StepperControl:
             if key == "a":
                 self.move_paper_left(50)
             if key == "d":
-                self.move_paper_left(50)
+                self.move_paper_right(50)
             if key == "r": #release
                 self.kit.stepper1.release()
                 self.kit.stepper2.release()
