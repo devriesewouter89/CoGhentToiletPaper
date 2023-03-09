@@ -95,6 +95,7 @@ class StepperControl:
             print('placement : {}'.format(self.placement))
             if self.placement == PLACEMENT.CORRECT:
                 print("found correct location")
+                self.cc.stop_vid_rec()
                 break
             if self.placement == PLACEMENT.TOO_FAR:
                 print("rolling back")
@@ -108,7 +109,7 @@ class StepperControl:
 
     def insert_sshkeyboard(self):
         print("inserting ssh keyboard")
-        listen_keyboard(on_press=self.on_press, until="space")
+        listen_keyboard(on_press=self.on_press, until="space", debug=True)
 
     def on_press(self, key):
         try:
