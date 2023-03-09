@@ -60,6 +60,7 @@ class StepperControl:
             self.kit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.SINGLE)
             # self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
         # todo necessary to have both activated afterwards so paper can't move?
+        return
 
     def move_paper_left(self, amount_of_steps: int = 50):
         """
@@ -73,6 +74,7 @@ class StepperControl:
             # self.kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
             self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
         # todo necessary to have both activated afterwards so paper can't move?
+        return
 
     def roll_towards_next_sheet(self):
         """
