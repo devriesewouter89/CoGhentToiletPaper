@@ -32,7 +32,7 @@ class StepperControl:
         self.total_roll = 0
         self.placement = PLACEMENT.NOT_FAR
         self.config = config
-        self.cc = CamControl()
+        self.cc = CamControl(config)
         self.sheet = SheetPlacement(self.cc, config)
 
     def test_stepper(self):
@@ -104,6 +104,9 @@ class StepperControl:
                 self.move_paper_left(50)
             if key == "d":
                 self.move_paper_left(50)
+            if key == "r": #release
+                self.kit.stepper1.release()
+                self.kit.stepper2.release()
             if key == "t":
                 self.roll_towards_next_sheet()
             # if key == "w":
