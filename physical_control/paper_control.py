@@ -83,7 +83,7 @@ class StepperControl:
         """
         self.placement = PLACEMENT.NOT_FAR
         # 1. first we move the paper a little bit
-        self.move_paper_left(amount_of_steps=50)
+        self.move_paper_left(amount_of_steps=20)
         # 2. then we go and check the position
         self.cc.start_vid_rec()
         # self.placement = self.sheet.check_placement_via_pic()
@@ -95,7 +95,7 @@ class StepperControl:
             print('placement : {}'.format(self.placement))
             if self.placement == PLACEMENT.CORRECT:
                 print("found correct location")
-                self.cc.stop_vid_rec()
+
                 break
             if self.placement == PLACEMENT.TOO_FAR:
                 print("rolling back")
@@ -105,6 +105,7 @@ class StepperControl:
                 print("rolling further")
                 self.move_paper_left(amount_of_steps=10)
                 continue
+            self.cc.stop_vid_rec()
             # self.insert_sshkeyboard()
 
     def insert_sshkeyboard(self):
