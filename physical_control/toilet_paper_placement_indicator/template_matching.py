@@ -20,6 +20,9 @@ class PLACEMENT(Enum):
 
 class CamControl:
     def __init__(self, config):
+        self.config = config
+        self.register()
+    def register(self):
         self.picam2 = Picamera2()
         self.video = False
         # half_resolution = [dim // 2 for dim in picam2.sensor_resolution]
@@ -29,10 +32,11 @@ class CamControl:
         lores_stream = {"size": (640, 480)}
         self.video_config = self.picam2.create_video_configuration(main_stream, lores_stream, encode="lores")
         self.preview_config = self.picam2.create_preview_configuration(main={"size": half_resolution})
-        self.config = config
         atexit.register(self.close)
 
     def start_vid_rec(self):
+        if(self.picam2==None):
+            self.register()
         self.picam2.configure(self.video_config)
         encoder = H264Encoder(10000000)
         self.picam2.start_recording(encoder, 'test.h264')
@@ -52,12 +56,14 @@ class CamControl:
         return
 
     def capture_jpeg(self):
+
         self.picam2.configure(self.preview_config)
         # self.picam2.start_preview(Preview.QTGL)
         self.picam2.start()
         time.sleep(2)
         metadata = self.picam2.capture_file(str(self.config.prep_img.resolve()))
         print(metadata)
+        self.picam2.stop()
 
     def close(self):
         self.picam2.close()
