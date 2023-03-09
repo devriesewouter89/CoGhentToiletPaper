@@ -41,6 +41,7 @@ class CamControl:
         self.video = False
 
     def capture_during_rec(self):
+        print("capturing img")
         if not self.video:
             self.start_vid_rec()
         request = self.picam2.capture_request()
