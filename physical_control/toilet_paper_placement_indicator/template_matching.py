@@ -42,7 +42,6 @@ class CamControl:
         self.video = False
 
     def capture_during_rec(self):
-        print("capturing img")
         if not self.video:
             self.start_vid_rec()
         request = self.picam2.capture_request()
@@ -103,7 +102,6 @@ class SheetPlacement():
             # It's better to capture the still in this thread, not in the one driving the camera.
             self.cc.capture_during_rec()
             result = self.qualify_position(str(self.config.temp_img.resolve()), template, region_of_ok)
-            print("Still image captured!")
 
         # time.sleep(5)
         self.cc.stop_vid_rec()
@@ -112,7 +110,6 @@ class SheetPlacement():
         self.cc.capture_jpeg()
         img_to_verify = str(self.config.prep_img.resolve())
         placement = self.qualify_position(img_to_verify, self.template, self.region_of_ok)
-        print("PLACEMENT via pic {}".format(placement))
         return placement
 
     def create_template(self):
