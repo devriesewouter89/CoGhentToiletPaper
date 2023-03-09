@@ -192,7 +192,7 @@ class SheetPlacement():
                 line_to_change = idx
 
         print(data)
-        data[line_to_change] = "    region_of_interest = {}".format(region_of_interest)
+        data[line_to_change] = "    region_of_interest = {}\r\n".format(region_of_interest)
 
         with open(config_path, 'w', encoding='utf-8') as file:
             file.writelines(data)
