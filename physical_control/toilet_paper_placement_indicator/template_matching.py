@@ -1,13 +1,13 @@
 #!/usr/bin/python3
 
+import atexit
 import os
 import time
 from enum import Enum
 
 import cv2
-from picamera2 import Picamera2, Preview
+from picamera2 import Picamera2
 from picamera2.encoders import H264Encoder
-import atexit
 
 from config_toilet import get_git_root, Config
 
@@ -58,6 +58,7 @@ class CamControl:
         time.sleep(2)
         metadata = self.picam2.capture_file(str(self.config.prep_img.resolve()))
         print(metadata)
+
     def close(self):
         self.picam2.close()
 
@@ -211,13 +212,14 @@ class SheetPlacement():
         with open(config_path, 'w', encoding='utf-8') as file:
             file.writelines(data)
 
-    def return_matched_image(self, input_image: str, template, min_height=0, max_height=3840):
-        input_image = cv2.imread(input_image, 0)
+    def return_matched_image(self, input_image_path: str, template, min_height=0, max_height=3840):
+        input_image = cv2.imread(input_image_path, 0)
         # cv2.imshow("input normal", input_image)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
         # # todo change with roi
         input_image = input_image[min_height: max_height, 0: input_image.shape[1]]
+
         # cv2.imshow("input cropped", input_image)
         # Perform template matching
         result = cv2.matchTemplate(input_image, template, cv2.TM_CCOEFF_NORMED)
@@ -230,7 +232,9 @@ class SheetPlacement():
         top_left = max_loc
         bottom_right = (top_left[0] + w, top_left[1] + h)
         cropped = input_image[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
-        overlay = cv2.rectangle(input_image.copy(), max_loc, (max_loc[0] + w, max_loc[1] + h), (0, 0, 255), 2)
+        orig_image = cv2.imread(input_image_path)
+        orig_image = orig_image[min_height: max_height, 0: input_image.shape[1]]
+        overlay = cv2.rectangle(orig_image.copy(), max_loc, (max_loc[0] + w, max_loc[1] + h), (0, 0, 255), 2)
         print("coordinates of max loc: {} with certainty {}".format(max_loc, max_val))
         # Display the result for debugging
         # cv2.imshow("overlay", overlay)
