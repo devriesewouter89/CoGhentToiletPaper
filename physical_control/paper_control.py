@@ -90,7 +90,6 @@ class StepperControl:
         while True:
             # It's better to capture the still in this thread, not in the one driving the camera.
             self.cc.capture_during_rec()
-            print("img captured")
             self.placement = self.sheet.qualify_position(str(self.config.temp_img.resolve()), self.sheet.template,
                                                          self.sheet.region_of_ok)
             print('placement : {}'.format(self.placement))
@@ -99,14 +98,12 @@ class StepperControl:
 
                 break
             if self.placement == PLACEMENT.TOO_FAR:
-                print("rolling back")
                 self.move_paper_right(amount_of_steps=10)
                 continue
             if self.placement == PLACEMENT.NOT_FAR:
-                print("rolling further")
                 self.move_paper_left(amount_of_steps=10)
                 continue
-            self.cc.stop_vid_rec()
+        self.cc.stop_vid_rec()
             # self.insert_sshkeyboard()
 
     def insert_sshkeyboard(self):
