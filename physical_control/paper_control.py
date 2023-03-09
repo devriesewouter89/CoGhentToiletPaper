@@ -85,8 +85,13 @@ class StepperControl:
         # 1. first we move the paper a little bit
         self.move_paper_left(amount_of_steps=50)
         # 2. then we go and check the position
+        self.cc.start_vid_rec()
+        # self.placement = self.sheet.check_placement_via_pic()
         while True:
-            self.placement = self.sheet.check_placement_via_pic()
+            # It's better to capture the still in this thread, not in the one driving the camera.
+            self.cc.capture_during_rec()
+            self.placement = self.sheet.qualify_position(str(self.config.temp_img.resolve()), self.sheet.template,
+                                                         self.sheet.region_of_ok)
             print('placement : {}'.format(self.placement))
             if self.placement == PLACEMENT.CORRECT:
                 print("found correct location")
