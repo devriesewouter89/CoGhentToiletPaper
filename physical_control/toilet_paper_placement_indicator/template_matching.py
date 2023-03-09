@@ -18,7 +18,7 @@ class PLACEMENT(Enum):
 
 
 class CamControl:
-    def __init__(self):
+    def __init__(self, config):
         self.picam2 = Picamera2()
         self.video = False
         # half_resolution = [dim // 2 for dim in picam2.sensor_resolution]
@@ -28,7 +28,7 @@ class CamControl:
         lores_stream = {"size": (640, 480)}
         self.video_config = self.picam2.create_video_configuration(main_stream, lores_stream, encode="lores")
         self.preview_config = self.picam2.create_preview_configuration(main={"size": half_resolution})
-
+        self.config = config
     def start_vid_rec(self):
         self.picam2.configure(self.video_config)
         encoder = H264Encoder(10000000)
@@ -44,7 +44,7 @@ class CamControl:
         if not self.video:
             self.start_vid_rec()
         request = self.picam2.capture_request()
-        request.save("main", str(config.temp_img.resolve()))
+        request.save("main", str(self.config.temp_img.resolve()))
         request.release()
 
     def capture_jpeg(self):
@@ -241,7 +241,7 @@ the input image, and the cropped region containing the notch.
 
 if __name__ == '__main__':
     config = Config()
-    cc = CamControl()
+    cc = CamControl(config)
     sheet = SheetPlacement(cc, config)
     manual = False
     prep = True
