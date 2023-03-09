@@ -90,8 +90,10 @@ class StepperControl:
                 print("found correct location")
                 break
             if self.placement == PLACEMENT.TOO_FAR:
+                print("rolling back")
                 self.move_paper_right(amount_of_steps=10)
             if self.placement == PLACEMENT.NOT_FAR:
+                print("rolling further")
                 self.move_paper_left(amount_of_steps=10)
             # self.insert_sshkeyboard()
 
