@@ -78,7 +78,8 @@ class SheetPlacement():
         self.save_region_of_interest(config_path, region_of_ok)
         return template, region_of_ok
 
-    def qualify_position(self, input_image, template, region_of_ok):
+    def qualify_position(self, input_image: str, template, region_of_ok):
+
         overlay, max_loc = self.return_matched_image(input_image, template)
         print("overlay {} max_loc {} ".format(overlay, max_loc))
         # cv2.imshow("overlay", cv2.resize(overlay, (int(overlay.shape[1] * 0.6), int(overlay.shape[0] * 0.6))))
@@ -108,7 +109,7 @@ class SheetPlacement():
 
     def check_placement_via_pic(self):
         self.cc.capture_jpeg()
-        img_to_verify = cv2.imread(str(self.config.prep_img.resolve()), 0)
+        img_to_verify = str(self.config.prep_img.resolve())
         placement = self.qualify_position(img_to_verify, self.template, self.region_of_ok)
         print("PLACEMENT via pic {}".format(placement))
         return placement
@@ -206,8 +207,8 @@ class SheetPlacement():
         with open(config_path, 'w', encoding='utf-8') as file:
             file.writelines(data)
 
-    def return_matched_image(self, input_image, template, min_height=0, max_height=3840):
-        # input_image = cv2.imread(input_image, 0)
+    def return_matched_image(self, input_image : str, template, min_height=0, max_height=3840):
+        input_image = cv2.imread(input_image, 0)
         # cv2.imshow("input normal", input_image)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
