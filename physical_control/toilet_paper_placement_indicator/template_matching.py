@@ -70,7 +70,7 @@ class SheetPlacement():
             self.cc.capture_jpeg()
         # create template
         template = self.create_template()
-        region_of_ok = self.create_region_of_interest(str(self.config.resolve()), "region of ok")
+        region_of_ok = self.create_region_of_interest(str(self.config), "region of ok")
         config_path = os.path.join(get_git_root(os.getcwd()), "config_toilet.py")
 
         self.save_region_of_interest(config_path, region_of_ok)
