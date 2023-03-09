@@ -84,12 +84,14 @@ class StepperControl:
         self.move_paper_left(amount_of_steps=50)
         # 2. then we go and check the position
         while self.placement != PLACEMENT.CORRECT:
-            if self.sheet.check_placement_via_pic() == PLACEMENT.CORRECT:
+            self.placement = self.sheet.check_placement_via_pic()
+            print('placement : {}'.format(self.placement))
+            if self.placement == PLACEMENT.CORRECT:
                 print("found correct location")
                 break
-            if self.sheet.check_placement_via_pic() == PLACEMENT.TOO_FAR:
+            if self.placement == PLACEMENT.TOO_FAR:
                 self.move_paper_right(amount_of_steps=10)
-            if self.sheet.check_placement_via_pic() == PLACEMENT.NOT_FAR:
+            if self.placement == PLACEMENT.NOT_FAR:
                 self.move_paper_left(amount_of_steps=10)
             # self.insert_sshkeyboard()
 
@@ -105,7 +107,7 @@ class StepperControl:
                 self.move_paper_left(50)
             if key == "d":
                 self.move_paper_right(50)
-            if key == "r": #release
+            if key == "r":  # release
                 self.kit.stepper1.release()
                 self.kit.stepper2.release()
             if key == "t":
