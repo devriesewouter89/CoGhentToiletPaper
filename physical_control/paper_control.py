@@ -1,7 +1,7 @@
 """Simple test for using adafruit_motorkit with a stepper motor"""
 import sys
 import time
-from time import sleep
+from enum import Enum
 from pathlib import Path
 
 import board
@@ -12,6 +12,7 @@ from sshkeyboard import listen_keyboard
 
 from config_toilet import Config
 from physical_control.suction import SuctionControl
+from physical_control.toilet_paper_placement_indicator.template_matching import CamControl, SheetPlacement
 
 
 def get_project_root():
@@ -22,16 +23,24 @@ try:
     sys.path.index(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 except ValueError:
     sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
-from physical_control.toilet_paper_placement_indicator.sheet_placement import PLACEMENT
+
+
+class PLACEMENT(Enum):
+    NOT_FAR = 0
+    CORRECT = 1
+    TOO_FAR = 2
 
 
 class StepperControl:
-    def __init__(self):
+    def __init__(self, config: Config):
         """
         """
         self.kit = MotorKit(i2c=board.I2C())
         self.total_roll = 0
         self.placement = PLACEMENT.NOT_FAR
+        self.config = config
+        self.cc = CamControl()
+        self.sheet = SheetPlacement(self.cc, config)
 
     def test_stepper(self):
         for _ in range(10):
@@ -81,18 +90,18 @@ class StepperControl:
         # 1. first we move the paper a little bit
         self.move_paper_left(amount_of_steps=50)
         # 2. then we go and check the position
-        if self.placement != PLACEMENT.CORRECT:
-            # if sheet_placement() == PLACEMENT.CORRECT:
-            #     break
-            # if sheet_placement() == PLACEMENT.TOO_FAR:
-            #     self.move_paper_right(amount_of_steps=10)
-            # if sheet_placement() == PLACEMENT.NOT_FAR:
-            #     self.move_paper_left(amount_of_steps=10)
-            self.insert_sshkeyboard()
+        while self.placement != PLACEMENT.CORRECT:
+            if self.sheet.check_placement_via_pic() == PLACEMENT.CORRECT:
+                print("found correct location")
+                break
+            if self.sheet.check_placement_via_pic() == PLACEMENT.TOO_FAR:
+                self.move_paper_right(amount_of_steps=10)
+            if self.sheet.check_placement_via_pic() == PLACEMENT.NOT_FAR:
+                self.move_paper_left(amount_of_steps=10)
+            # self.insert_sshkeyboard()
 
     def insert_sshkeyboard(self):
         listen_keyboard(on_press=self.on_press, until="space")
-
 
     def on_press(self, key):
         try:
@@ -102,8 +111,8 @@ class StepperControl:
                 self.move_paper_left(50)
             if key == "d":
                 self.move_paper_left(50)
-            # if key == "s":
-            #     sc.enable_suction()
+            if key == "t":
+                self.roll_towards_next_sheet()
             # if key == "w":
             #     sc.disable_suction()
             if key == "o":
@@ -116,7 +125,7 @@ class StepperControl:
 
 if __name__ == '__main__':
     config = Config()
-    stepperControl = StepperControl()
+    stepperControl = StepperControl(config)
     sc = SuctionControl(config)
 
     # Collect events until released
