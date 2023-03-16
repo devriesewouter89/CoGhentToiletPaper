@@ -57,7 +57,7 @@ class ToiletPaperStateMachine(StateMachine):
         self.state = self.initial_state
         super().__init__()  # init only to be called after setting self.state
         self.df_tree = None
-        self.stepperControl = StepperControl()
+        self.stepperControl = StepperControl(config=config)
         self.sc = SuctionControl(config=config)
         self.timeline = TimelinePrinter()
         self.image_number = 0

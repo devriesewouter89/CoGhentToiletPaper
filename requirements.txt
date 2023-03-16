@@ -19,3 +19,5 @@ python-dotenv >= 0.21.1
 natsort >= 8.2.0
 pycairo >= 1.23.0
 opencv-python >= 4.7.0.68
+
+linedraw@git+https://github.com/devriesewouter89/linedraw.git

@@ -113,7 +113,6 @@ class StepperControl:
                 self.move_paper_left(amount_of_steps=5)
                 continue
         self.cc.stop_vid_rec()
-            # self.insert_sshkeyboard()
 
     def insert_sshkeyboard(self):
         print("inserting ssh keyboard")

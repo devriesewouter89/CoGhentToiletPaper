@@ -2,7 +2,7 @@
 import os
 import numpy as np
 import svglue
-import drawSvg as draw
+#import drawSvg as draw
 import textwrap
 from typing import Union
 import cairo
@@ -171,7 +171,8 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
         surface.write_to_png("{}.png".format(os.path.splitext(output_path)[0]))
 
 
-def adapt_svg_for_print(d: draw):
+def adapt_svg_for_print(d):
+    #TODO nog nodig??
     """
     for printing, our in-between images are not suited due to some small issues:
     - svg dimensions aren't specified for mm or inches
