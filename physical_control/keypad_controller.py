@@ -1,8 +1,16 @@
 import sys
 import signal
+from enum import Enum
+
 import RPi.GPIO as GPIO
 from rgb1602 import rgb1602
 import time
+
+
+class Mode(Enum):
+    SETUP = 0
+    ROLL = 1
+    TEST = 2
 
 
 class KeypadController:
@@ -25,8 +33,11 @@ class KeypadController:
         GPIO.setup(self.btnDOWN.get("GPIO"), GPIO.IN)
         GPIO.setup(self.btnRIGHT.get("GPIO"), GPIO.IN)
 
+        self.mode = Mode.ROLL
+
     def set_message(self, row, text):
         self.lcd.setCursor(0, row)
+        self.lcd.clear()
         self.lcd.printout(text)
 
     @staticmethod
@@ -35,18 +46,41 @@ class KeypadController:
                               callback=function, bouncetime=100)
 
     def read_lcd_buttons(self, channel):
-        if channel == 16:
-            print(self.btnSELECT)
         if channel == 17:
             print(self.btnUP)
+            self.mode = Mode((self.mode.value + 1) % 3)
         if channel == 18:
             print(self.btnDOWN)
-        if channel == 19:
-            print(self.btnLEFT)
-            self.blink(2.0)
-        if channel == 20:
-            print(self.btnRIGHT)
-            self.breath(0x02)  # 0x03 red 0x02
+            self.mode = Mode((self.mode.value - 1) % 3)
+
+        if self.mode == Mode.SETUP:
+            self.set_message(0, "SETUP")
+            if channel == 16:
+                print(self.btnSELECT)
+            if channel == 19:
+                print(self.btnLEFT)
+                self.blink(2.0)
+            if channel == 20:
+                print(self.btnRIGHT)
+                self.breath(0x02)  # 0x03 red 0x02
+        if self.mode == Mode.ROLL:
+            self.set_message(0, "ROLL")
+            if channel == 16:
+                print(self.btnSELECT)
+            if channel == 19:
+                print(self.btnLEFT)
+            if channel == 20:
+                print(self.btnRIGHT)
+        if self.mode == Mode.TEST:
+            self.set_message(0, "TEST")
+            if channel == 16:
+                print(self.btnSELECT)
+            if channel == 19:
+                print(self.btnLEFT)
+                self.blink(2.0)
+            if channel == 20:
+                print(self.btnRIGHT)
+                self.breath(0x02)  # 0x03 red 0x02
 
     def blink(self, _time):
         self.lcd.blinkLED()
@@ -76,5 +110,7 @@ if __name__ == '__main__':
     key.set_message(0, "hello there!")
     key.add_event_function(key.btnRIGHT.get("GPIO"), key.read_lcd_buttons)
     key.add_event_function(key.btnLEFT.get("GPIO"), key.read_lcd_buttons)
+    key.add_event_function(key.btnUP.get("GPIO"), key.read_lcd_buttons)
+    key.add_event_function(key.btnDOWN.get("GPIO"), key.read_lcd_buttons)
     signal.signal(signal.SIGINT, key.on_exit)
     signal.pause()
