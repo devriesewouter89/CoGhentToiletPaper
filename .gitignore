@@ -147,3 +147,4 @@ poetry.lock
 *.png
 .webp
 .JPEG
+*.gcode
