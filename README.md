@@ -15,6 +15,7 @@ _That's about as close as it gets to the people._
 
 ## installation
 
+
 1. Start with a **64-bit** raspberry pi OS as Git lfs needs 64 bits
 
 	tip: enable SSH & setup headless wifi via raspberry pi Imager and CTRL+SHIFT+X
