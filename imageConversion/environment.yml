@@ -1,0 +1,10 @@
+name: linedraw
+
+dependencies:
+  - python=3.9
+  - numpy
+  - pillow
+  - pip
+  - pip:
+      - opencv-python
+      - svgelements==1.8.4
