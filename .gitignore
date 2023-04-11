@@ -130,7 +130,7 @@ dmypy.json
 
 *.csv
 *.svg
-*.jpg
+#*.jpg
 *.pdf
 
 # Generated images
@@ -144,6 +144,7 @@ imageConversion/images/
 location_files/
 poetry.lock
 *.h264
-*.png
+#*.png
 .webp
-.JPEG
+#.JPEG
+*.gcode

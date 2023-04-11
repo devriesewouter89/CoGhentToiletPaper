@@ -28,7 +28,7 @@ class StepperControl:
     def __init__(self, config: Config):
         """
         """
-        self.kit = MotorKit(i2c=board.I2C())
+        self.kit = MotorKit(i2c=board.I2C(), address=0x60) #todo
         self.total_roll = 0
         self.placement = PLACEMENT.NOT_FAR
         self.config = config

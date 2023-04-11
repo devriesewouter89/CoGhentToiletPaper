@@ -38,6 +38,7 @@ from dBPathFinder.findOverlap import find_tree
 from dBPathFinder.scripts.supabase_link import link_supabase, get_sb_data
 from imageConversion.image_conversion import convert_folder_to_linedraw, create_in_between_images, \
     download_images_from_tree
+from physical_control.keypad_controller import KeypadController
 from physical_control.paper_control import StepperControl
 from physical_control.suction import SuctionControl
 from print_timeline.print_timeline import TimelinePrinter
@@ -60,6 +61,8 @@ class ToiletPaperStateMachine(StateMachine):
         self.stepperControl = StepperControl(config=config)
         self.sc = SuctionControl(config=config)
         self.timeline = TimelinePrinter()
+        self.key = KeypadController()
+        self.key.set_message(0, "hello toilet printer fellow!")
         self.image_number = 0
         self.finished = False
 
@@ -69,6 +72,7 @@ class ToiletPaperStateMachine(StateMachine):
 
         we find a possible path for this run and generate the csvs for this
         """
+        self.key.set_message(0, "searching a path")
         # 1. Make connection with supabase database
         sb = link_supabase(config)
         # 2. fetch the dataframe for current location
@@ -82,6 +86,8 @@ class ToiletPaperStateMachine(StateMachine):
 
     @transition(source="waiting", target="test_df")
     def test_df(self):
+        self.key.set_message(0, "testing a path")
+
         self.df_tree = pd.read_csv(config.tree_path, index_col=0)
 
     @transition(source=["path_finding", "test_df"], target="prep_imgs")
@@ -91,6 +97,7 @@ class ToiletPaperStateMachine(StateMachine):
         2. we create the in-between pages
         3. we convert the images to lineart
         """
+        self.key.set_message(0, "prepping imgs")
 
         # 1.
         download_images_from_tree(df=self.df_tree,
@@ -107,12 +114,16 @@ class ToiletPaperStateMachine(StateMachine):
 
     @transition(source=["prep_imgs", "waiting"], target="prep_timeline")
     def prep_timeline(self):
+        self.key.set_message(0, "timeline")
+
         list1 = self.timeline.get_list_of_files(config.converted_img_path)
         list2 = self.timeline.get_list_of_files(config.in_between_page_path)
         self.timeline.create_comb_list(list1, list2)
 
     @transition(source=["prep_timeline", "print_img"], target="roll_paper")
     def roll_paper(self):
+        self.key.set_message(0, "roll it!")
+
         print("preparing sheet {} for {}".format(self.image_number, self.timeline.get_img(self.image_number)))
         # ! bijhouden hoeveel we afrollen
         self.stepperControl.roll_towards_next_sheet()
