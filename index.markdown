@@ -3,12 +3,11 @@
 # To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
 
 layout: home
+title: "Collectie van de Gentenaar: Gentse rol van het wc"
 ---
 
-
-# Collectie van de Gentenaar: Gentse rol van het wc
-
 	Bringin heritage closer to the people.
+
 An installation interpreting images from [Collectie van de Gentenaar](https://www.collectie.gent/).
 
 The installation places images on a unique timeline, where each image is semantically connected one way or the other.
@@ -33,7 +32,7 @@ _That's about as close as it gets to the people._
 
 ## Build it yourself
 
-underneath [physical construct](../physical_construct/) you can find :
+underneath [physical construct](https://github.com/devriesewouter89/CoGhentToiletPaper/tree/main/physical_construct) you can find :
 - the Fusion360 model (parameterized for plate thickness)
 - lasercut files (plate thickness 3.8mm, create new lasercut files via the fusion360 model)
 - the 3D print models

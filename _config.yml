@@ -18,7 +18,7 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: CoGhent: De Gentse rol van het wc
+title: CoGhent De Gentse rol van het wc
 email: devriese.wouter@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
   CoGhent is a project digitizing Cultural heritage from Ghent, Belgium. 
@@ -28,10 +28,9 @@ description: >- # this means to ignore newlines until "baseurl:"
   - bring the cultural heritage close to the people of Ghent
   - no matter their background
   - create a physical representation of the digital dataset.
-
-baseurl: "" # the subpath of your site, e.g. /blog
-url: "" # the base hostname & protocol for your site, e.g. http://example.com
-twitter_username: 
+#baseurl: "" # the subpath of your site, e.g. /blog
+#url: "" # the base hostname & protocol for your site, e.g. http://example.com
+twitter_username:
 github_username:  devriesewouter89
 
 # Build settings
