@@ -59,7 +59,7 @@ class ToiletPaperStateMachine(StateMachine):
         super().__init__()  # init only to be called after setting self.state
         self.df_tree = None
         self.stepperControl = StepperControl(config=config)
-        self.sc = SuctionControl(config=config)
+        # self.sc = SuctionControl(config=config)
         self.timeline = TimelinePrinter()
         self.key = KeypadController()
         self.key.set_message(0, "hello toilet printer fellow!")
@@ -131,12 +131,12 @@ class ToiletPaperStateMachine(StateMachine):
     @transition(source="roll_paper", target="print_img")
     def print_img(self):
         print("plotting image {}".format(self.image_number))
-        # 1. start suction
-        self.sc.enable_suction()
+        # 1. move to start position
+        # self.sc.enable_suction()
         # 2. start printing
         self.timeline.plot_img_from_list(self.image_number)
         # 3. disable suction
-        self.sc.disable_suction()
+        # self.sc.disable_suction()
         # 4. update the image number if finished
         if self.image_number < self.config.amount_of_tissues:
             self.image_number += 1

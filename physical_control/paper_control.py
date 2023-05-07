@@ -50,6 +50,19 @@ class StepperControl:
 
     def move_paper_right(self, amount_of_steps: int = 50):
         """
+        for some reason, I need to direct both steppers in order to be able to pull back the paper
+        @param amount_of_steps:
+        @return:
+        """
+        self.total_roll -= amount_of_steps
+        # self.kit.stepper1.release()
+        for _ in range(amount_of_steps):
+            self.kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
+            self.kit.stepper2.onestep(direction=stepper.BACKWARD)  # , style=stepper.SINGLE)
+        # todo necessary to have both activated afterwards so paper can't move?
+
+    def move_paper_left(self, amount_of_steps: int = 50):
+        """
 
         @param amount_of_steps:
         @return:
@@ -60,21 +73,6 @@ class StepperControl:
             self.kit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.SINGLE)
             # self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
         # todo necessary to have both activated afterwards so paper can't move?
-        return
-
-    def move_paper_left(self, amount_of_steps: int = 50):
-        """
-
-        @param amount_of_steps:
-        @return:
-        """
-        self.total_roll -= amount_of_steps
-        self.kit.stepper1.release()
-        for _ in range(amount_of_steps):
-            # self.kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
-            self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
-        # todo necessary to have both activated afterwards so paper can't move?
-        return
 
     def roll_towards_next_sheet(self):
         """
@@ -144,7 +142,7 @@ class StepperControl:
 if __name__ == '__main__':
     config = Config()
     stepperControl = StepperControl(config)
-    sc = SuctionControl(config)
+    #sc = SuctionControl(config)
 
     # Collect events until released
     stepperControl.insert_sshkeyboard()

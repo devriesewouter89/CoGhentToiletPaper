@@ -41,7 +41,6 @@ def download_images_from_tree(df: pd.DataFrame, output_path: Path):
 
 
 def convert_folder_to_linedraw(input_path: Path, output_path: Path, config: Config):
-
     """
 
     @param input_path:
@@ -54,7 +53,8 @@ def convert_folder_to_linedraw(input_path: Path, output_path: Path, config: Conf
     """
     ld = LineDraw(draw_contours=config.draw_contour, draw_hatch=config.draw_hatch, hatch_size=config.hatch_size,
                   contour_simplify=config.contour_simplify, no_polylines=config.no_polylines, resize=config.resize,
-                  longest=config.sheet_width, shortest=config.sheet_height, resolution=config.resolution, draw_border=True)
+                  longest=config.sheet_width, shortest=config.sheet_height, resolution=config.resolution,
+                  draw_border=True, offset=config.paper_offset, fixed_size=config.fixed_size)
     output_path.mkdir(parents=True, exist_ok=True)
     for img in input_path.iterdir():
         output = Path(output_path / "{}.svg".format(img.stem))
