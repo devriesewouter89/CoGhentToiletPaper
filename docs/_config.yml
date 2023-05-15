@@ -29,7 +29,7 @@ description: >- # this means to ignore newlines until "baseurl:"
   - no matter their background
   - create a physical representation of the digital dataset.
 #baseurl: "" # the subpath of your site, e.g. /blog
-#url: "" # the base hostname & protocol for your site, e.g. http://example.com
+url: https://devriesewouter89.github.io/CoGhentToiletPaper # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username:
 github_username:  devriesewouter89
 
