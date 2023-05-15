@@ -34,7 +34,8 @@ twitter_username:
 github_username:  devriesewouter89
 
 # Build settings
-theme: minima
+# theme: minima
+theme: just-the-docs
 plugins:
   - jekyll-feed
 

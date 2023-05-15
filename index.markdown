@@ -4,11 +4,12 @@
 
 layout: home
 title: "Collectie van de Gentenaar: Gentse rol van het wc"
+nav_order: 1
 ---
 
 	Bringin heritage closer to the people.
 
-An installation interpreting images from [Collectie van de Gentenaar](https://www.collectie.gent/).
+An installation interpreting images from [Collectie van de Gentenaar](https://www.collectie.gent/){: .btn .btn-blue }.
 
 The installation places images on a unique timeline, where each image is semantically connected one way or the other.
 
@@ -26,9 +27,11 @@ _That's about as close as it gets to the people._
 
 *soon*
 
-## tech walkthrough
+## walkthrough
 
-*soon*
+Underneath [installation](./walkthrough/installation.html){: .btn } I've written an overview of the setup, from the journey the toilet roll takes.
+
+In [Software](./walkthrough/software.html){: .btn} there's a short writeup on all things software.
 
 ## Build it yourself
 
