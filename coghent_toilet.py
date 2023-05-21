@@ -162,8 +162,8 @@ if __name__ == '__main__':
 
     stm = ToiletPaperStateMachine(config)
     try:
-        stm.test_df()
-        stm.prep_imgs()
+        # stm.test_df()
+        # stm.prep_imgs()
         stm.prep_timeline()
         while not stm.finished:
             stm.roll_paper()
