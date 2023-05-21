@@ -39,6 +39,14 @@ class KeypadController:
         self.lcd.setCursor(0, row)
         self.lcd.clear()
         self.lcd.printout(text)
+        
+    def set_messages(self, text_row0, text_row1):
+        self.lcd.clear()
+        self.lcd.setCursor(0, 0)
+        self.lcd.printout(text_row0)
+        self.lcd.setCursor(0, 1)
+        self.lcd.printout(text_row1)
+        
 
     @staticmethod
     def add_event_function(btn: int, function):

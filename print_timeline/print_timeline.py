@@ -70,6 +70,14 @@ class TimelinePrinter:
         self.ad.options.pen_pos_up = self.config.pen_pos_up
         self.ad.options.pen_pos_down = self.config.pen_pos_down
         self.ad.plot_run()
+        # try:
+            # output_svg = self.ad.plot_run(True)
+        # except KeyboardInterrupt:
+            # print("exiting the plotting par user request")
+            # self.ad.plot_setup(output_svg)
+            # self.ad.options.mode = "res_home"
+            # output_homed = self.ad.plot_run(True)
+            # raise SystemExit
         
     def test_paper_startingpoint(self):
         self.ad.interactive()

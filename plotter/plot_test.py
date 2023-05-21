@@ -51,10 +51,14 @@ def disable_axidraw():
 
 def return_home():
     ad = axidraw.AxiDraw()
-    ad.plot_setup()
-    ad.options.mode = "res_home"
-    ad.plot_run()
+    ad.interactive()                # Enter interactive context
+    if not ad.connect():            # Open serial port to AxiDraw;
+        quit()                      #   Exit, if no connection.
+                                    # Absolute moves follow:
+    ad.moveto(0, 0)                 # Pen-up move, back to origin.
     disable_axidraw()
+    ad.disconnect()                 # Close serial port to AxiDraw
+
 
 def on_press(key):
     try:

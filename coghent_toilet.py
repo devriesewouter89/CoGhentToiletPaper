@@ -132,9 +132,7 @@ class ToiletPaperStateMachine(StateMachine):
     @transition(source="roll_paper", target="print_img")
     def print_img(self):
         print("plotting image {}".format(self.image_number))
-        self.key.set_message(0, "print it!")
-        
-        self.key.set_message(1, "img {}".format(self.image_number))
+        self.key.set_messages("print it!", "img {}".format(self.image_number))
         # 1. move to start position
         # 
         # 2. start printing
