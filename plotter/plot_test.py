@@ -68,8 +68,8 @@ def on_press(key):
             calibrate_heights(config)
         if key == "s":  # save
             print("adapt the config_toilet.py file with :")
-            print("\t pen_pos_up = {}".format(pen_pos_up))
-            print("\t pen_pos_down = {}".format(pen_pos_down))
+            print("\t pen_pos_up = {}".format(config.pen_pos_up))
+            print("\t pen_pos_down = {}".format(config.pen_pos_down))
         if key =='p': #plot test file
             plot("calibrate.svg", config)
         if key =='h': # halt the steppers for the axidraw
@@ -77,9 +77,11 @@ def on_press(key):
     except AttributeError:
         print('special key {0} pressed'.format(
             key))
+        raise SystemExit
 
 
 if __name__ == '__main__':
+    print("q/e is pen pos up +/-, a/d is pen pos down +/-, s is save, p is plot, h is halt the steppers")
     global pen_pos_up, pen_pos_down
     config = Config()
     #plot("calibrate.svg", config)

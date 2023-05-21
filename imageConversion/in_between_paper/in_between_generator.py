@@ -203,7 +203,7 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
                  font_size=font_sz, face=config.fontface)
     # place the years on the circle as well
     print(angle)
-    cr.set_font_face(face2)
+    # cr.set_font_face(face2)
     cr.set_font_size(config.year_fontsize)
     text_arc_path(cr, config.sheet_width / 2.0, config.sheet_height / 2.0, year_old, radius + 1.5,
                   np.radians(90 - angle))
@@ -227,10 +227,10 @@ def adapt_svg_for_print(d):
     return d
 
 
-face2 = create_cairo_font_face_for_file("font/AVHersheySimplexLight.ttf", 0)
 
 if __name__ == '__main__':
     config = Config()
+    #face2 = create_cairo_font_face_for_file("font/AVHersheySimplexLight.ttf", 0)
 
     create_svg("lange titel", "vorige wc-rol met veel meer tekst dan de lijn toelaat", "2000", "titel",
                "volgende wc-rol",
