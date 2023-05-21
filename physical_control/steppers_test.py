@@ -31,7 +31,7 @@ class StepperControl:
 
     def move_paper_right(self, amount_of_steps: int = 50):
         """
-
+        for some reason, I need to direct both steppers in order to be able to pull back the paper
         @param amount_of_steps:
         @return:
         """

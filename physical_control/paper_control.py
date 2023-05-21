@@ -50,7 +50,7 @@ class StepperControl:
 
     def move_paper_right(self, amount_of_steps: int = 50):
         """
-
+        for some reason, I need to direct both steppers in order to be able to pull back the paper
         @param amount_of_steps:
         @return:
         """
@@ -74,6 +74,7 @@ class StepperControl:
             #self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
         # todo necessary to have both activated afterwards so paper can't move?
         #time.sleep(1.0)
+
 
     def roll_towards_next_sheet(self):
         """
@@ -143,7 +144,7 @@ class StepperControl:
 if __name__ == '__main__':
     config = Config()
     stepperControl = StepperControl(config)
-    sc = SuctionControl(config)
+    #sc = SuctionControl(config)
 
     # Collect events until released
     stepperControl.insert_sshkeyboard()

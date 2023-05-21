@@ -46,14 +46,25 @@ class Config:
     no_polylines: bool = True
     resize: bool = True
     resolution: int = 1024
-
+    fixed_size: bool = True
 
     # toilet paper sheet settings
     sheet_width = 110  # [mm]
     sheet_height = 80  # [mm]
-    font_size = 5
-    circle_fontsize = 6
-    year_fontsize = 5
+    font_size = 4
+    max_title_fontsize = 10
+    max_circle_fontsize = 10
+    max_extra_fontsize = 10
+    year_fontsize = 10
+    offset_x_text = 25
+    offset_x_title = 15
+    angle_offset = 20
+    radius = (sheet_width / 2 - offset_x_text) * 0.6
+    title_text_width = 40
+    circle_text_width = 2 * radius - 4
+    extra_text_width = 30
+    fontface = 'sans'
+    max_lines_circle = 2
 
     # plot settings
     pen_pos_up = 24  # [0-100]
@@ -61,11 +72,13 @@ class Config:
     speed_pendown = 20  # [1-110]
     model = 4  # AxiDraw MiniKit
     reordering = 2  # optimize plot before plotting:  Full; Also allow path reversal
+
     paper_offset = (0.1, 0.1) #TODO (x,y) coordinates where the paper is approx positioned
 
     # physical connections
     suction_GPIO = 18  # BCM
     stepperi2c = 0x63
+
 
     # camera settings
     region_of_interest = (272, 68, 50, 411)

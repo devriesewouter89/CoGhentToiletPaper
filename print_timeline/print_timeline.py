@@ -1,7 +1,7 @@
 import itertools
 from natsort import natsorted
 import sys
-import os # if you want this directory
+import os  # if you want this directory
 import git
 from pathlib import Path
 
@@ -84,12 +84,24 @@ class TimelinePrinter:
         self.ad.disconnect()                 # Close serial port to AxiDraw
 
 
+    def test_paper_startingpoint(self):
+        self.ad.interactive()
+        self.ad.options.pen_pos_up = 70  # set pen-up position
+        if not self.ad.connect():  # Open serial port to AxiDraw;
+            quit()  # Exit, if no connection.
+
+        self.ad.moveto(config.paper_offset[0], config.paper_offset[1])
+        input("push a button to return to base")
+        self.ad.moveto(0, 0)
+        self.ad.disconnect()  # Close serial port to AxiDraw
+
     def get_img(self, index):
         return self.comb_list[index]
 
+
 if __name__ == '__main__':
     config = Config()
-    tp = TimelinePrinter()
+    tp = TimelinePrinter(config)
     # 1. create list of images
     list1 = tp.get_list_of_files(config.converted_img_path)
     list2 = tp.get_list_of_files(config.in_between_page_path)
@@ -97,3 +109,4 @@ if __name__ == '__main__':
     print(res)
     tp.test_paper_startingpoint()
 #    tp.plot_img_from_list(0)
+
