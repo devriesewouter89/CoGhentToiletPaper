@@ -71,7 +71,7 @@ def on_press(key):
             print("\t pen_pos_up = {}".format(pen_pos_up))
             print("\t pen_pos_down = {}".format(pen_pos_down))
         if key =='p': #plot test file
-            plot("test_output_cairo.svg", config)
+            plot("calibrate.svg", config)
         if key =='h': # halt the steppers for the axidraw
             disable_axidraw()
     except AttributeError:
@@ -82,5 +82,5 @@ def on_press(key):
 if __name__ == '__main__':
     global pen_pos_up, pen_pos_down
     config = Config()
-
+    #plot("calibrate.svg", config)
     listen_keyboard(on_press=on_press)

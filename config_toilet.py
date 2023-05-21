@@ -40,9 +40,9 @@ class Config:
     converted_img_path = Path(location_files / "converted_imgs")
     in_between_page_path = Path(location_files / "in_between")
     draw_contour: bool = True
-    draw_hatch: bool = True
+    draw_hatch: bool = False
     hatch_size: int = 16
-    contour_simplify: int = 2
+    contour_simplify: int = 3
     no_polylines: bool = True
     resize: bool = True
     resolution: int = 1024
@@ -56,18 +56,19 @@ class Config:
     year_fontsize = 5
 
     # plot settings
-    pen_pos_up = 26  # [0-100]
-    pen_pos_down = 22  # [0-100]
+    pen_pos_up = 24  # [0-100]
+    pen_pos_down = 13  # [0-100]
     speed_pendown = 20  # [1-110]
     model = 4  # AxiDraw MiniKit
     reordering = 2  # optimize plot before plotting:  Full; Also allow path reversal
+    paper_offset = (0.1, 0.1) #TODO (x,y) coordinates where the paper is approx positioned
 
     # physical connections
     suction_GPIO = 18  # BCM
-
+    stepperi2c = 0x63
 
     # camera settings
-    region_of_interest = (341, 7, 106, 346)
+    region_of_interest = (272, 68, 50, 411)
     prep_img = Path(location_files / "prep.jpg")
     template = Path(location_files / "template.jpg")
     temp_img = Path(location_files / "temp.jpg")

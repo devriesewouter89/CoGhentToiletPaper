@@ -20,12 +20,13 @@ from pyaxidraw import axidraw
 
 
 class TimelinePrinter:
-    def __init__(self):
+    def __init__(self, config):
         try:
             self.ad = axidraw.AxiDraw()
         except Exception as e:
             print(e)
         self.comb_list = []
+        self.config = config
 
     def create_comb_list(self, list1, list2):
         """
@@ -64,9 +65,24 @@ class TimelinePrinter:
 
     def plot_img_from_list(self, index: int = 0):
         img = self.comb_list[index]
+        #self.ad.moveto(config.paper_offset)
         self.ad.plot_setup(img)
-        self.ad.options.pen_pos_up = 70
+        self.ad.options.pen_pos_up = self.config.pen_pos_up
+        self.ad.options.pen_pos_down = self.config.pen_pos_down
         self.ad.plot_run()
+        
+    def test_paper_startingpoint(self):
+        self.ad.interactive()
+        self.ad.options.pen_pos_up = 70      # set pen-up position
+        if not self.ad.connect():            # Open serial port to AxiDraw;
+            quit()                      #   Exit, if no connection.
+
+
+        self.ad.moveto(config.paper_offset[0],config.paper_offset[1])
+        input("push a button to return to base")
+        self.ad.moveto(0,0)
+        self.ad.disconnect()                 # Close serial port to AxiDraw
+
 
     def get_img(self, index):
         return self.comb_list[index]
@@ -79,4 +95,5 @@ if __name__ == '__main__':
     list2 = tp.get_list_of_files(config.in_between_page_path)
     res = tp.create_comb_list(list1, list2)
     print(res)
-    tp.plot_img_from_list(0)
+    tp.test_paper_startingpoint()
+#    tp.plot_img_from_list(0)

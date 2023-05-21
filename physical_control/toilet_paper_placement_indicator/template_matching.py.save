@@ -1,16 +1,15 @@
 #!/usr/bin/python3
 
-import atexit
 import os
 import time
 from enum import Enum
 
 import cv2
-from picamera2 import Picamera2
+from picamera2 import Picamera2, Preview
 from picamera2.encoders import H264Encoder
 
 from config_toilet import get_git_root, Config
-import argparse
+
 
 class PLACEMENT(Enum):
     NOT_FAR = 0
@@ -20,9 +19,6 @@ class PLACEMENT(Enum):
 
 class CamControl:
     def __init__(self, config):
-        self.config = config
-        self.register()
-    def register(self):
         self.picam2 = Picamera2()
         self.video = False
         # half_resolution = [dim // 2 for dim in picam2.sensor_resolution]
@@ -32,11 +28,8 @@ class CamControl:
         lores_stream = {"size": (640, 480)}
         self.video_config = self.picam2.create_video_configuration(main_stream, lores_stream, encode="lores")
         self.preview_config = self.picam2.create_preview_configuration(main={"size": half_resolution})
-        atexit.register(self.close)
-
+        self.config = config
     def start_vid_rec(self):
-        if(self.picam2==None):
-            self.register()
         self.picam2.configure(self.video_config)
         encoder = H264Encoder(10000000)
         self.picam2.start_recording(encoder, 'test.h264')
@@ -48,6 +41,7 @@ class CamControl:
         self.video = False
 
     def capture_during_rec(self):
+        print("capturing img")
         if not self.video:
             self.start_vid_rec()
         request = self.picam2.capture_request()
@@ -56,16 +50,12 @@ class CamControl:
         return
 
     def capture_jpeg(self):
-
         self.picam2.configure(self.preview_config)
-        # self.picam2.start_preview(Preview.QTGL)
+        self.picam2.start_preview(Preview.QTGL)
         self.picam2.start()
         time.sleep(2)
         metadata = self.picam2.capture_file(str(self.config.prep_img.resolve()))
         print(metadata)
-        self.picam2.stop()
-
-    def close(self):
         self.picam2.close()
 
 
@@ -77,20 +67,20 @@ class SheetPlacement():
         self.region_of_ok = self.config.region_of_interest
 
     def prepare(self):
-        # capture image
-        self.cc.capture_jpeg()
+        if not os.path.isfile(str(self.config.prep_img.resolve())):
+            # capture image
+            self.cc.capture_jpeg()
         # create template
         template = self.create_template()
-        # create region where the paper lies correctly
         region_of_ok = self.create_region_of_interest(str(self.config.prep_img.resolve()), "region of ok")
         config_path = os.path.join(get_git_root(os.getcwd()), "config_toilet.py")
 
         self.save_region_of_interest(config_path, region_of_ok)
         return template, region_of_ok
 
-    def qualify_position(self, input_image: str, template, region_of_ok):
-
+    def qualify_position(self, input_image, template, region_of_ok):
         overlay, max_loc = self.return_matched_image(input_image, template)
+        print("overlay {} max_loc {} ".format(overlay, max_loc))
         # cv2.imshow("overlay", cv2.resize(overlay, (int(overlay.shape[1] * 0.6), int(overlay.shape[0] * 0.6))))
         # cv2.waitKey(0)
         # print("region of ok {}".format(region_of_ok))
@@ -98,17 +88,11 @@ class SheetPlacement():
             print("OK")
             return PLACEMENT.CORRECT
         else:
-            # todo right now I start with not far, as otherwise we keep returning to the same page,
-            # todo ?how to tackle this problem?
-            # todo perhaps check the distance of too far at start and have the paper move out of sight, only then enable
-            # todo the option TOO FAR again?
-            return PLACEMENT.NOT_FAR
-            # if max_loc[0] > region_of_ok[0] + region_of_ok[2]:
-            #     print("Not far")
-            #     return PLACEMENT.NOT_FAR
-            # else:
-            #     print("Too far")
-            #     return PLACEMENT.TOO_FAR
+            print("Not OK")
+            if max_loc[0] > region_of_ok[0] + region_of_ok[2]:
+                return PLACEMENT.NOT_FAR
+            else:
+                return PLACEMENT.TOO_FAR
 
     def open_stream_until_OK(self, template, region_of_ok):
         self.cc.start_vid_rec()
@@ -117,14 +101,16 @@ class SheetPlacement():
             # It's better to capture the still in this thread, not in the one driving the camera.
             self.cc.capture_during_rec()
             result = self.qualify_position(str(self.config.temp_img.resolve()), template, region_of_ok)
+            print("Still image captured!")
 
         # time.sleep(5)
         self.cc.stop_vid_rec()
 
     def check_placement_via_pic(self):
         self.cc.capture_jpeg()
-        img_to_verify = str(self.config.prep_img.resolve())
+        img_to_verify = cv2.imread(str(self.config.prep_img.resolve()), 0)
         placement = self.qualify_position(img_to_verify, self.template, self.region_of_ok)
+        print("PLACEMENT via pic {}".format(placement))
         return placement
 
     def create_template(self):
@@ -213,19 +199,20 @@ class SheetPlacement():
         for idx, i in enumerate(data):
             if "region_of_interest" in i:
                 line_to_change = idx
+
+        print(data)
         data[line_to_change] = "    region_of_interest = {}\r\n".format(region_of_interest)
 
         with open(config_path, 'w', encoding='utf-8') as file:
             file.writelines(data)
 
-    def return_matched_image(self, input_image_path: str, template, min_height=0, max_height=3840):
-        input_image = cv2.imread(input_image_path, 0)
+    def return_matched_image(self, input_image, template, min_height=0, max_height=3840):
+        # input_image = cv2.imread(input_image, 0)
         # cv2.imshow("input normal", input_image)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
         # # todo change with roi
         input_image = input_image[min_height: max_height, 0: input_image.shape[1]]
-
         # cv2.imshow("input cropped", input_image)
         # Perform template matching
         result = cv2.matchTemplate(input_image, template, cv2.TM_CCOEFF_NORMED)
@@ -238,14 +225,13 @@ class SheetPlacement():
         top_left = max_loc
         bottom_right = (top_left[0] + w, top_left[1] + h)
         cropped = input_image[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]]
-        orig_image = cv2.imread(input_image_path)
-        orig_image = orig_image[min_height: max_height, 0: input_image.shape[1]]
-        overlay = cv2.rectangle(orig_image.copy(), max_loc, (max_loc[0] + w, max_loc[1] + h), (0, 0, 255), 2)
+        overlay = cv2.rectangle(input_image.copy(), max_loc, (max_loc[0] + w, max_loc[1] + h), (0, 0, 255), 2)
         print("coordinates of max loc: {} with certainty {}".format(max_loc, max_val))
-        # Display the result for debugging
-        # cv2.imshow("overlay", overlay)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        # Display the result
+        # cv2.imshow('template', template)
+        # cv2.imshow('input', cv2.resize(input_image, (int(input_image.shape[1]*0.6), int(input_image.shape[0]*0.6)),
+        #                                interpolation=cv2.INTER_LINEAR))
+        # cv2.imshow('cropped', cropped)
         return overlay, max_loc
 
 
@@ -257,18 +243,11 @@ the input image, and the cropped region containing the notch.
 '''
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-                    prog='template matching',
-                    description='a script to determine of our toilet paper is correctly positioned, by analysing the position of the notches via template matching',
-                    epilog="it's all about the toilet paper")
-    parser.add_argument('-p', '--prep',
-                    action='store_true', help='generate the template')  # on/off flag
-    args = parser.parse_args()
     config = Config()
     cc = CamControl(config)
     sheet = SheetPlacement(cc, config)
     manual = False
-    prep = args.prep
+    prep = False
     if (prep):
         template, region_of_ok = sheet.prepare()
     else:

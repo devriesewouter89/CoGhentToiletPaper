@@ -28,7 +28,7 @@ class StepperControl:
     def __init__(self, config: Config):
         """
         """
-        self.kit = MotorKit(i2c=board.I2C())
+        self.kit = MotorKit(i2c=board.I2C(), address=config.stepperi2c) #todo
         self.total_roll = 0
         self.placement = PLACEMENT.NOT_FAR
         self.config = config
@@ -54,13 +54,12 @@ class StepperControl:
         @param amount_of_steps:
         @return:
         """
-        self.total_roll += amount_of_steps
-        self.kit.stepper2.release()
+        self.total_roll -= amount_of_steps
+        #self.kit.stepper1.release()
         for _ in range(amount_of_steps):
-            self.kit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.SINGLE)
-            # self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
+           self.kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
+           self.kit.stepper2.onestep(direction=stepper.BACKWARD) #, style=stepper.SINGLE)
         # todo necessary to have both activated afterwards so paper can't move?
-        return
 
     def move_paper_left(self, amount_of_steps: int = 50):
         """
@@ -68,13 +67,13 @@ class StepperControl:
         @param amount_of_steps:
         @return:
         """
-        self.total_roll -= amount_of_steps
-        self.kit.stepper1.release()
+        self.total_roll += amount_of_steps
+        self.kit.stepper2.release()
         for _ in range(amount_of_steps):
-            # self.kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
-            self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
+            self.kit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.SINGLE)
+            #self.kit.stepper2.onestep(direction=stepper.BACKWARD, style=stepper.SINGLE)
         # todo necessary to have both activated afterwards so paper can't move?
-        return
+        #time.sleep(1.0)
 
     def roll_towards_next_sheet(self):
         """
@@ -85,7 +84,7 @@ class StepperControl:
         # # 1. first we move the paper a little bit
         # self.move_paper_left(amount_of_steps=20)
         # 1. the idea is that first we have to move from PLACEMENT.CORRECT towards PLACEMENT.NOT_FAR ( with a bool)
-        # and only
+        # and onlya
         # then start listening again to PLACEMENT.CORRECT
         # 2. we go and check the position
         self.cc.start_vid_rec()
@@ -113,7 +112,6 @@ class StepperControl:
                 self.move_paper_left(amount_of_steps=5)
                 continue
         self.cc.stop_vid_rec()
-            # self.insert_sshkeyboard()
 
     def insert_sshkeyboard(self):
         print("inserting ssh keyboard")
