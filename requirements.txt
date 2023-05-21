@@ -18,10 +18,9 @@ supabase >= 0.7.1
 python-dotenv >= 0.21.1
 natsort >= 8.2.0
 pycairo >= 1.23.0
-<<<<<<< HEAD
+
 opencv-python == 4.7.0.72
-=======
-opencv-python >= 4.7.0.68
+freetype-py == 2.4.0
 
 linedraw@git+https://github.com/devriesewouter89/linedraw.git
->>>>>>> fbe3fdbcabe121706930a52e010cd46f36c18278
+

@@ -11,6 +11,7 @@ from pathlib import Path
 import sys
 # from pycairo_arcs import *
 import math
+import freetype
 
 from imageConversion.in_between_paper.create_cairo_font import create_cairo_font_face_for_file
 from imageConversion.in_between_paper.pycairo_arcs import text_arc_path
@@ -74,8 +75,8 @@ def text(ctx, string, pos, angle=0.0, face='Georgia', font_size=18):
 
     # build up an appropriate font
 
-    # ctx.select_font_face(face, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-    ctx.set_font_face(face2)
+    ctx.select_font_face(face, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+    # ctx.set_font_face(face2)
     ctx.set_font_size(font_size)
     fascent, fdescent, fheight, fxadvance, fyadvance = ctx.font_extents()
     x_off, y_off, text_width, text_height, dx, dy = ctx.text_extents(string)
@@ -115,10 +116,10 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
     surface.set_document_unit(cairo.SVGUnit.MM)
     cr = cairo.Context(surface)
     # TEXT PARAMETERS & PLACEMENT VALUES
-    cr.select_font_face("Sans",
+    face = config.fontface
+    cr.select_font_face(face,
                         cairo.FONT_SLANT_NORMAL,
                         cairo.FONT_WEIGHT_NORMAL)
-
     explanation = False  # explanation adds more descriptive text
     angle = percentage_of_layers * 2 * config.angle_offset - config.angle_offset  # function to make diagonal "move" throughout time
     radius = (config.sheet_width / 2 - config.offset_x_text) * 0.6
@@ -139,15 +140,15 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
         text_old = wrap_text_if_needed(cr, text_old, max_width_text, max_height_text)
         # Draw text
         for idx, i in enumerate(text_old):
-            font_sz = calc_font_size(cr, i, face=config.fontface, wanted_text_width=config.extra_text_width,
+            font_sz = calc_font_size(cr, i, face=face, wanted_text_width=config.extra_text_width,
                                      max_font_size=config.max_extra_fontsize)
             text(cr, i, (config.offset_x_text - idx * config.font_size, config.sheet_height / 2), angle=90,
-                 font_size=font_sz, face=config.fontface)
+                 font_size=font_sz, face=face)
     # -----------------OLD TITLE -----------------------
-    font_sz = calc_font_size(cr, title_old, face=config.fontface, wanted_text_width=config.title_text_width,
+    font_sz = calc_font_size(cr, title_old, face=face, wanted_text_width=config.title_text_width,
                              max_font_size=config.max_title_fontsize)
     text(cr, title_old, (config.offset_x_title, config.sheet_height / 2), angle=90, font_size=font_sz,
-         face=config.fontface)
+         face=face)
 
     # # -----------------NEW TEXT-----------------------
     if explanation:
@@ -155,16 +156,16 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
         text_new = wrap_text_if_needed(cr, text_new, max_width_text, max_height_text)
         # Draw text
         for idx, i in enumerate(text_new):
-            font_sz = calc_font_size(cr, i, face=config.fontface, wanted_text_width=config.extra_text_width,
+            font_sz = calc_font_size(cr, i, face=face, wanted_text_width=config.extra_text_width,
                                      max_font_size=config.max_extra_fontsize)
             text(cr, i, (config.sheet_width - config.offset_x_text + idx * config.font_size, config.sheet_height / 2),
                  angle=270,
-                 font_size=font_sz, face=config.fontface)
+                 font_size=font_sz, face=face)
     # -----------------NEW TITLE-----------------------
-    font_sz = calc_font_size(cr, title_new, face=config.fontface, wanted_text_width=config.title_text_width,
+    font_sz = calc_font_size(cr, title_new, face=face, wanted_text_width=config.title_text_width,
                              max_font_size=config.max_title_fontsize)
     text(cr, title_new, (config.sheet_width - config.offset_x_title, config.sheet_height / 2), angle=270,
-         font_size=font_sz, face=config.fontface)
+         font_size=font_sz, face=face)
     cr.fill()
     # --------------CENTER CIRCLE FIGURE--------------
     # circle
@@ -186,24 +187,24 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
     for idx, i in enumerate(overlap_text):
         # cr.set_font_size(config.max_circle_fontsize)
         # _text = wrap_text_if_needed(cr, i, 40, 1)
-        font_sz = calc_font_size(cr, i, face=config.fontface, wanted_text_width=config.circle_text_width,
+        font_sz = calc_font_size(cr, i, face=face, wanted_text_width=config.circle_text_width,
                                  max_font_size=config.max_circle_fontsize)
         if config.max_lines_circle == 1:
             text(cr, i,
                  (config.sheet_width / 2,
                   config.sheet_height / 2 - font_sz / 4),
                  0,
-                 font_size=font_sz, face=config.fontface)
+                 font_size=font_sz, face=face)
         else:
             text(cr, i,
                  (config.sheet_width / 2,
                   config.sheet_height / 2
                   - (len(overlap_text) - 1) / 2.0 * font_sz * 1.1 + idx * font_sz * 1.1),
                  0,
-                 font_size=font_sz, face=config.fontface)
+                 font_size=font_sz, face=face)
     # place the years on the circle as well
-    print(angle)
-    # cr.set_font_face(face2)
+    # print(angle)
+    cr.select_font_face(face)
     cr.set_font_size(config.year_fontsize)
     text_arc_path(cr, config.sheet_width / 2.0, config.sheet_height / 2.0, year_old, radius + 1.5,
                   np.radians(90 - angle))
@@ -230,7 +231,7 @@ def adapt_svg_for_print(d):
 
 if __name__ == '__main__':
     config = Config()
-    #face2 = create_cairo_font_face_for_file("font/AVHersheySimplexLight.ttf", 0)
+    # face2 = create_cairo_font_face_for_file("font/AVHersheySimplexLight.ttf", 0)
 
     create_svg("lange titel", "vorige wc-rol met veel meer tekst dan de lijn toelaat", "2000", "titel",
                "volgende wc-rol",

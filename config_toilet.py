@@ -63,7 +63,8 @@ class Config:
     title_text_width = 40
     circle_text_width = 2 * radius - 4
     extra_text_width = 30
-    fontface = 'sans'
+    fontface = "AVHershey Simplex"
+    #Path(ROOT_DIR / "imageConversion/in_between_paper/font" / "MecSoft_Font-1.ttf") #"AVHersheySimplexLight.ttf")
     max_lines_circle = 2
 
     # plot settings
