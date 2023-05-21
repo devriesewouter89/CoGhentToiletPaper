@@ -62,7 +62,7 @@ class CamControl:
         self.picam2.start()
         time.sleep(2)
         metadata = self.picam2.capture_file(str(self.config.prep_img.resolve()))
-        print(metadata)
+        #print(metadata)
         self.picam2.stop()
 
     def close(self):
@@ -90,12 +90,14 @@ class SheetPlacement():
 
     def qualify_position(self, input_image: str, template, region_of_ok):
 
-        overlay, max_loc = self.return_matched_image(input_image, template)
-        # cv2.imshow("overlay", cv2.resize(overlay, (int(overlay.shape[1] * 0.6), int(overlay.shape[0] * 0.6))))
-        # cv2.waitKey(0)
+        overlay, max_loc, max_val = self.return_matched_image(input_image, template)
+        
         # print("region of ok {}".format(region_of_ok))
-        if region_of_ok[0] < max_loc[0] < region_of_ok[0] + region_of_ok[2]:
+        if (region_of_ok[0] < max_loc[0] < region_of_ok[0] + region_of_ok[2]) & (max_val >= self.config.location_threshold):
             print("OK")
+            cv2.imshow("overlay", cv2.resize(overlay, (int(overlay.shape[1] * 0.6), int(overlay.shape[0] * 0.6))))
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
             return PLACEMENT.CORRECT
         else:
             # todo right now I start with not far, as otherwise we keep returning to the same page,
@@ -246,7 +248,7 @@ class SheetPlacement():
         # cv2.imshow("overlay", overlay)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
-        return overlay, max_loc
+        return overlay, max_loc, max_val
 
 
 '''

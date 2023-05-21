@@ -42,6 +42,7 @@ from physical_control.keypad_controller import KeypadController
 from physical_control.paper_control import StepperControl
 from physical_control.suction import SuctionControl
 from print_timeline.print_timeline import TimelinePrinter
+from plotter.plot_test import return_home
 
 """
 #todo write documentation
@@ -162,24 +163,29 @@ if __name__ == '__main__':
     # TODO add a physical setup function: find height of pen etc
 
     stm = ToiletPaperStateMachine(config)
-    #stm.test_df()
-    #stm.prep_imgs()
-    stm.prep_timeline()
-    while not stm.finished:
-        stm.roll_paper()
-        stm.print_img()
-    stm.roll_back()
-    stm.wait()
-    # stm.find_path()
-    # print("finished path creation")
-    # stm.prep_imgs()
-    # for i in range(0, 49):
-    #     stm.roll_paper()
-    #     stm.print_img()
-    # stm.roll_back()
-    # stm.wait()
-    # try:
-    #     stm.print_img()  # should trigger an error
-    # except InvalidStartState as e:
-    #     print("Error: {}".format(e))
+    try:
+        #stm.test_df()
+        #stm.prep_imgs()
+        stm.prep_timeline()
+        while not stm.finished:
+            stm.roll_paper()
+            stm.print_img()
+        stm.roll_back()
+        stm.wait()
+        # stm.find_path()
+        # print("finished path creation")
+        # stm.prep_imgs()
+        # for i in range(0, 49):
+        #     stm.roll_paper()
+        #     stm.print_img()
+        # stm.roll_back()
+        # stm.wait()
+        # try:
+        #     stm.print_img()  # should trigger an error
+        # except InvalidStartState as e:
+        #     print("Error: {}".format(e))
+    except KeyboardInterrupt:
+        print("exiting the program par user request")
+        return_home()
+        raise SystemExit
 

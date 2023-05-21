@@ -81,7 +81,8 @@ class Config:
 
 
     # camera settings
-    region_of_interest = (280, 51, 30, 429)
+    region_of_interest = (283, 6, 51, 451)
     prep_img = Path(location_files / "prep.jpg")
     template = Path(location_files / "template.jpg")
     temp_img = Path(location_files / "temp.jpg")
+    location_threshold = 0.2

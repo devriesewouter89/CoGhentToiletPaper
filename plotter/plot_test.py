@@ -49,6 +49,12 @@ def disable_axidraw():
     ad.options.mode = "align"
     ad.plot_run()
 
+def return_home():
+    ad = axidraw.AxiDraw()
+    ad.plot_setup()
+    ad.options.mode = "res_home"
+    ad.plot_run()
+    disable_axidraw()
 
 def on_press(key):
     try:
