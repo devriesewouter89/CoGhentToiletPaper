@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 import os
 import numpy as np
-import svglue
-# import drawSvg as draw
 import textwrap
 from typing import Union
 import cairo
 import git
 from pathlib import Path
 import sys
-# from pycairo_arcs import *
 import math
-import freetype
 
 from imageConversion.in_between_paper.create_cairo_font import create_cairo_font_face_for_file
 from imageConversion.in_between_paper.pycairo_arcs import text_arc_path

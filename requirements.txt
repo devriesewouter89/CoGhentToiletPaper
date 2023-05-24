@@ -20,7 +20,7 @@ natsort >= 8.2.0
 pycairo >= 1.23.0
 
 opencv-python == 4.7.0.72
-freetype-py == 2.4.0
+
 
 linedraw@git+https://github.com/devriesewouter89/linedraw.git
 
