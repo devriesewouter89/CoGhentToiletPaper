@@ -42,6 +42,15 @@ def calibrate_heights(config):
     print(config.pen_pos_up, config.pen_pos_down)
     ad.plot_run()
 
+def move_to_start_offset(config):
+    ad = axidraw.AxiDraw()
+    ad.interactive()                # Enter interactive context
+    if not ad.connect():            # Open serial port to AxiDraw;
+        quit()                      #   Exit, if no connection.
+                                    # Absolute moves follow:
+    ad.moveto(config.paper_offset[0],config.paper_offset[1])  # Pen-up move, to starting offset.
+    disable_axidraw()
+    ad.disconnect()                 # Close serial port to AxiDraw
 
 def disable_axidraw():
     ad = axidraw.AxiDraw()
@@ -82,8 +91,15 @@ def on_press(key):
             print("\t pen_pos_down = {}".format(config.pen_pos_down))
         if key =='p': #plot test file
             plot("calibrate.svg", config)
-        if key =='h': # halt the steppers for the axidraw
+        if key =='x': # halt the steppers for the axidraw
             disable_axidraw()
+        if key == 'h':
+            return_home()
+        if key =='c': # test the calibration file
+            plot("calibrate.svg", config)
+        if key =='m':
+            move_to_start_offset(config)
+
     except AttributeError:
         print('special key {0} pressed'.format(
             key))
@@ -94,5 +110,5 @@ if __name__ == '__main__':
     print("q/e is pen pos up +/-, a/d is pen pos down +/-, s is save, p is plot, h is halt the steppers")
     global pen_pos_up, pen_pos_down
     config = Config()
-    #plot("calibrate.svg", config)
+    
     listen_keyboard(on_press=on_press)

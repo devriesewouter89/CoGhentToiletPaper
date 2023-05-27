@@ -68,13 +68,13 @@ class Config:
     max_lines_circle = 2
 
     # plot settings
-    pen_pos_up = 24  # [0-100]
-    pen_pos_down = 13  # [0-100]
+    pen_pos_up = 14  # [0-100]
+    pen_pos_down = 5  # [0-100]
     speed_pendown = 20  # [1-110]
     model = 4  # AxiDraw MiniKit
     reordering = 2  # optimize plot before plotting:  Full; Also allow path reversal
 
-    paper_offset = (0.1, 0.1) #TODO (x,y) coordinates where the paper is approx positioned
+    paper_offset = (0.2, 0.3) #TODO (x,y) coordinates where the paper is approx positioned
 
     # physical connections
     suction_GPIO = 18  # BCM
