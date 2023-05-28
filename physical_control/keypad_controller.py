@@ -11,6 +11,15 @@ class Mode(Enum):
     SETUP = 0
     ROLL = 1
     TEST = 2
+    PROGRESS = 3
+
+
+class Functions(Enum):
+    calibrate = 0
+    roll_left = 1
+    roll_right = 2
+    test = 3
+    progress = 4
 
 
 class KeypadController:
@@ -39,14 +48,13 @@ class KeypadController:
         self.lcd.setCursor(0, row)
         self.lcd.clear()
         self.lcd.printout(text)
-        
+
     def set_messages(self, text_row0, text_row1):
         self.lcd.clear()
         self.lcd.setCursor(0, 0)
         self.lcd.printout(text_row0)
         self.lcd.setCursor(0, 1)
         self.lcd.printout(text_row1)
-        
 
     @staticmethod
     def add_event_function(btn: int, function):
@@ -54,12 +62,13 @@ class KeypadController:
                               callback=function, bouncetime=100)
 
     def read_lcd_buttons(self, channel):
+        # switch between modes
         if channel == 17:
             print(self.btnUP)
-            self.mode = Mode((self.mode.value + 1) % 3)
+            self.mode = Mode((self.mode.value + 1) % 4)
         if channel == 18:
             print(self.btnDOWN)
-            self.mode = Mode((self.mode.value - 1) % 3)
+            self.mode = Mode((self.mode.value - 1) % 4)
 
         if self.mode == Mode.SETUP:
             self.set_message(0, "SETUP")
@@ -70,15 +79,18 @@ class KeypadController:
                 self.blink(2.0)
             if channel == 20:
                 print(self.btnRIGHT)
-                self.breath(0x02)  # 0x03 red 0x02
+                # self.breath(0x02)  # 0x03 red 0x02
+                return Functions.calibrate
         if self.mode == Mode.ROLL:
             self.set_message(0, "ROLL")
             if channel == 16:
                 print(self.btnSELECT)
             if channel == 19:
                 print(self.btnLEFT)
+                return Functions.roll_left
             if channel == 20:
                 print(self.btnRIGHT)
+                return Functions.roll_right
         if self.mode == Mode.TEST:
             self.set_message(0, "TEST")
             if channel == 16:
@@ -88,8 +100,12 @@ class KeypadController:
                 self.blink(2.0)
             if channel == 20:
                 print(self.btnRIGHT)
-                self.breath(0x02)  # 0x03 red 0x02
-
+                # self.breath(0x02)  # 0x03 red 0x02
+                return Functions.test
+        if self.mode == Mode.PROGRESS:
+            self.set_message(0,"PROGRESS")
+            if channel == 20:
+                return Functions.progress
     def blink(self, _time):
         self.lcd.blinkLED()
         time.sleep(_time)

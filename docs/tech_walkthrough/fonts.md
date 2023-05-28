@@ -11,6 +11,8 @@ For a plotter it is best to have a single line font.
 
 ![single vs outline fonts](https://i.stack.imgur.com/RPyPp.png)
 
+[some more explanation](http://imajeenyus.com/computer/20150110_single_line_fonts/index.shtml)
+
 ## font size
 
 ## amount of text

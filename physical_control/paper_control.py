@@ -48,6 +48,9 @@ class StepperControl:
         self.kit.stepper1.release()
         self.kit.stepper2.release()
 
+    def calibrate_template_matching(self):
+        self.sheet.prepare()
+
     def move_paper_right(self, amount_of_steps: int = 50):
         """
         for some reason, I need to direct both steppers in order to be able to pull back the paper

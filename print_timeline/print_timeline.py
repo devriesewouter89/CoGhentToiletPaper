@@ -42,6 +42,22 @@ class TimelinePrinter:
         self.comb_list = [x for x in itertools.chain.from_iterable(temp) if x]
         return self.comb_list
 
+    def move_to_start_offset(self):
+        ad = axidraw.AxiDraw()
+        ad.interactive()  # Enter interactive context
+        if not ad.connect():  # Open serial port to AxiDraw;
+            quit()  # Exit, if no connection.
+            # Absolute moves follow:
+        ad.moveto(self.config.paper_offset[0], self.config.paper_offset[1])  # Pen-up move, to starting offset.
+        self.disable_axidraw()
+        ad.disconnect()
+
+    def disable_axidraw(self):
+        ad = axidraw.AxiDraw()
+        ad.plot_setup()
+        ad.options.mode = "align"
+        ad.plot_run()
+
     def get_list_of_files(self, dir_name: str):
         """
         create a **sorted** list of file and subdirectories names in the given directory
@@ -65,32 +81,31 @@ class TimelinePrinter:
 
     def plot_img_from_list(self, index: int = 0):
         img = self.comb_list[index]
-        #self.ad.moveto(config.paper_offset)
+        # self.ad.moveto(config.paper_offset)
+        self.ad = axidraw.AxiDraw()
         self.ad.plot_setup(img)
         self.ad.options.pen_pos_up = self.config.pen_pos_up
         self.ad.options.pen_pos_down = self.config.pen_pos_down
         self.ad.plot_run()
         # try:
-            # output_svg = self.ad.plot_run(True)
+        # output_svg = self.ad.plot_run(True)
         # except KeyboardInterrupt:
-            # print("exiting the plotting par user request")
-            # self.ad.plot_setup(output_svg)
-            # self.ad.options.mode = "res_home"
-            # output_homed = self.ad.plot_run(True)
-            # raise SystemExit
-        
+        # print("exiting the plotting par user request")
+        # self.ad.plot_setup(output_svg)
+        # self.ad.options.mode = "res_home"
+        # output_homed = self.ad.plot_run(True)
+        # raise SystemExit
+
     def test_paper_startingpoint(self):
         self.ad.interactive()
-        self.ad.options.pen_pos_up = 70      # set pen-up position
-        if not self.ad.connect():            # Open serial port to AxiDraw;
-            quit()                      #   Exit, if no connection.
+        self.ad.options.pen_pos_up = 70  # set pen-up position
+        if not self.ad.connect():  # Open serial port to AxiDraw;
+            quit()  # Exit, if no connection.
 
-
-        self.ad.moveto(config.paper_offset[0],config.paper_offset[1])
+        self.ad.moveto(config.paper_offset[0], config.paper_offset[1])
         input("push a button to return to base")
-        self.ad.moveto(0,0)
-        self.ad.disconnect()                 # Close serial port to AxiDraw
-
+        self.ad.moveto(0, 0)
+        self.ad.disconnect()  # Close serial port to AxiDraw
 
     def test_paper_startingpoint(self):
         self.ad.interactive()
@@ -117,4 +132,3 @@ if __name__ == '__main__':
     print(res)
     tp.test_paper_startingpoint()
 #    tp.plot_img_from_list(0)
-

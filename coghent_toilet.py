@@ -54,7 +54,7 @@ from plotter.plot_test import return_home
 class ToiletPaperStateMachine(StateMachine):
     initial_state = "waiting"
 
-    def __init__(self, config):
+    def __init__(self, config, key):
         self.config = config
         self.state = self.initial_state
         super().__init__()  # init only to be called after setting self.state
@@ -62,7 +62,7 @@ class ToiletPaperStateMachine(StateMachine):
         self.stepperControl = StepperControl(config=config)
         self.timeline = TimelinePrinter(config=config)
 
-        self.key = KeypadController()
+        self.key = key
         self.key.set_message(0, "hello toilet printer fellow!")
         self.image_number = 0
         self.finished = False
@@ -121,7 +121,12 @@ class ToiletPaperStateMachine(StateMachine):
         list2 = self.timeline.get_list_of_files(config.in_between_page_path)
         self.timeline.create_comb_list(list1, list2)
 
-    @transition(source=["prep_timeline", "print_img"], target="roll_paper")
+    @transition(source=["prep_timeline"], target="move_to_start_pos")
+    def move_to_start_pos(self):
+        self.timeline.move_to_start_offset()
+        self.key.set_message(0,"moving to start")
+
+    @transition(source=["move_to_start_pos", "prep_timeline", "print_img"], target="roll_paper")
     def roll_paper(self):
         self.key.set_message(0, "roll it!")
 
@@ -154,13 +159,71 @@ class ToiletPaperStateMachine(StateMachine):
         pass
 
 
+ def read_lcd_buttons(self, channel):
+     #todo: adapt this for having a menu switching option, perhaps link directly to the wanted functions?
+        # switch between modes
+        if channel == 17:
+            print(self.btnUP)
+            self.mode = key.Mode((self.mode.value + 1) % 4)
+        if channel == 18:
+            print(self.btnDOWN)
+            self.mode = key.Mode((self.mode.value - 1) % 4)
+
+        if self.mode == key.Mode.SETUP:
+            self.set_message(0, "SETUP")
+            if channel == 16:
+                print(self.btnSELECT)
+            if channel == 19:
+                print(self.btnLEFT)
+                self.blink(2.0)
+            if channel == 20:
+                print(self.btnRIGHT)
+                # self.breath(0x02)  # 0x03 red 0x02
+                return key.Functions.calibrate
+        if self.mode == Mode.ROLL:
+            self.set_message(0, "ROLL")
+            if channel == 16:
+                print(self.btnSELECT)
+            if channel == 19:
+                print(self.btnLEFT)
+                return Functions.roll_left
+            if channel == 20:
+                print(self.btnRIGHT)
+                return Functions.roll_right
+        if self.mode == Mode.TEST:
+            self.set_message(0, "TEST")
+            if channel == 16:
+                print(self.btnSELECT)
+            if channel == 19:
+                print(self.btnLEFT)
+                self.blink(2.0)
+            if channel == 20:
+                print(self.btnRIGHT)
+                # self.breath(0x02)  # 0x03 red 0x02
+                return Functions.test
+        if self.mode == Mode.PROGRESS:
+            self.set_message(0,"PROGRESS")
+            if channel == 20:
+                return Functions.progress
+
+
+
 if __name__ == '__main__':
     print("starting the coghent toilet paper printer software")
     # read config file
     config = Config()
     # TODO add a physical setup function: find height of pen etc
+    key = KeypadController()
+    key.add_event_function(key.btnRIGHT.get("GPIO"), key.read_lcd_buttons)
+    key.add_event_function(key.btnLEFT.get("GPIO"), key.read_lcd_buttons)
+    key.add_event_function(key.btnUP.get("GPIO"), key.read_lcd_buttons)
+    key.add_event_function(key.btnDOWN.get("GPIO"), key.read_lcd_buttons)
+    stm = ToiletPaperStateMachine(config, key)
 
-    stm = ToiletPaperStateMachine(config)
+#TODO put in calibration mode?
+    stm.stepperControl.calibrate_template_matching()
+
+
     try:
         # stm.test_df()
         # stm.prep_imgs()
@@ -186,4 +249,5 @@ if __name__ == '__main__':
         print("exiting the program par user request")
         return_home()
         raise SystemExit
+
 
