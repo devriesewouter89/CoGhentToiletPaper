@@ -8,7 +8,7 @@ from sshkeyboard import listen_keyboard
 
 
 def get_project_root():
-    return Path(git.Repo('.', search_parent_directories=True).working_tree_dir)
+    return Path(git.Repo('', search_parent_directories=True).working_tree_dir)
 
 
 try:

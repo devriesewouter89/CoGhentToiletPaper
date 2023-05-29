@@ -9,8 +9,3 @@
 > To search for instances of the notch in the input image, you can use a technique called convolution to slide the template image over the input image and compare the template to each subregion of the input image. You can then use a metric to determine how closely the template matches the subregion, and if the match is above a certain threshold, you can consider the subregion to contain a notch.
 > 
 > There are many differing ways you could implement template matching, and the specific approach you take will depend on the specifics of your problem and the resources you have available. I hope this gives you a general idea of how you could approach this problem!"
-
-![](2.png)
-![](3.png)
-![](4.png)
-![](5.png)

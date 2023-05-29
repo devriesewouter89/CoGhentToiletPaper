@@ -40,9 +40,8 @@ from imageConversion.image_conversion import convert_folder_to_linedraw, create_
     download_images_from_tree
 from physical_control.keypad_controller import KeypadController
 from physical_control.paper_control import StepperControl
-from physical_control.suction import SuctionControl
 from print_timeline.print_timeline import TimelinePrinter
-from plotter.plot_test import return_home
+from print_timeline.plotter.plotter import return_home
 
 """
 #todo write documentation
