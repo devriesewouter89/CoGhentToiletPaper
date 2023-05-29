@@ -160,11 +160,13 @@ class ToiletPaperStateMachine(StateMachine):
 
 
 def thread_keep_paper_rolling(direction, enabled):
-    while enabled.is_set():
-        if direction.is_set():
-            stm.stepperControl.move_paper_right(50)
-        else:
-            stm.stepperControl.move_paper_left(50)
+    while True:
+        if enabled.is_set():
+        #enabled.wait()
+            if direction.is_set():
+                stm.stepperControl.move_paper_right(50)
+            else:
+                stm.stepperControl.move_paper_left(50)
 
 
 mode = Mode.SETUP
@@ -202,7 +204,7 @@ def read_lcd_buttons(channel):
             else:
                 rolling.set()
             rolling_dir.clear()
-            thread_keep_paper_rolling(stm, "left", rolling)
+            #thread_keep_paper_rolling(stm, "left", rolling)
             return Functions.roll_left
         if channel == 20:
             key.set_messages("ROLL", "RIGHT")
@@ -244,7 +246,8 @@ if __name__ == '__main__':
     key.add_event_function(key.btnUP.get("GPIO"), read_lcd_buttons)
     key.add_event_function(key.btnDOWN.get("GPIO"), read_lcd_buttons)
     stm = ToiletPaperStateMachine(config, key)
-
+    thread.start()
+    thread.join()
     while True:
         time.sleep(1)
     # #TODO put in calibration mode?
