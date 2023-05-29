@@ -32,7 +32,7 @@ we want a state machine calling the different blocks of code:
 """
 import pandas as pd
 from finite_state_machine import StateMachine, transition
-
+import time
 from config_toilet import Config
 from dBPathFinder.findOverlap import find_tree
 from dBPathFinder.scripts.supabase_link import link_supabase, get_sb_data
@@ -166,60 +166,58 @@ def keep_paper_rolling(stm, direction, enabled):
 
 
 rolling = False
+mode = Mode.SETUP
 
 
-def read_lcd_buttons(self, channel):
-    global rolling
+def read_lcd_buttons(channel):
+    global rolling, mode
     # todo: adapt this for having a menu switching option, perhaps link directly to the wanted functions?
     # switch between modes
     if channel == 17:
-        print(self.btnUP)
-        self.mode = Mode((self.mode.value + 1) % 4)
+        mode = Mode((mode.value + 1) % 4)
     if channel == 18:
-        print(self.btnDOWN)
-        self.mode = Mode((self.mode.value - 1) % 4)
+        mode = Mode((mode.value - 1) % 4)
 
-    if self.mode == Mode.SETUP:
-        self.set_message(0, "SETUP")
+    if mode == Mode.SETUP:
+        key.set_message(0, "SETUP")
         if channel == 16:
-            print(self.btnSELECT)
+            print("")
         if channel == 19:
-            print(self.btnLEFT)
-            self.blink(2.0)
+            print("")
+            #blink(2.0)
         if channel == 20:
-            print(self.btnRIGHT)
+            print("")
             # self.breath(0x02)  # 0x03 red 0x02
             return Functions.calibrate
-    if self.mode == Mode.ROLL:
-        self.set_message(0, "ROLL")
+    if mode == Mode.ROLL:
+        key.set_message(0, "ROLL")
         if channel == 16:
-            print(self.btnSELECT)
+            print("")
         if channel == 19:
-            print(self.btnLEFT)
             # start rolling or stop rolling
-            self.set_messages("ROLL", "LEFT")
+            key.set_messages("ROLL", "LEFT")
             rolling = not rolling
             keep_paper_rolling(stm, "left", rolling)
             return Functions.roll_left
         if channel == 20:
-            print(self.btnRIGHT)
-            self.set_messages("ROLL", "RIGHT")
+            key.set_messages("ROLL", "RIGHT")
+            rolling = not rolling
             keep_paper_rolling(stm, "right", rolling)
             # start rolling or stop rolling
             return Functions.roll_right
-    if self.mode == Mode.TEST:
-        self.set_message(0, "TEST")
+    if mode == Mode.TEST:
+        key.set_message(0, "TEST")
         if channel == 16:
-            print(self.btnSELECT)
+            print("")#self.btnSELECT)
         if channel == 19:
-            print(self.btnLEFT)
-            self.blink(2.0)
+            print("")#self.btnLEFT)
+            #self.blink(2.0)
         if channel == 20:
-            print(self.btnRIGHT)
+            print("")#self.btnRIGHT)
             # self.breath(0x02)  # 0x03 red 0x02
             return Functions.test
-    if self.mode == Mode.PROGRESS:
-        self.set_message(0, "PROGRESS")
+    if mode == Mode.PROGRESS:
+        key.set_message(0, "PROGRESS")
         if channel == 20:
             return Functions.progress
 
@@ -230,12 +228,14 @@ if __name__ == '__main__':
     config = Config()
     # TODO add a physical setup function: find height of pen etc
     key = KeypadController()
-    key.add_event_function(key.btnRIGHT.get("GPIO"), key.read_lcd_buttons)
-    key.add_event_function(key.btnLEFT.get("GPIO"), key.read_lcd_buttons)
-    key.add_event_function(key.btnUP.get("GPIO"), key.read_lcd_buttons)
-    key.add_event_function(key.btnDOWN.get("GPIO"), key.read_lcd_buttons)
+    key.add_event_function(key.btnRIGHT.get("GPIO"), read_lcd_buttons)
+    key.add_event_function(key.btnLEFT.get("GPIO"), read_lcd_buttons)
+    key.add_event_function(key.btnUP.get("GPIO"), read_lcd_buttons)
+    key.add_event_function(key.btnDOWN.get("GPIO"), read_lcd_buttons)
     stm = ToiletPaperStateMachine(config, key)
 
+    while True:
+        time.sleep(1)
     # #TODO put in calibration mode?
     #     stm.stepperControl.calibrate_template_matching()
 
