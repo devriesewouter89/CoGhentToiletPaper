@@ -30,6 +30,8 @@ we want a state machine calling the different blocks of code:
     DEBUG: the waiting light is shown that we're ready
     We roll back the paper already a bit in approx of the amount of rotations already done
 """
+import threading
+
 import pandas as pd
 from finite_state_machine import StateMachine, transition
 import time
@@ -157,27 +159,26 @@ class ToiletPaperStateMachine(StateMachine):
         self.finished = False
 
 
-def keep_paper_rolling(stm, direction, enabled):
-    while enabled:
-        if direction == "right":
+def thread_keep_paper_rolling(direction, enabled):
+    while enabled.is_set():
+        if direction.is_set():
             stm.stepperControl.move_paper_right(50)
         else:
             stm.stepperControl.move_paper_left(50)
 
 
-rolling = False
 mode = Mode.SETUP
 
-
 def read_lcd_buttons(channel):
-    global rolling, mode
+    global mode
+
     # todo: adapt this for having a menu switching option, perhaps link directly to the wanted functions?
     # switch between modes
     if channel == 17:
         mode = Mode((mode.value + 1) % 4)
     if channel == 18:
         mode = Mode((mode.value - 1) % 4)
-
+    # execute mode functions
     if mode == Mode.SETUP:
         key.set_message(0, "SETUP")
         if channel == 16:
@@ -196,13 +197,20 @@ def read_lcd_buttons(channel):
         if channel == 19:
             # start rolling or stop rolling
             key.set_messages("ROLL", "LEFT")
-            rolling = not rolling
-            keep_paper_rolling(stm, "left", rolling)
+            if rolling.is_set():
+                rolling.clear()
+            else:
+                rolling.set()
+            rolling_dir.clear()
+            thread_keep_paper_rolling(stm, "left", rolling)
             return Functions.roll_left
         if channel == 20:
             key.set_messages("ROLL", "RIGHT")
-            rolling = not rolling
-            keep_paper_rolling(stm, "right", rolling)
+            if rolling.is_set():
+                rolling.clear()
+            else:
+                rolling.set()
+            rolling_dir.set()
             # start rolling or stop rolling
             return Functions.roll_right
     if mode == Mode.TEST:
@@ -228,6 +236,9 @@ if __name__ == '__main__':
     config = Config()
     # TODO add a physical setup function: find height of pen etc
     key = KeypadController()
+    rolling_dir = threading.Event()
+    rolling = threading.Event()  # set is right, clear is left
+    thread = threading.Thread(target = thread_keep_paper_rolling, args=(rolling_dir, rolling))
     key.add_event_function(key.btnRIGHT.get("GPIO"), read_lcd_buttons)
     key.add_event_function(key.btnLEFT.get("GPIO"), read_lcd_buttons)
     key.add_event_function(key.btnUP.get("GPIO"), read_lcd_buttons)

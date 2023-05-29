@@ -103,9 +103,10 @@ class KeypadController:
                 # self.breath(0x02)  # 0x03 red 0x02
                 return Functions.test
         if self.mode == Mode.PROGRESS:
-            self.set_message(0,"PROGRESS")
+            self.set_message(0, "PROGRESS")
             if channel == 20:
                 return Functions.progress
+
     def blink(self, _time):
         self.lcd.blinkLED()
         time.sleep(_time)
