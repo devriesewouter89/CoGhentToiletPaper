@@ -159,8 +159,10 @@ class ToiletPaperStateMachine(StateMachine):
         self.finished = False
 
 
-def thread_keep_paper_rolling(direction, enabled):
+def thread_keep_paper_rolling(direction, enabled, stop):
     while True:
+        if stop.is_set():
+            break
         if enabled.is_set():
         #enabled.wait()
             if direction.is_set():
@@ -183,17 +185,24 @@ def read_lcd_buttons(channel):
     # execute mode functions
     if mode == Mode.SETUP:
         key.set_message(0, "SETUP")
+        if thread.is_alive():
+            stop_thread.set()
         if channel == 16:
             print("")
         if channel == 19:
-            print("")
+            key.set_messages("SETUP","TEMPLATE")
+            #USELESS!! you need a screen for template matching
+            stm.stepperControl.calibrate_template_matching()
             #blink(2.0)
         if channel == 20:
-            print("")
+            key.set_messages("SETUP","HEIGHT")
             # self.breath(0x02)  # 0x03 red 0x02
             return Functions.calibrate
     if mode == Mode.ROLL:
         key.set_message(0, "ROLL")
+        if not thread.is_alive():
+            thread.start()
+            
         if channel == 16:
             print("")
         if channel == 19:
@@ -205,7 +214,6 @@ def read_lcd_buttons(channel):
                 rolling.set()
             rolling_dir.clear()
             #thread_keep_paper_rolling(stm, "left", rolling)
-            return Functions.roll_left
         if channel == 20:
             key.set_messages("ROLL", "RIGHT")
             if rolling.is_set():
@@ -214,9 +222,11 @@ def read_lcd_buttons(channel):
                 rolling.set()
             rolling_dir.set()
             # start rolling or stop rolling
-            return Functions.roll_right
     if mode == Mode.TEST:
         key.set_message(0, "TEST")
+        if thread.is_alive():
+            #pen plotter not moving smoothly, perhaps due to CPU?
+            stop_thread.set()
         if channel == 16:
             print("")#self.btnSELECT)
         if channel == 19:
@@ -229,6 +239,17 @@ def read_lcd_buttons(channel):
     if mode == Mode.PROGRESS:
         key.set_message(0, "PROGRESS")
         if channel == 20:
+            key.set_messages("PROGRESS", "STARTING")
+            #todo make thread of this one
+            #stm.test_df()
+            #stm.prep_imgs()
+            stm.prep_timeline()
+            while not stm.finished:
+                stm.roll_paper()
+                stm.print_img()
+            stm.roll_back()
+            stm.wait()
+            key.set_messages("FINISHED","TOILET ROLL")
             return Functions.progress
 
 
@@ -240,14 +261,13 @@ if __name__ == '__main__':
     key = KeypadController()
     rolling_dir = threading.Event()
     rolling = threading.Event()  # set is right, clear is left
-    thread = threading.Thread(target = thread_keep_paper_rolling, args=(rolling_dir, rolling))
+    stop_thread = threading.Event()
+    thread = threading.Thread(target = thread_keep_paper_rolling, args=(rolling_dir, rolling, stop_thread))
     key.add_event_function(key.btnRIGHT.get("GPIO"), read_lcd_buttons)
     key.add_event_function(key.btnLEFT.get("GPIO"), read_lcd_buttons)
     key.add_event_function(key.btnUP.get("GPIO"), read_lcd_buttons)
     key.add_event_function(key.btnDOWN.get("GPIO"), read_lcd_buttons)
     stm = ToiletPaperStateMachine(config, key)
-    thread.start()
-    thread.join()
     while True:
         time.sleep(1)
     # #TODO put in calibration mode?

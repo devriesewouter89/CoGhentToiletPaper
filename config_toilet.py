@@ -66,6 +66,7 @@ class Config:
     fontface = "AVHershey Simplex"
     #Path(ROOT_DIR / "imageConversion/in_between_paper/font" / "MecSoft_Font-1.ttf") #"AVHersheySimplexLight.ttf")
     max_lines_circle = 2
+    
 
     # plot settings
     pen_pos_up = 18  # [0-100]
@@ -87,3 +88,4 @@ class Config:
     template = Path(location_files / "template.jpg")
     temp_img = Path(location_files / "temp.jpg")
     location_threshold = 0.2
+    move_paper_threshold = 5

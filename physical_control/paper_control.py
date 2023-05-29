@@ -95,7 +95,7 @@ class StepperControl:
         self.cc.start_vid_rec()
 
         paper_has_left_original_position = False
-        paper_has_left_original_position_threshold = 3 # amount of frames before deciding we really left the original position
+        paper_has_left_original_position_threshold = self.config.move_paper_threshold # amount of frames before deciding we really left the original position
         while True:
             # It's better to capture the still in this thread, not in the one driving the camera.
             self.cc.capture_during_rec()
