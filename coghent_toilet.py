@@ -225,7 +225,6 @@ def read_lcd_buttons(channel):
     if mode == Mode.TEST:
         key.set_message(0, "TEST")
         if thread.is_alive():
-            #pen plotter not moving smoothly, perhaps due to CPU?
             stop_thread.set()
         if channel == 16:
             print("")#self.btnSELECT)
@@ -240,7 +239,7 @@ def read_lcd_buttons(channel):
         key.set_message(0, "PROGRESS")
         if channel == 20:
             key.set_messages("PROGRESS", "STARTING")
-            #todo make thread of this one
+            #todo make thread of this one, in order to halt it via menu switcher
             #stm.test_df()
             #stm.prep_imgs()
             stm.prep_timeline()
