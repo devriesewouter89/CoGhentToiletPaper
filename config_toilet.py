@@ -68,8 +68,8 @@ class Config:
     max_lines_circle = 2
 
     # plot settings
-    pen_pos_up = 14  # [0-100]
-    pen_pos_down = 5  # [0-100]
+    pen_pos_up = 18  # [0-100]
+    pen_pos_down = 7  # [0-100]
     speed_pendown = 20  # [1-110]
     model = 4  # AxiDraw MiniKit
     reordering = 2  # optimize plot before plotting:  Full; Also allow path reversal
