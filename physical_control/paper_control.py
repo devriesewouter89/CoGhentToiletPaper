@@ -153,12 +153,13 @@ if __name__ == '__main__':
         prog='paper control',
         description="a script to move the paper and to check if it's positioned correctly",
         epilog="it's all about the toilet paper")
-    parser.add_argument('-p', '--prep',
-                        action='store_true', help='generate the template')  # on/off flag
+    parser.add_argument('-i', '--interactive',
+                        action='store_true', help='interactive usage')  # on/off flag
+
     args = parser.parse_args()
     config = Config()
     stepperControl = StepperControl(config)
-    #sc = SuctionControl(config)
 
     # Collect events until released
-    stepperControl.insert_sshkeyboard()
+    if args.interactive:
+        stepperControl.insert_sshkeyboard()
