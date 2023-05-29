@@ -38,7 +38,7 @@ from dBPathFinder.findOverlap import find_tree
 from dBPathFinder.scripts.supabase_link import link_supabase, get_sb_data
 from imageConversion.image_conversion import convert_folder_to_linedraw, create_in_between_images, \
     download_images_from_tree
-from physical_control.keypad_controller import KeypadController
+from physical_control.keypad_controller import KeypadController, Mode, Functions
 from physical_control.paper_control import StepperControl
 from print_timeline.print_timeline import TimelinePrinter
 from print_timeline.plotter.plotter import return_home
@@ -123,7 +123,7 @@ class ToiletPaperStateMachine(StateMachine):
     @transition(source=["prep_timeline"], target="move_to_start_pos")
     def move_to_start_pos(self):
         self.timeline.move_to_start_offset()
-        self.key.set_message(0,"moving to start")
+        self.key.set_message(0, "moving to start")
 
     @transition(source=["move_to_start_pos", "prep_timeline", "print_img"], target="roll_paper")
     def roll_paper(self):
@@ -155,56 +155,73 @@ class ToiletPaperStateMachine(StateMachine):
     @transition(source="roll_back_paper", target="waiting")
     def wait(self):
         self.finished = False
-        pass
 
 
- # def read_lcd_buttons(self, channel):
- #     #todo: adapt this for having a menu switching option, perhaps link directly to the wanted functions?
- #        # switch between modes
- #        if channel == 17:
- #            print(self.btnUP)
- #            self.mode = key.Mode((self.mode.value + 1) % 4)
- #        if channel == 18:
- #            print(self.btnDOWN)
- #            self.mode = key.Mode((self.mode.value - 1) % 4)
- #
- #        if self.mode == key.Mode.SETUP:
- #            self.set_message(0, "SETUP")
- #            if channel == 16:
- #                print(self.btnSELECT)
- #            if channel == 19:
- #                print(self.btnLEFT)
- #                self.blink(2.0)
- #            if channel == 20:
- #                print(self.btnRIGHT)
- #                # self.breath(0x02)  # 0x03 red 0x02
- #                return key.Functions.calibrate
- #        if self.mode == Mode.ROLL:
- #            self.set_message(0, "ROLL")
- #            if channel == 16:
- #                print(self.btnSELECT)
- #            if channel == 19:
- #                print(self.btnLEFT)
- #                return Functions.roll_left
- #            if channel == 20:
- #                print(self.btnRIGHT)
- #                return Functions.roll_right
- #        if self.mode == Mode.TEST:
- #            self.set_message(0, "TEST")
- #            if channel == 16:
- #                print(self.btnSELECT)
- #            if channel == 19:
- #                print(self.btnLEFT)
- #                self.blink(2.0)
- #            if channel == 20:
- #                print(self.btnRIGHT)
- #                # self.breath(0x02)  # 0x03 red 0x02
- #                return Functions.test
- #        if self.mode == Mode.PROGRESS:
- #            self.set_message(0,"PROGRESS")
- #            if channel == 20:
- #                return Functions.progress
+def keep_paper_rolling(stm, direction, enabled):
+    while enabled:
+        if direction == "right":
+            stm.stepperControl.move_paper_right(50)
+        else:
+            stm.stepperControl.move_paper_left(50)
 
+
+rolling = False
+
+
+def read_lcd_buttons(self, channel):
+    global rolling
+    # todo: adapt this for having a menu switching option, perhaps link directly to the wanted functions?
+    # switch between modes
+    if channel == 17:
+        print(self.btnUP)
+        self.mode = Mode((self.mode.value + 1) % 4)
+    if channel == 18:
+        print(self.btnDOWN)
+        self.mode = Mode((self.mode.value - 1) % 4)
+
+    if self.mode == Mode.SETUP:
+        self.set_message(0, "SETUP")
+        if channel == 16:
+            print(self.btnSELECT)
+        if channel == 19:
+            print(self.btnLEFT)
+            self.blink(2.0)
+        if channel == 20:
+            print(self.btnRIGHT)
+            # self.breath(0x02)  # 0x03 red 0x02
+            return Functions.calibrate
+    if self.mode == Mode.ROLL:
+        self.set_message(0, "ROLL")
+        if channel == 16:
+            print(self.btnSELECT)
+        if channel == 19:
+            print(self.btnLEFT)
+            # start rolling or stop rolling
+            self.set_messages("ROLL", "LEFT")
+            rolling = not rolling
+            keep_paper_rolling(stm, "left", rolling)
+            return Functions.roll_left
+        if channel == 20:
+            print(self.btnRIGHT)
+            self.set_messages("ROLL", "RIGHT")
+            keep_paper_rolling(stm, "right", rolling)
+            # start rolling or stop rolling
+            return Functions.roll_right
+    if self.mode == Mode.TEST:
+        self.set_message(0, "TEST")
+        if channel == 16:
+            print(self.btnSELECT)
+        if channel == 19:
+            print(self.btnLEFT)
+            self.blink(2.0)
+        if channel == 20:
+            print(self.btnRIGHT)
+            # self.breath(0x02)  # 0x03 red 0x02
+            return Functions.test
+    if self.mode == Mode.PROGRESS:
+        self.set_message(0, "PROGRESS")
+        if channel == 20:
+            return Functions.progress
 
 
 if __name__ == '__main__':
@@ -219,34 +236,31 @@ if __name__ == '__main__':
     key.add_event_function(key.btnDOWN.get("GPIO"), key.read_lcd_buttons)
     stm = ToiletPaperStateMachine(config, key)
 
-# #TODO put in calibration mode?
-#     stm.stepperControl.calibrate_template_matching()
+    # #TODO put in calibration mode?
+    #     stm.stepperControl.calibrate_template_matching()
 
-
-    try:
-        # stm.test_df()
-        # stm.prep_imgs()
-        stm.prep_timeline()
-        while not stm.finished:
-            stm.roll_paper()
-            stm.print_img()
-        stm.roll_back()
-        stm.wait()
-        # stm.find_path()
-        # print("finished path creation")
-        # stm.prep_imgs()
-        # for i in range(0, 49):
-        #     stm.roll_paper()
-        #     stm.print_img()
-        # stm.roll_back()
-        # stm.wait()
-        # try:
-        #     stm.print_img()  # should trigger an error
-        # except InvalidStartState as e:
-        #     print("Error: {}".format(e))
-    except KeyboardInterrupt:
-        print("exiting the program par user request")
-        return_home()
-        raise SystemExit
-
-
+    # try:
+    #     # stm.test_df()
+    #     # stm.prep_imgs()
+    #     stm.prep_timeline()
+    #     while not stm.finished:
+    #         stm.roll_paper()
+    #         stm.print_img()
+    #     stm.roll_back()
+    #     stm.wait()
+    #     # stm.find_path()
+    #     # print("finished path creation")
+    #     # stm.prep_imgs()
+    #     # for i in range(0, 49):
+    #     #     stm.roll_paper()
+    #     #     stm.print_img()
+    #     # stm.roll_back()
+    #     # stm.wait()
+    #     # try:
+    #     #     stm.print_img()  # should trigger an error
+    #     # except InvalidStartState as e:
+    #     #     print("Error: {}".format(e))
+    # except KeyboardInterrupt:
+    #     print("exiting the program par user request")
+    #     return_home()
+    #     raise SystemExit
