@@ -162,6 +162,8 @@ class ToiletPaperStateMachine(StateMachine):
 def thread_keep_paper_rolling(direction, enabled, stop):
     while True:
         if stop.is_set():
+            print("stopping paper rolling thread")
+            stop.clear()
             break
         if enabled.is_set():
         #enabled.wait()
@@ -170,13 +172,23 @@ def thread_keep_paper_rolling(direction, enabled, stop):
             else:
                 stm.stepperControl.move_paper_left(50)
 
+def stop_thread_funct(thread_list):
+    if not bool(thread_list):
+        #empty list, return
+        return
+    if thread_list[0].is_alive():
+            print("stopping thread")
+            stop_thread.set()
+            thread_list[0].join()
+            thread_has_started = True
+            thread_list.clear()
 
 mode = Mode.SETUP
 
 def read_lcd_buttons(channel):
     global mode
-
     # todo: adapt this for having a menu switching option, perhaps link directly to the wanted functions?
+        
     # switch between modes
     if channel == 17:
         mode = Mode((mode.value + 1) % 4)
@@ -185,8 +197,11 @@ def read_lcd_buttons(channel):
     # execute mode functions
     if mode == Mode.SETUP:
         key.set_message(0, "SETUP")
-        if thread.is_alive():
-            stop_thread.set()
+        stop_thread_funct(thread_list)
+
+            # make new thread with same name
+            # thread = threading.Thread(target = thread_keep_paper_rolling, args=(rolling_dir, rolling, stop_thread))
+
         if channel == 16:
             print("")
         if channel == 19:
@@ -200,8 +215,13 @@ def read_lcd_buttons(channel):
             return Functions.calibrate
     if mode == Mode.ROLL:
         key.set_message(0, "ROLL")
-        if not thread.is_alive():
-            thread.start()
+        if not bool(thread_list):
+            print("creating new thread")
+            thread_list.append(threading.Thread(target = thread_keep_paper_rolling, args=(rolling_dir, rolling, stop_thread)))
+        if not thread_list[0].is_alive():
+                
+            print("starting thread to roll paper")
+            thread_list[0].start()
             
         if channel == 16:
             print("")
@@ -224,8 +244,8 @@ def read_lcd_buttons(channel):
             # start rolling or stop rolling
     if mode == Mode.TEST:
         key.set_message(0, "TEST")
-        if thread.is_alive():
-            stop_thread.set()
+        stop_thread_funct(thread_list)
+
         if channel == 16:
             print("")#self.btnSELECT)
         if channel == 19:
@@ -237,6 +257,8 @@ def read_lcd_buttons(channel):
             return Functions.test
     if mode == Mode.PROGRESS:
         key.set_message(0, "PROGRESS")
+        stop_thread_funct(thread_list)
+
         if channel == 20:
             key.set_messages("PROGRESS", "STARTING")
             #todo make thread of this one, in order to halt it via menu switcher
@@ -261,7 +283,8 @@ if __name__ == '__main__':
     rolling_dir = threading.Event()
     rolling = threading.Event()  # set is right, clear is left
     stop_thread = threading.Event()
-    thread = threading.Thread(target = thread_keep_paper_rolling, args=(rolling_dir, rolling, stop_thread))
+    thread_list = list()
+    thread_list.append(threading.Thread(target = thread_keep_paper_rolling, args=(rolling_dir, rolling, stop_thread)))
     key.add_event_function(key.btnRIGHT.get("GPIO"), read_lcd_buttons)
     key.add_event_function(key.btnLEFT.get("GPIO"), read_lcd_buttons)
     key.add_event_function(key.btnUP.get("GPIO"), read_lcd_buttons)
