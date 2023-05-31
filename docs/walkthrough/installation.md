@@ -44,3 +44,10 @@ title: "Installation Overview"
 
 ## the physical setup
 
+
+
+## raspberry pi hotspot when no wifi detected
+
+https://www.raspberryconnect.com/projects/65-raspberrypi-hotspot-accesspoints/157-raspberry-pi-auto-wifi-hotspot-switch-internet
+
+Notice: we can't use a virtual environment due to some used libraries. (#todo list which libraries)
