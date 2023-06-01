@@ -92,7 +92,7 @@ def text(ctx, string, pos, angle=0.0, face='Georgia', font_size=18):
 def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, text_new: str, year_new: str,
                overlap_text: Union[str, list[str]], config: Config,
                output_path: Path, percentage_of_layers: float, max_width_text: int = 40,
-               max_height_text: int = 4, to_bitmap: bool = False):
+               max_height_text: int = 3, to_bitmap: bool = False):
     """
 
     @param to_bitmap:
@@ -164,8 +164,7 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
                  font_size=font_sz, face=face)
     # -----------------NEW TITLE-----------------------
     title_new = wrap_text_if_needed(cr, title_new, max_width_text, max_height_text)
-    for idx, i in enumerate(title_old):
-
+    for idx, i in enumerate(title_new):
         font_sz = calc_font_size(cr, i, face=face, wanted_text_width=config.title_text_width,
                                  max_font_size=config.max_title_fontsize)
         text(cr, i, (config.sheet_width - config.offset_x_title + idx * font_sz, config.sheet_height / 2), angle=270,
