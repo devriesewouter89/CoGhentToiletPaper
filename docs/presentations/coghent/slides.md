@@ -50,7 +50,6 @@ transition: fade-out
 
 ---
 
-
 # Brainstorm 
 
 Algemene vragen:
@@ -81,7 +80,7 @@ WC-papier
 
 ---
 layout: image-right
-image: /images/prototype_2.jpg
+image: ./images/prototype_2.jpg
 ---
 
 # Installatie
@@ -92,6 +91,21 @@ image: /images/prototype_2.jpg
 
 
 ---
+layout: 3-images
+imageLeft: ./images/process/tree.png
+imageTopRight: ./images/process/in_between.svg
+imageBottomRight: './images/process/0.jpg'
+---
+---
+layout: image-right
+image: ./images/process/0.jpg
+---
+
+# download image
+
+---
+layout: image-right
+image: ./images/process/lineart.png
 layout: image-left
 image: ./images/process/tree.png
 ---
@@ -115,6 +129,14 @@ layout: default
 
 ![](images/process/object_order.png)
 ---
+
+# convert to lineart
+---
+layout: image-right
+image: ./images/process/0.svg
+---
+
+# convert to lineart
 layout: default
 image: 
 ---
@@ -129,7 +151,6 @@ image:
 layout: image-right
 image: ./images/coghent_fest.MP4
 ---
-
 
 # Doel
 

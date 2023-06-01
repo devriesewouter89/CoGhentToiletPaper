@@ -119,8 +119,8 @@ if __name__ == '__main__':
     df = pd.read_csv(str(csv_path), index_col=0)
 
     download_images_from_tree(df=df,
-                             output_path=config.tree_img_path)
+                              output_path=config.tree_img_path)
     convert_folder_to_linedraw(input_path=config.tree_img_path,
-                              output_path=config.converted_img_path, config=config)
+                               output_path=config.converted_img_path, config=config)
 
     create_in_between_images(df=df, output_path=config.in_between_page_path, config=config)
