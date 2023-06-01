@@ -13,3 +13,5 @@ python -m pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.
 python -m pip install git+https://github.com/devriesewouter89/DFRobot_RGB1602_RaspberryPi/ --upgrade
 pip install -r requirements.txt
 echo 'export PYTHONPATH=/home/pi/coghent/' >> ~/.bashrc
+
+echo "Copy the .env.template and fill in the supabase credentials"

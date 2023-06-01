@@ -50,15 +50,17 @@ def limit_overlap_text(overlap_list: list[str], max_lines: int = 3):
     return overlap_list
 
 
-def calc_font_size(ctx, string, face='Georgia', wanted_text_width=40, max_font_size: int = 10):
+def calc_font_size(ctx, text, face='Georgia', wanted_text_width=40, max_font_size: int = 10):
     ctx.save()
     font_size = 1
+    if isinstance(text, list):
+        text = text[0]
     # build up an appropriate font
     while True:
         ctx.select_font_face(face, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
         ctx.set_font_size(font_size)
         # fascent, fdescent, fheight, fxadvance, fyadvance = ctx.font_extents()
-        x_off, y_off, text_width, text_height, dx, dy = ctx.text_extents(string)
+        x_off, y_off, text_width, text_height, dx, dy = ctx.text_extents(text)
         if text_width < wanted_text_width and font_size < max_font_size:
             font_size += 1
         else:
@@ -141,10 +143,13 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
             text(cr, i, (config.offset_x_text - idx * config.font_size, config.sheet_height / 2), angle=90,
                  font_size=font_sz, face=face)
     # -----------------OLD TITLE -----------------------
-    font_sz = calc_font_size(cr, title_old, face=face, wanted_text_width=config.title_text_width,
-                             max_font_size=config.max_title_fontsize)
-    text(cr, title_old, (config.offset_x_title, config.sheet_height / 2), angle=90, font_size=font_sz,
-         face=face)
+
+    title_old = wrap_text_if_needed(cr, title_old, max_width_text, max_height_text)
+    for idx, i in enumerate(title_old):
+        font_sz = calc_font_size(cr, i, face=face, wanted_text_width=config.title_text_width,
+                                 max_font_size=config.max_title_fontsize)
+        text(cr, i, (config.offset_x_title- idx * font_sz, config.sheet_height / 2), angle=90, font_size=font_sz,
+             face=face)
 
     # # -----------------NEW TEXT-----------------------
     if explanation:
@@ -158,10 +163,13 @@ def create_svg(title_old: str, text_old: str, year_old: str, title_new: str, tex
                  angle=270,
                  font_size=font_sz, face=face)
     # -----------------NEW TITLE-----------------------
-    font_sz = calc_font_size(cr, title_new, face=face, wanted_text_width=config.title_text_width,
-                             max_font_size=config.max_title_fontsize)
-    text(cr, title_new, (config.sheet_width - config.offset_x_title, config.sheet_height / 2), angle=270,
-         font_size=font_sz, face=face)
+    title_new = wrap_text_if_needed(cr, title_new, max_width_text, max_height_text)
+    for idx, i in enumerate(title_old):
+
+        font_sz = calc_font_size(cr, i, face=face, wanted_text_width=config.title_text_width,
+                                 max_font_size=config.max_title_fontsize)
+        text(cr, i, (config.sheet_width - config.offset_x_title + idx * font_sz, config.sheet_height / 2), angle=270,
+             font_size=font_sz, face=face)
     cr.fill()
     # --------------CENTER CIRCLE FIGURE--------------
     # circle
@@ -229,9 +237,9 @@ if __name__ == '__main__':
     config = Config()
     # face2 = create_cairo_font_face_for_file("font/AVHersheySimplexLight.ttf", 0)
 
-    create_svg("lange titel", "vorige wc-rol met veel meer tekst dan de lijn toelaat", "2000", "titel",
+    create_svg("titel vorige", "vorige wc-rol met veel meer tekst dan de lijn toelaat", "2000", "titel volgende",
                "volgende wc-rol",
                "2001",
-               ["wc-rol", "grote test", "3"], config=config, output_path=Path("test_output_cairo.svg"),
+               ["wat is er", "gemeenschappelijk?", "3"], config=config, output_path=Path("test_output_cairo.svg"),
                percentage_of_layers=0.4, max_width_text=100, max_height_text=1, to_bitmap=False)
     # vpype read test_output_cairo.svg deduplicate  write output.svg

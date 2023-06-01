@@ -17,11 +17,12 @@ from anytree import Node
 from anytree.exporter import DotExporter
 from tabulate import tabulate
 import sys
-import os # if you want this directory
+import os  # if you want this directory
+
 try:
-    sys.path.index(os.path.join(os.environ["HOME"], "CoGhentToiletPaper")) # Or os.getcwd() for this directory
+    sys.path.index(os.path.join(os.environ["HOME"], "CoGhentToiletPaper"))  # Or os.getcwd() for this directory
 except ValueError:
-    sys.path.append(os.path.join(os.environ["HOME"], "CoGhentToiletPaper")) # Or os.getcwd() for this directory
+    sys.path.append(os.path.join(os.environ["HOME"], "CoGhentToiletPaper"))  # Or os.getcwd() for this directory
 
 from config_toilet import Config
 from dBPathFinder.scripts.stemmer import sentence_to_stems, start_WordListCorpusReader
@@ -56,7 +57,8 @@ class FindOverlapOneBranch:
         # print("Initial reading of the data: {}".format(self.df.describe))
         self.end_date: int = date.today().year
         self.df_tree = pd.DataFrame(columns=["layer", "id", "overlap", "parent", "img_uri", "chosen",
-                                             "has_already_been_chosen", "origin_year", "target_year"])
+                                             "has_already_been_chosen", "origin_year", "target_year", "origin_title",
+                                             "target_title"])
 
         self.df_tree = self.df_tree.astype({"chosen": bool, "has_already_been_chosen": bool,
                                             "origin_year": int, "target_year": int})
@@ -89,6 +91,8 @@ class FindOverlapOneBranch:
         # target = self.df_row(target_idx)
         origin_year = int(origin["creation_date"])  # "converted_creation_date"
         target_year = int(target["creation_date"])
+        origin_title = origin["title"]
+        target_title = target["title"]
         for col in self.list_cols:
             # we need to unpack the strings to list via ast.literal_eval as otherwise we're evaluating character-based.
             # we use the try except statement as not always there are valid entries
@@ -120,9 +124,10 @@ class FindOverlapOneBranch:
         img_uri = target["img_uri"]
 
         if overlap_found:
-            return overlap_found, overlap_list[0], img_uri, target_idx, origin_year, target_year  # we use overlap_list
+            return overlap_found, overlap_list[
+                0], img_uri, target_idx, origin_year, target_year, origin_title, target_title  # we use overlap_list
         else:
-            return overlap_found, overlap_list, img_uri, target_idx, origin_year, target_year
+            return overlap_found, overlap_list, img_uri, target_idx, origin_year, target_year, origin_title, target_title
 
     def df_row(self, idx):
         """
@@ -179,7 +184,8 @@ class FindOverlapOneBranch:
         # we'll multithread the find_overlap function to speed things up
         que = Queue()
         threads_list = []  # list()
-        res_df = pd.DataFrame(columns=["id", "overlap", "img_uri", "origin_year", "target_year"])
+        res_df = pd.DataFrame(
+            columns=["id", "overlap", "img_uri", "origin_year", "target_year", "origin_title", "target_title"])
         for i in indexes:
             if i == origin:
                 continue
@@ -191,12 +197,13 @@ class FindOverlapOneBranch:
         for t in threads_list:
             t.join()
         while not que.empty():
-            overlap_found, overlap_list, img_uri, index, origin_year, target_year = que.get()
+            overlap_found, overlap_list, img_uri, index, origin_year, target_year, origin_title, target_title = que.get()
             if overlap_found:
                 # print(Fore.GREEN + "index: {}, origin: {}, overlap: {}".format(index, origin,  overlap_list) +
                 # Style.RESET_ALL)
-                temp_df = pd.DataFrame([[index, overlap_list, img_uri, origin_year, target_year]],
-                                       columns=["id", "overlap", "img_uri", "origin_year", "target_year"])
+                temp_df = pd.DataFrame(
+                    [[index, overlap_list, img_uri, origin_year, target_year, origin_title, target_title]],
+                    columns=["id", "overlap", "img_uri", "origin_year", "target_year", "origin_title", "target_title"])
                 res_df = pd.concat([res_df, temp_df])
                 res_found = True
             else:
@@ -213,7 +220,7 @@ class FindOverlapOneBranch:
         while self.layer < self.steps:
             chosen_in_previous_layer = self.df_tree[
                 (self.df_tree["layer"] == self.layer - 1) & (self.df_tree['chosen'])]
-            origin_idx = int(chosen_in_previous_layer.index.values[0]) #["id"].values[0]
+            origin_idx = int(chosen_in_previous_layer.index.values[0])  # ["id"].values[0]
             print(origin_idx)  # printing origin idx as sometimes its a nan
             if np.isnan(origin_idx):
                 print("origin is nan")
@@ -257,23 +264,26 @@ class FindOverlapOneBranch:
         choose_idx = int(random.sample(item_list.index.values.tolist(), 1)[0])
         if self.layer == 0:
             # we know we're at the first line
-            df_selection = item_list[["img_uri"]].copy() #"id",
+            df_selection = item_list[["img_uri"]].copy()  # "id",
             df_selection["overlap"] = ""
             df_selection["origin_year"] = item_list["creation_date"]
             df_selection["target_year"] = item_list["creation_date"]
         else:
-            df_selection = item_list[["overlap", "img_uri", "origin_year", "target_year"]].copy() #"id",
+            df_selection = item_list[["overlap", "img_uri", "origin_year", "target_year"]].copy()  # "id",
+            df_selection["origin_title"] = item_list["origin_title"]
+            df_selection["target_title"] = item_list["target_title"]
         df_selection["parent"] = origin_idx  # None
         df_selection["layer"] = self.layer
         df_selection["chosen"] = False
 
+
         df_selection["has_already_been_chosen"] = False
-        df_selection.loc[choose_idx, "chosen"] = True #df_selection["id"] == choose_idx
+        df_selection.loc[choose_idx, "chosen"] = True  # df_selection["id"] == choose_idx
         df_selection.loc[choose_idx, "has_already_been_chosen"] = True
         df_selection = df_selection.astype({"chosen": bool, "has_already_been_chosen": bool})
         self.df_tree = self.df_tree.astype({"chosen": bool, "has_already_been_chosen": bool})
-        self.df_tree = pd.concat([df_selection, self.df_tree])#, ignore_index=True)
-        self.df_tree.sort_values(by=["layer"], inplace=True) #, "id"
+        self.df_tree = pd.concat([df_selection, self.df_tree])  # , ignore_index=True)
+        self.df_tree.sort_values(by=["layer"], inplace=True)  # , "id"
         # self.df_tree.reset_index()
         # self.df_tree.set_index('id', inplace=True)
         return
@@ -338,7 +348,7 @@ class FindOverlapOneBranch:
         rand_idx = int(random.sample(other_rows.index.values.tolist(), 1)[0])
         other_rows.at[rand_idx, "chosen"] = True
         other_rows.at[rand_idx, "has_already_been_chosen"] = True
-        new_origin_idx = rand_idx # other_rows.loc[]#at[rand_idx, "id"]
+        new_origin_idx = rand_idx  # other_rows.loc[]#at[rand_idx, "id"]
         self.df_tree.update(other_rows)
         print("went back, new origin: {}".format(new_origin_idx))
         return new_origin_idx
@@ -347,6 +357,7 @@ class FindOverlapOneBranch:
         """
         Function that creates tree.png with in each layer the nodes written as "layer"_"identifier"
         @type depth: amount of layers we want to show (becomes easily very big)
+        #todo depth not correctly functioning?
         """
         node_list = []
         root = Node("root")
@@ -366,12 +377,13 @@ class FindOverlapOneBranch:
                                 parent = j
                     else:
                         parent = root
-                    used = self.df_tree.loc[i]#, not self.df_tree["chosen"] & self.df_tree["has_already_been_chosen"]]
+                    used = self.df_tree.loc[
+                        i]  # , not self.df_tree["chosen"] & self.df_tree["has_already_been_chosen"]]
                     color = "black"
                     if used.loc["chosen"]:
-                        color="green"
+                        color = "green"
                     if (not used.loc["chosen"]) & (used.loc["has_already_been_chosen"]):
-                        color="red"
+                        color = "red"
                     print(i, idx_list)
                     print(used)
                     node_sub_list.append(Node(name="{}_{}".format(layer, idx_list[i]), parent=parent, color=color))
@@ -381,7 +393,8 @@ class FindOverlapOneBranch:
             print(e)
             pass
         dot_exp = DotExporter(root, nodeattrfunc=self.set_color_shape)
-        dot_exp.to_picture("{}.png".format(os.path.splitext(self.output_fname)[0]))
+        loc = os.path.splitext(self.output_fname)[0]
+        dot_exp.to_picture("{}.png".format(loc))
         for line in dot_exp:
             print(line)
 
@@ -438,7 +451,6 @@ if __name__ == '__main__':
     config = Config()
     clean_file = config.clean_data_path
 
-
     # 1. Make connection with supabase database
     sb = link_supabase(config)
     # 2. fetch the dataframe for current location
@@ -448,6 +460,6 @@ if __name__ == '__main__':
 
     # input_df2 = pd.read_csv(clean_file)
 
-#TODO something goes often wrong here, need to debug
-#TODO bug in visualizing of tree, wrong parent gets chosen, colors are correct
-#TODO sometimes we remove the old index and then things go wrong
+# TODO something goes often wrong here, need to debug
+# TODO bug in visualizing of tree, wrong parent gets chosen, colors are correct
+# TODO sometimes we remove the old index and then things go wrong

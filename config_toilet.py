@@ -57,7 +57,7 @@ class Config:
     max_extra_fontsize = 10
     year_fontsize = 10
     offset_x_text = 25
-    offset_x_title = 15
+    offset_x_title = 25
     angle_offset = 20
     radius = (sheet_width / 2 - offset_x_text) * 0.6
     title_text_width = 40

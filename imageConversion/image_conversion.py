@@ -100,8 +100,10 @@ def create_in_between_images(df: pd.DataFrame, output_path: Path, config: Config
         layer = row["layer"]
         old_image_year = int(row.get("origin_year"))
         new_image_year = int(row.get("target_year"))
-        create_svg(title_old="", text_old=old_image_descr, year_old=str(old_image_year),
-                   title_new="", text_new=new_image_descr, year_new=str(new_image_year),
+        old_title = row.get("origin_title")
+        new_title = row.get("target_title")
+        create_svg(title_old=old_title, text_old=old_image_descr, year_old=str(old_image_year),
+                   title_new=new_title, text_new=new_image_descr, year_new=str(new_image_year),
                    overlap_text=overlap_text, percentage_of_layers=float(float(layer) / amount_of_layers),
                    output_path=Path(output_path / "{}.svg".format(layer)),
                    config=config, to_bitmap=False)
@@ -116,9 +118,9 @@ if __name__ == '__main__':
     csv_path = config.tree_path
     df = pd.read_csv(str(csv_path), index_col=0)
 
-    download_images_from_tree(df=df,
-                              output_path=config.tree_img_path)
-    convert_folder_to_linedraw(input_path=config.tree_img_path,
-                               output_path=config.converted_img_path, config=config)
+    #download_images_from_tree(df=df,
+    #                          output_path=config.tree_img_path)
+    #convert_folder_to_linedraw(input_path=config.tree_img_path,
+     #                          output_path=config.converted_img_path, config=config)
 
     create_in_between_images(df=df, output_path=config.in_between_page_path, config=config)
