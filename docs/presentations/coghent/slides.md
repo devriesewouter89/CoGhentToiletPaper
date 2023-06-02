@@ -78,6 +78,7 @@ Algemene vragen:
 
 WC-papier 
 
+
 ---
 layout: image-right
 image: ./images/prototype_2.jpg
