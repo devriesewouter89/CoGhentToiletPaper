@@ -69,13 +69,13 @@ class Config:
     
 
     # plot settings
-    pen_pos_up = 18  # [0-100]
-    pen_pos_down = 7  # [0-100]
+    pen_pos_up = 34  # [0-100]
+    pen_pos_down = 25  # [0-100]
     speed_pendown = 20  # [1-110]
     model = 4  # AxiDraw MiniKit
     reordering = 2  # optimize plot before plotting:  Full; Also allow path reversal
 
-    paper_offset = (0.2, 0.3) #TODO (x,y) coordinates where the paper is approx positioned
+    paper_offset = (0.3, 0.3) #TODO (x,y) coordinates where the paper is approx positioned
 
     # physical connections
     suction_GPIO = 18  # BCM
@@ -83,9 +83,9 @@ class Config:
 
 
     # camera settings
-    region_of_interest = (283, 6, 51, 451)
+    region_of_interest = (274, 4, 47, 476)
     prep_img = Path(location_files / "prep.jpg")
     template = Path(location_files / "template.jpg")
     temp_img = Path(location_files / "temp.jpg")
-    location_threshold = 0.2
+    location_threshold = 0.21
     move_paper_threshold = 5

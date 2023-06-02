@@ -43,7 +43,7 @@ from imageConversion.image_conversion import convert_folder_to_linedraw, create_
 from physical_control.keypad_controller import KeypadController, Mode, Functions
 from physical_control.paper_control import StepperControl
 from print_timeline.print_timeline import TimelinePrinter
-from print_timeline.plotter.plotter import return_home
+from print_timeline.plotter.plotter import return_home, move_to_start_offset
 
 """
 #todo write documentation
@@ -205,9 +205,10 @@ def read_lcd_buttons(channel):
         if channel == 16:
             print("")
         if channel == 19:
-            key.set_messages("SETUP","TEMPLATE")
+            key.set_messages("SETUP","STARTING POINT")
             #USELESS!! you need a screen for template matching
-            stm.stepperControl.calibrate_template_matching()
+            #stm.stepperControl.calibrate_template_matching()w
+            move_to_start_offset(config)
             #blink(2.0)
         if channel == 20:
             key.set_messages("SETUP","HEIGHT")
