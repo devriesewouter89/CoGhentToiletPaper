@@ -123,11 +123,13 @@ image:
 
 ![](images/process/lineart2.png)
 
+<!--
 
 ---
 layout: image-right
 image: ./images/coghent_fest.MP4
 ---
+
 
 # Doel
 
@@ -145,7 +147,7 @@ nut van
 - WC rol & installatie als conversation starter
 
 </v-clicks>
-
+ -->
 ---
 layout: image-right
 image: ./images/fusion.jpg
