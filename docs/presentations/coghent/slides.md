@@ -91,31 +91,39 @@ image: ./images/prototype_2.jpg
 - zo unieke wc-rollen creerend
 
 
----
-layout: 3-images
-imageLeft: ./images/process/tree.png
-imageTopRight: ./images/process/in_between.svg
-imageBottomRight: './images/process/0.jpg'
----
----
-layout: image-right
-image: ./images/process/0.jpg
----
-
-# download image
 
 ---
-layout: image-right
-image: ./images/process/lineart.png
+layout: image-left
+image: ./images/process/tree.png
 ---
 
-# convert to lineart
+# pad
+
+"Deze **stoel** heeft een hoge rechte rugleuning die wordt benadrukt door het snijwerk van de kapregel. 
+De rechte achterpoten van de **stoel** lopen zonder onderbreking over in de stijlen van de rugleuning. 
+Deze **stoel** werd geconstrueerd in de 19de eeuw met <u>vermoedelijk</u> <...>"
+
+"Deze pronkzetel met vernieuwde <...> 
+Achteraan steunt de **stoel** op sabelpoten ('à l'étrusque'). <...> werd hij <u>vermoedelijk</u> uitgevoerd in het midden van de 19de eeuw. 
+Vergelijkbare **stoel**en zijn te vinden in de collecties van het Bayerisches Nationalmuseum in München en Musée des Arts Décoratifs in Parijs."
+
+*'stoel', 'eeuw', 'vermoedelijk', '19de'*
+
 ---
-layout: image-right
-image: ./images/process/0.svg
+layout: default
+
 ---
 
-# convert to lineart
+![](images/process/object_order.png)
+---
+layout: default
+image: 
+---
+
+# conversion
+
+![](images/process/lineart2.png)
+
 
 ---
 layout: image-right
@@ -132,6 +140,8 @@ nut van
 <v-clicks>
 
 - WC-rol als functioneel object 
+    - niet noemenswaardig
+- WC-rol als esthethisch object 
     - niet noemenswaardig
 - WC rol & installatie als conversation starter
 
@@ -155,6 +165,14 @@ image: ./images/fusion.jpg
 - open-source reproduceerbaar <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" class="h-10 rounded shadow" />
 - WC-papier als medium = horror
 </v-click>
+
+---
+layout: 3-images
+imageLeft: images/paper/lots.jpg
+imageTopRight: images/paper/notches.png
+imageBottomRight: images/paper/too_much_ink.jpg
+---
+
 
 ---
 layout: default
@@ -229,7 +247,7 @@ transition: fade-out
 ![9](images/evolutie/10.jpg)
 
 ---
-layout: default
+layout: center
 transition: fade-out
 ---
 
