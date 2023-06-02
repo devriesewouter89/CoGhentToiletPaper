@@ -50,6 +50,7 @@ transition: fade-out
 
 ---
 
+
 # Brainstorm 
 
 Algemene vragen:
@@ -78,10 +79,9 @@ Algemene vragen:
 
 WC-papier 
 
-
 ---
 layout: image-right
-image: ./images/prototype_2.jpg
+image: /images/prototype_2.jpg
 ---
 
 # Installatie
@@ -89,7 +89,6 @@ image: ./images/prototype_2.jpg
 - die telkens nieuwe paden doorheen de collectie zoekt
 - deze print op een WC-rol
 - zo unieke wc-rollen creerend
-
 
 
 ---
