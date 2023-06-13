@@ -34,13 +34,14 @@ cd CoGhentToiletPaper
 git lfs pull
 git submodule update --init --recursive
 ```
-TODO: adapt [prep_env.sh](./prep_env.sh)
+
 4. copy `.env.template` to `.env` and adapt to your needs.
 5. install graphviz: `sudo apt install graphviz`
 3. install poetry: `curl -sSL https://install.python-poetry.org | python3 -`
 4. install all packages: `poetry install`
 5. enable the environment: `poetry shell`
 
+[//]: # TODO: adapt [prep_env.sh](./prep_env.sh)
 
 [//]: # ()
 [//]: # (**optional:** Want to run docker containers? install docker:)
