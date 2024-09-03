@@ -26,9 +26,8 @@ dependencies = [
     "python-dotenv >= 0.21.1",
     "natsort >= 8.2.0",
     "pycairo >= 1.23.0",
-    "opencv-python >= 4.7.0.68"
-    #linedraw = { git = 'git@github.com:devriesewouter89/linedraw.git', branch = 'master' }
-    #python -m pip install 'linedraw@git+https://github.com/devriesewouter89/linedraw.git'
+    "opencv-python >= 4.10",
+    "linedraw@git+https://github.com/devriesewouter89/linedraw.git@master"
     #python -m pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
 ]
 #
@@ -39,9 +38,13 @@ dependencies = [
 #[build-system]
 #build-backend = "flit_core.buildapi"
 #requires = ["flit_core >=3.2,<4"]
+
 [build-system]
-requires = [
-    "setuptools >= 35.0.2",
-    "setuptools_scm >= 2.0.0, <3"
-]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
+[tool.setuptools]
+packages.find = { }
+include-package-data = true
