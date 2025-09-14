@@ -10,9 +10,8 @@ from adafruit_motor import stepper
 from adafruit_motorkit import MotorKit
 from sshkeyboard import listen_keyboard
 
-from config_toilet import Config
-from physical_control.suction import SuctionControl
-from physical_control.toilet_paper_placement_indicator.template_matching import CamControl, SheetPlacement, PLACEMENT
+from src.config_toilet import Config
+from src.physical_control.toilet_paper_placement_indicator.template_matching import CamControl, SheetPlacement, PLACEMENT
 
 
 def get_project_root():

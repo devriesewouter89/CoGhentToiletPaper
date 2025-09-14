@@ -1,4 +1,4 @@
-from dBPathFinder.findOverlap import FindOverlap
+from src.dBPathFinder.findOverlap import FindOverlap
 from pathlib import Path
 import pandas as pd
 

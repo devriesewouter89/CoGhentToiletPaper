@@ -1,6 +1,5 @@
 from pyaxidraw import axidraw
 import sys
-import os  # if you want this directory
 import git
 from pathlib import Path
 
@@ -15,7 +14,7 @@ try:
     sys.path.index(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 except ValueError:
     sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
-from config_toilet import Config
+from src.config_toilet import Config
 
 
 def set_axi_options(ad: axidraw.AxiDraw, config: Config):

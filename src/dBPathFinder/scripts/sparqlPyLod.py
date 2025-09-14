@@ -1,4 +1,3 @@
-import argparse
 import os
 from datetime import datetime
 from itertools import zip_longest
@@ -9,7 +8,7 @@ from lodstorage.csv import CSV
 import pandas as pd
 from pathlib import Path
 
-from config_toilet import Config
+from src.config_toilet import Config
 
 """
 to build the query: 

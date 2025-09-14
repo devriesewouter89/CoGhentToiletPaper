@@ -6,7 +6,7 @@ import git
 import pandas as pd
 import requests
 from linedraw.linedraw import LineDraw
-from imageConversion.in_between_paper.in_between_generator import create_svg
+from src.imageConversion.in_between_paper.in_between_generator import create_svg
 
 
 def get_project_root():
@@ -18,7 +18,7 @@ try:
 except ValueError:
     sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 
-from config_toilet import Config
+from src.config_toilet import Config
 
 
 def download_images_from_tree(df: pd.DataFrame, output_path: Path):

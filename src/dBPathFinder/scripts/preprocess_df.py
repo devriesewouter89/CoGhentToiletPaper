@@ -1,4 +1,3 @@
-import argparse
 import datetime
 import json
 import math
@@ -6,7 +5,7 @@ import os
 import time
 import urllib
 from threading import Thread
-from typing import Any, Tuple
+from typing import Any
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -14,9 +13,7 @@ from queue import Queue
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
-from pathlib import Path
-
-from config_toilet import Config
+from src.config_toilet import Config
 
 """
 #todo write documentation

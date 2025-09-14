@@ -134,7 +134,7 @@ dmypy.json
 *.pdf
 
 # Generated images
-imageConversion/images/
+src/imageConversion/images/
 
 # generated hidden folders
 .obsidian/

@@ -36,14 +36,14 @@ import pandas as pd
 from finite_state_machine import StateMachine, transition
 import time
 from config_toilet import Config
-from dBPathFinder.findOverlap import find_tree
-from dBPathFinder.scripts.supabase_link import link_supabase, get_sb_data
-from imageConversion.image_conversion import convert_folder_to_linedraw, create_in_between_images, \
+from src.dBPathFinder.findOverlap import find_tree
+from src.dBPathFinder import link_supabase, get_sb_data
+from src.imageConversion import convert_folder_to_linedraw, create_in_between_images, \
     download_images_from_tree
-from physical_control.keypad_controller import KeypadController, Mode, Functions
-from physical_control.paper_control import StepperControl
-from print_timeline.print_timeline import TimelinePrinter
-from print_timeline.plotter.plotter import return_home, move_to_start_offset
+from src.physical_control.keypad_controller import KeypadController, Mode, Functions
+from src.physical_control.paper_control import StepperControl
+from src.print_timeline.print_timeline import TimelinePrinter
+from src.print_timeline.plotter.plotter import move_to_start_offset
 
 """
 #todo write documentation

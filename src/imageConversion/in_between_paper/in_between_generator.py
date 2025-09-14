@@ -9,8 +9,7 @@ from pathlib import Path
 import sys
 import math
 
-from imageConversion.in_between_paper.create_cairo_font import create_cairo_font_face_for_file
-from imageConversion.in_between_paper.pycairo_arcs import text_arc_path
+from src.imageConversion.in_between_paper.pycairo_arcs import text_arc_path
 
 
 def get_project_root():
@@ -21,7 +20,7 @@ try:
     sys.path.index(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 except ValueError:
     sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
-from config_toilet import Config
+from src.config_toilet import Config
 
 
 def wrap_text_if_needed(ctx, text: str, max_width_text: int, max_height_text: int) -> Union[str, list[str]]:

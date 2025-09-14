@@ -1,4 +1,3 @@
-import argparse
 import json
 from datetime import datetime
 from pathlib import Path
@@ -7,10 +6,8 @@ import pandas
 import pandas as pd
 from supabase import create_client, Client
 from dotenv import load_dotenv, find_dotenv
-import os
-from os.path import join, dirname
 import csv
-from config_toilet import Config
+from src.config_toilet import Config
 
 
 def upload_data(csv_path: Path, sb: Client, location: str):

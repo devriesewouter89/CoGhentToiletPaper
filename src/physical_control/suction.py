@@ -15,7 +15,7 @@ try:
     sys.path.index(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
 except ValueError:
     sys.path.append(str(get_project_root().resolve()))  # Or os.getcwd() for this directory
-from config_toilet import Config
+from src.config_toilet import Config
 
 
 class SuctionControl:

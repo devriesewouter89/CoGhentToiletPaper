@@ -9,7 +9,7 @@ import cv2
 from picamera2 import Picamera2
 from picamera2.encoders import H264Encoder
 
-from config_toilet import get_git_root, Config
+from src.config_toilet import get_git_root, Config
 import argparse
 
 class PLACEMENT(Enum):

@@ -24,9 +24,9 @@ try:
 except ValueError:
     sys.path.append(os.path.join(os.environ["HOME"], "CoGhentToiletPaper"))  # Or os.getcwd() for this directory
 
-from config_toilet import Config
-from dBPathFinder.scripts.stemmer import sentence_to_stems, start_WordListCorpusReader
-from dBPathFinder.scripts.supabase_link import get_sb_data, link_supabase
+from src.config_toilet import Config
+from src.dBPathFinder.scripts.stemmer import sentence_to_stems, start_WordListCorpusReader
+from src.dBPathFinder.scripts.supabase_link import get_sb_data, link_supabase
 from typing import Union
 
 """
