@@ -148,3 +148,5 @@ poetry.lock
 .webp
 #.JPEG
 *.gcode
+
+ *package-lock.json
