@@ -1,7 +1,7 @@
 [project]
 name = "coghenttoiletpaper"
 version = "0.1.0"
-description = ""
+description = "Project repository voor Collectie van de gentenaar - WC rol installatie"
 authors = [{ name = "Wouter Devriese", email = "devriese.wouter@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.9"
@@ -27,17 +27,14 @@ dependencies = [
     "natsort >= 8.2.0",
     "pycairo >= 1.23.0",
     "opencv-python >= 4.10",
-    "linedraw@git+https://github.com/devriesewouter89/linedraw.git@master"
-    #python -m pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
+    "linedraw@git+https://github.com/devriesewouter89/linedraw.git@master",
+    "axidraw@https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip",
+    "rgb1602@git+https://github.com/devriesewouter89/DFRobot_RGB1602_RaspberryPi/"
 ]
-#
-#
-#[build-system]
-#requires = ["poetry-core"]
-#build-backend = "poetry.core.masonry.api"
-#[build-system]
-#build-backend = "flit_core.buildapi"
-#requires = ["flit_core >=3.2,<4"]
+
+[project.urls]
+Issues = "https://github.com/devriesewouter89/CoGhentToiletPaper/issues"
+Repository = "https://github.com/devriesewouter89/CoGhentToiletPaper"
 
 [build-system]
 requires = ["setuptools>=64", "setuptools_scm>=8"]
